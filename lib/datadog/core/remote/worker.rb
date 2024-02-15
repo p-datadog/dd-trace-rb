@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# TODO: what is the purpose of starting/started/stopping?
+
 module Datadog
   module Core
     module Remote
@@ -20,48 +22,54 @@ module Datadog
         end
 
         def start
+        puts "** Maybe starting worker #{object_id}"
           Datadog.logger.debug { 'remote worker starting' }
 
-          acquire_lock
+          # TODO: log under the lock?
+          @mutex.synchronize do
+          puts "start #{object_id} #{@stopping}"
+            return if @starting || @started || @stopped
 
-          return if @starting || @started
+            @starting = true
+            puts "** really starting #{object_id}"
+            #require'byebug';byebug
 
-          @starting = true
+            thread = Thread.new { poll(@interval) }
+            thread.name = self.class.name unless Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.3')
+            thread.thread_variable_set(:fork_safe, true)
+            @thr = thread
 
-          thread = Thread.new { poll(@interval) }
-          thread.name = self.class.name unless Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.3')
-          thread.thread_variable_set(:fork_safe, true)
-          @thr = thread
-
-          @started = true
-          @starting = false
+            @started = true
+            @starting = false
+          end
 
           Datadog.logger.debug { 'remote worker started' }
-        ensure
-          release_lock
         end
 
         def stop
+        puts "** stopping #{object_id}"
+        #require'byebug';byebug
           Datadog.logger.debug { 'remote worker stopping' }
 
-          acquire_lock
+          # TODO: log under the lock?
+          @mutex.synchronize do
+          p "!! stop #{object_id}"
+            @stopping = true
 
-          @stopping = true
+            thread = @thr
 
-          thread = @thr
+            if thread
+              thread.kill
+              thread.join
+            end
 
-          if thread
-            thread.kill
-            thread.join
+            @started = false
+            @stopping = false
+            @thr = nil
+            @stopped = true
           end
 
-          @started = false
-          @stopping = false
-          @thr = nil
-
           Datadog.logger.debug { 'remote worker stopped' }
-        ensure
-          release_lock
         end
 
         def started?
@@ -69,14 +77,6 @@ module Datadog
         end
 
         private
-
-        def acquire_lock
-          @mutex.lock
-        end
-
-        def release_lock
-          @mutex.unlock
-        end
 
         def poll(interval)
           loop do
