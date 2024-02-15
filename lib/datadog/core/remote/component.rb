@@ -77,7 +77,9 @@ module Datadog
 
         # If the worker is not initialized, initialize it.
         #
-        # Then, waits for one client sync to be executed if `kind` is `:once`.
+        # Then, waits for one client sync to be executed.
+        #
+        # TODO: remove argument, how is this method used exactly?
         def barrier(_kind)
           start
           @barrier.wait_once
@@ -88,9 +90,11 @@ module Datadog
         end
 
         # Barrier provides a mechanism to fence execution until a condition happens
+        #
+        # TODO: what is the purpose of @lifted write in the wait method?
         class Barrier
           def initialize(timeout = nil)
-            @once = false
+            @lifted = false
             @timeout = timeout
 
             @mutex = Mutex.new
@@ -100,47 +104,50 @@ module Datadog
           # Wait for first lift to happen, otherwise don't wait
           def wait_once(timeout = nil)
             # TTAS (Test and Test-And-Set) optimisation
-            # Since @once only ever goes from false to true, this is semantically valid
-            return :pass if @once
+            # Since @lifted only ever goes from false to true, this is semantically valid
+            return :pass if @lifted
 
-            begin
-              @mutex.lock
-
-              return :pass if @once
+            @mutex.synchronize do
+              return :pass if @lifted
 
               timeout ||= @timeout
 
               # - starting with Ruby 3.2, ConditionVariable#wait returns nil on
               #   timeout and an integer otherwise
               # - before Ruby 3.2, ConditionVariable returns itself
-              # so we have to rely on @once having been set
+              # so we have to rely on @lifted having been set
               if RUBY_VERSION >= '3.2'
                 lifted = @condition.wait(@mutex, timeout)
+                p "xx #{lifted.inspect}"
               else
                 @condition.wait(@mutex, timeout)
-                lifted = @once
+                lifted = @lifted
               end
 
               if lifted
                 :lift
               else
-                @once = true
+                @lifted = true
+                p 'lifting here'
                 :timeout
               end
-            ensure
-              @mutex.unlock
+
+              # TODO: what is the purpose of return value - tests only?
             end
           end
 
-          # Release all current waiters
+          # Lift the barrier, releasing all current waiters.
+          #
+          # Internally we only use Barrier to wait for one event, thus
+          # in practice there should only ever be one call to +lift+
+          # per instance of Barrier.
           def lift
-            @mutex.lock
+            @mutex.synchronize do
+            p 'lifting normally'
+              @lifted ||= true
 
-            @once ||= true
-
-            @condition.broadcast
-          ensure
-            @mutex.unlock
+              @condition.broadcast
+            end
           end
         end
 
