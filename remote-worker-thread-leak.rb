@@ -1,7 +1,7 @@
 require 'ddtrace'
 
 configure_thread = Thread.new do
-  15.times {
+  5.times {
     Datadog.configure { Thread.pass }
     Thread.pass
   }
