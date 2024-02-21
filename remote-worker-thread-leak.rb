@@ -10,6 +10,7 @@ end
 trigger_rc_thread = Thread.new do
   loop {
     sleep 0.5
+    p Datadog::Core::Remote.active_remote.object_id
     Datadog::Core::Remote.active_remote.barrier(:once)
     Thread.pass
   }
