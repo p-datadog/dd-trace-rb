@@ -39,6 +39,7 @@ module Datadog
               @client.sync
               @healthy ||= true
             rescue Client::SyncError => e
+            raise
               Datadog.logger.error do
                 "remote worker client sync error: #{e.message} location: #{Array(e.backtrace).first}. skipping sync"
               end
