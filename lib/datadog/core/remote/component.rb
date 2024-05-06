@@ -40,6 +40,7 @@ module Datadog
               @healthy ||= true
             rescue Client::SyncError => e
               # Transient errors due to network or agent. Logged the error but not via telemetry
+            raise
               Datadog.logger.error do
                 "remote worker client sync error: #{e.message} location: #{Array(e.backtrace).first}. skipping sync"
               end
