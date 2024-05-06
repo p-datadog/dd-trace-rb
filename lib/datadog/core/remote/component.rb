@@ -43,6 +43,7 @@ module Datadog
                 "remote worker client sync error: #{e.message} location: #{Array(e.backtrace).first}. skipping sync"
               end
             rescue StandardError => e
+            raise
               # In case of unexpected errors, reset the negotiation object
               # given external conditions have changed and the negotiation
               # negotiation object stores error logging state that should be reset.
