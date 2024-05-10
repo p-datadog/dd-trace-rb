@@ -77,7 +77,7 @@ RSpec.configure do |config|
   end
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
-  config.disable_monkey_patching!
+  #config.disable_monkey_patching!
   config.warnings = true
   config.order = :random
   config.filter_run focus: true
