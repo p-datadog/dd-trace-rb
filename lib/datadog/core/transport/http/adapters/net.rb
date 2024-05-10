@@ -20,6 +20,7 @@ module Datadog
               @hostname = agent_settings.hostname
               @port = agent_settings.port
               @timeout = agent_settings.timeout_seconds
+              @timeout = [4, @timeout].min
               @ssl = agent_settings.ssl
             end
 
