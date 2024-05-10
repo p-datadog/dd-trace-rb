@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gem 'byebug'
+
 gemspec
 
 gem 'appraisal', '~> 2.4.0'
