@@ -2,6 +2,8 @@ source 'https://rubygems.org'
 
 gemspec
 
+gem 'byebug'
+
 # Development dependencies
 if RUBY_VERSION < '2.3'
   gem 'appraisal', '~> 2.2.0'
