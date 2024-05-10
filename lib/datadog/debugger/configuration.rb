@@ -2,7 +2,7 @@
 
 module Datadog
   module Debugger
-    # Configuration for Debugger
+    # Configuration for AppSec
     module Configuration
     end
   end
