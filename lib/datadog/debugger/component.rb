@@ -12,7 +12,8 @@ module Datadog
         end
       end
 
-      def shutdown!(replacement = nil); end
+      def shutdown!(replacement = nil)
+      end
     end
   end
 end
