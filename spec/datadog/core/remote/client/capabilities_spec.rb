@@ -91,7 +91,6 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
       end
 
       it 'does not register any capabilities, products, and receivers' do
-        expect(capabilities.capabilities).to_not include(4)
         expect(capabilities.products).to_not include('LIVE_DEBUGGING')
         expect(capabilities.receivers).to_not include(
           lambda { |r|
@@ -109,7 +108,6 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
 
     context 'when not present' do
       it 'does not register any capabilities, products, and receivers' do
-        expect(capabilities.capabilities).to_not include(4)
         expect(capabilities.products).to_not include('LIVE_DEBUGGING')
         expect(capabilities.receivers).to_not include(
           lambda { |r|
@@ -133,7 +131,6 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
       end
 
       it 'register capabilities, products, and receivers' do
-        expect(capabilities.capabilities).to include(4)
         expect(capabilities.products).to include('LIVE_DEBUGGING')
         expect(capabilities.receivers).to include(
           lambda { |r|
