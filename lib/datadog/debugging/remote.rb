@@ -2,6 +2,7 @@
 
 module Datadog
   module Debugging
+    # Remote
     module Remote
       class ReadError < StandardError; end
 
@@ -21,6 +22,7 @@ module Datadog
           component = Datadog.send(:components).debugging
 
           # TODO: apply configuration
+          @component = component
 
           content.applied
         rescue => e
