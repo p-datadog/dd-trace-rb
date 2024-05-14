@@ -3,6 +3,7 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'byebug'
+gem 'rfc'
 
 # Development dependencies
 if RUBY_VERSION < '2.3'
