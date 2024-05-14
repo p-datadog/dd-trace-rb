@@ -41,6 +41,5 @@ RSpec.describe Datadog::Debugging::Configuration::Settings do
         end
       end
     end
-
   end
 end

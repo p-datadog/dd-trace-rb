@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Datadog
   module Debugging
     module Remote
@@ -18,7 +20,7 @@ module Datadog
           # content is one probe info
           component = Datadog.send(:components).debugging
 
-          # TODO apply configuration
+          # TODO: apply configuration
 
           content.applied
         rescue => e
