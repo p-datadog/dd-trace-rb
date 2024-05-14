@@ -17,13 +17,11 @@ module Datadog
         def process_config(config, content)
           # content is one probe info
           component = Datadog.send(:components).debugging
-          component.add_probe_from_remote(config)
+
+          # TODO apply configuration
 
           content.applied
-
-#          Datadog.send(:components).telemetry.client_configuration_change!(env_vars)
         rescue => e
-        raise
           content.errored("#{e.class.name} #{e.message}: #{Array(e.backtrace).join("\n")}")
         end
 
