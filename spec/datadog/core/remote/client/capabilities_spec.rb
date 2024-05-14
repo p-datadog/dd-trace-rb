@@ -82,11 +82,11 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
     end
   end
 
-  context 'Debugger component' do
+  context 'Debugging component' do
     context 'when disabled' do
       let(:settings) do
         settings = Datadog::Core::Configuration::Settings.new
-        settings.debugger.enabled = false
+        settings.debugging.enabled = false
         settings
       end
 
@@ -94,7 +94,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
         expect(capabilities.products).to_not include('LIVE_DEBUGGING')
         expect(capabilities.receivers).to_not include(
           lambda { |r|
-            r.match? Datadog::Core::Remote::Configuration::Path.parse('datadog/1/DEBUGGER/_/_')
+            r.match? Datadog::Core::Remote::Configuration::Path.parse('datadog/1/LIVE_DEBUGGING/_/_')
           }
         )
       end
@@ -111,7 +111,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
         expect(capabilities.products).to_not include('LIVE_DEBUGGING')
         expect(capabilities.receivers).to_not include(
           lambda { |r|
-            r.match? Datadog::Core::Remote::Configuration::Path.parse('datadog/1/DEBUGGER/_/_')
+            r.match? Datadog::Core::Remote::Configuration::Path.parse('datadog/1/LIVE_DEBUGGING/_/_')
           }
         )
       end
@@ -126,7 +126,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
     context 'when enabled' do
       let(:settings) do
         settings = Datadog::Core::Configuration::Settings.new
-        settings.debugger.enabled = true
+        settings.debugging.enabled = true
         settings
       end
 
@@ -134,7 +134,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
         expect(capabilities.products).to include('LIVE_DEBUGGING')
         expect(capabilities.receivers).to include(
           lambda { |r|
-            r.match? Datadog::Core::Remote::Configuration::Path.parse('datadog/1/DEBUGGER/_/_')
+            r.match? Datadog::Core::Remote::Configuration::Path.parse('datadog/1/LIVE_DEBUGGING/_/_')
           }
         )
       end
