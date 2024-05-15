@@ -31,6 +31,12 @@ module Datadog
               register_receivers(Datadog::AppSec::Remote.receivers)
             end
 
+            if settings.respond_to?(:debugging) && settings.debugging.enabled
+              register_capabilities(Datadog::Debugging::Remote.capabilities)
+              register_products(Datadog::Debugging::Remote.products)
+              register_receivers(Datadog::Debugging::Remote.receivers)
+            end
+
             register_capabilities(Datadog::Tracing::Remote.capabilities)
             register_products(Datadog::Tracing::Remote.products)
             register_receivers(Datadog::Tracing::Remote.receivers)

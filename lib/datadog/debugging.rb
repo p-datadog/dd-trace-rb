@@ -3,6 +3,7 @@
 require_relative 'debugging/component'
 require_relative 'debugging/configuration'
 require_relative 'debugging/extensions'
+require_relative 'debugging/remote'
 
 module Datadog
   # Namespace for Datadog debugging instrumentation
