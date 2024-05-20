@@ -115,7 +115,7 @@ module Datadog
         end
 
         # Starts up components
-        def startup!(settings)
+        def startup!(settings, old: nil)
           if settings.profiling.enabled
             if profiler
               profiler.start
@@ -124,6 +124,11 @@ module Datadog
               unsupported_reason = Profiling.unsupported_reason
               logger.warn("Profiling was requested but is not supported, profiling disabled: #{unsupported_reason}")
             end
+          end
+
+          if settings.remote.enabled && old.remote&.started?
+            # remote should be defined here
+            remote.start
           end
 
           Core::Diagnostics::EnvironmentLogger.collect_and_log!(@environment_logger_extra)

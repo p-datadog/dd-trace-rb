@@ -260,7 +260,7 @@ module Datadog
         components = Components.new(settings)
 
         old.shutdown!(components)
-        components.startup!(settings)
+        components.startup!(settings, old: old)
         components
       end
 
