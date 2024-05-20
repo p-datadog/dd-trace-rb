@@ -2,7 +2,7 @@ require 'concurrent-ruby'
 require 'byebug'
 
 module Datadog
-  module Debugger
+  module Debugging
     module Hook
       module_function def clear_hooks
         INSTRUMENTED_METHODS.clear
