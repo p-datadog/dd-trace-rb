@@ -115,7 +115,7 @@ module Datadog
         end
 
         # Starts up components
-        def startup!(settings, old: nil)
+        def startup!(settings, old_state: nil)
           if settings.profiling.enabled
             if profiler
               profiler.start
@@ -126,7 +126,7 @@ module Datadog
             end
           end
 
-          if settings.remote.enabled && old.remote&.started?
+          if settings.remote.enabled && old_state&.[](:remote)
             # remote should be defined here
             remote.start
           end
