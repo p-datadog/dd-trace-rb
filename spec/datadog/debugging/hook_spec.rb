@@ -24,7 +24,7 @@ class HookTestClass
   end
 end
 
-describe Datadog::Debugger::Hook do
+describe Datadog::Debugging::Hook do
   let(:observed_calls) { [] }
 
   after do
