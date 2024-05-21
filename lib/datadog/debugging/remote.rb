@@ -15,8 +15,12 @@ module Datadog
         end
 
         def process_config(config, content)
-          # content is one probe info
+          # config is one probe info
           component = Datadog.send(:components).debugging
+
+          probe = Probe.from_remote_config(config)
+          probe.notify_received
+
           component.add_probe_from_remote(config)
 
           content.applied
