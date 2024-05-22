@@ -5,12 +5,20 @@ module Datadog
     # Core-pluggable component for Debugging
     class Component
       class << self
-        def build(settings)
+        def build(settings, agent_settings)
           return unless settings.respond_to?(:debugging) && settings.debugging.enabled
 
-          new
+          new(settings, agent_settings)
         end
       end
+
+      def initialize(settings, agent_settings)
+        @settings = settings
+        @agent_settings = agent_settings
+      end
+
+      attr_reader :settings
+      attr_reader :agent_settings
 
       def shutdown!(replacement = nil)
       end

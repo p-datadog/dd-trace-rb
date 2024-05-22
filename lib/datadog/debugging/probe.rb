@@ -1,5 +1,6 @@
 module Datadog
   module Debugging
+    # @api private
     class Probe
 
       def self.from_remote_config(config)
@@ -35,8 +36,8 @@ module Datadog
         }
 
         uri = URI("http://localhost:8126/debugger/v1/diagnostics")
-        http = Net::HTTP.new(uri.host, uri.port)
-        #http = Datadog::Core::Transport::HTTP::Adapters::Net::HTTP.new(uri.host, uri.port)
+        #http = Net::HTTP.new(uri.host, uri.port)
+        http = Datadog::Core::Transport::HTTP::Adapters::Net.new(agent_settings)
         headers =
         {
             'content-type' => 'application/json',
@@ -50,4 +51,3 @@ module Datadog
     end
   end
 end
-
