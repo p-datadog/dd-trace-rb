@@ -5,6 +5,7 @@ require_relative 'debugging/configuration'
 require_relative 'debugging/extensions'
 require_relative 'debugging/hook'
 require_relative 'debugging/probe'
+require_relative 'debugging/probe_notifier'
 require_relative 'debugging/remote'
 
 module Datadog
