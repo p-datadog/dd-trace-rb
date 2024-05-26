@@ -27,6 +27,8 @@ module Datadog
         # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/MethodLength,Metrics/CyclomaticComplexity
         def sync
           # TODO: Skip sync if no capabilities are registered
+          p 'remote: sending payload:'
+          pp payload
           response = transport.send_config(payload)
 
           if response.ok?
@@ -144,7 +146,7 @@ module Datadog
 
           client_tracer = {
             runtime_id: Core::Environment::Identity.id,
-            language: Core::Environment::Identity.lang,
+            language: 'python',#Core::Environment::Identity.lang,
             tracer_version: tracer_version,
             service: service_name,
             env: Datadog.configuration.env,

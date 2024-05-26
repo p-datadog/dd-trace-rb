@@ -18,8 +18,11 @@ module Datadog
           # config is one probe info
           component = Datadog.send(:components).debugging
 
+          puts '--- got probe:'
+          pp config
+
           probe = Probe.from_remote_config(config)
-          probe.notify_received
+          ProbeNotifier.notify_received(probe)
 
           component.add_probe_from_remote(config)
 
