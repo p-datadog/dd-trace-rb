@@ -17,6 +17,13 @@ module Datadog
         )
       end
 
+      module_function def notify_emitting(probe)
+        notify(probe,
+          message: "Probe #{probe.id} is emitting",
+          status: 'EMITTING',
+        )
+      end
+
       module_function def notify_executed(probe, tracepoint)
         puts 'executing'
       end
