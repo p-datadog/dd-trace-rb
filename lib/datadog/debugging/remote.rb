@@ -23,6 +23,7 @@ module Datadog
 
           probe = Probe.from_remote_config(config)
           ProbeNotifier.notify_received(probe)
+          ProbeNotifier.notify_installed(probe)
 
           component.add_probe_from_remote(config)
 

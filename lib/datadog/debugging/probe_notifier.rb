@@ -3,20 +3,33 @@ module Datadog
     # @api private
     module ProbeNotifier
 
-
       module_function def notify_received(probe)
+        notify(probe,
+          message: "Probe #{probe.id} has been received correctly",
+          status: 'RECEIVED',
+        )
+      end
+
+      module_function def notify_installed(probe)
+        notify(probe,
+          message: "Probe #{probe.id} has been instrumented correctly",
+          status: 'INSTALLED',
+        )
+      end
+
+      module_function def notify(probe, message:, status:)
         payload = {
           service: Datadog.configuration.service,
           timestamp: (Time.now.to_f * 1000).to_i,
-          message: "Probe #{probe.id} has been received correctly",
+          message: message,
           ddsource: 'dd_debugger',
           debugger: {
             diagnostics: {
               probeId: probe.id,
-              probeVersion: 1,
+              probeVersion: 0,
               runtimeId: Core::Environment::Identity.id,
               parentId: nil,
-              status: 'RECEIVED',
+              status: status,
             },
           },
         }
@@ -29,16 +42,16 @@ module Datadog
             'content-type' => 'application/json',
         }
 
-epayload = Datadog::Core::Vendor::Multipart::Post::UploadIO.new(
-  StringIO.new(JSON.dump(payload)), 'application/json', 'event.json')
-env = OpenStruct.new(
-  path: '/debugger/v1/diagnostics',
-  form: {'event' => epayload},
-  headers: {},
-)
+        epayload = Datadog::Core::Vendor::Multipart::Post::UploadIO.new(
+          StringIO.new(JSON.dump(payload)), 'application/json', 'event.json')
+        env = OpenStruct.new(
+          path: '/debugger/v1/diagnostics',
+          form: {'event' => epayload},
+          headers: {},
+        )
 
-puts '-- notifying:'
-pp payload
+        puts '-- notifying:'
+        pp payload
 
         response = http.post(env)
 
