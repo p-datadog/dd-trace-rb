@@ -38,7 +38,7 @@ module Datadog
           },
         }
 
-        uri = URI("http://localhost:8126/debugger/v1/diagnostics")
+        #uri = URI("http://localhost:8126/debugger/v1/diagnostics")
         #http = Net::HTTP.new(uri.host, uri.port)
         http = Datadog::Core::Transport::HTTP::Adapters::Net.new(agent_settings)
         headers =
