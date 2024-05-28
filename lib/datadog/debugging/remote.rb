@@ -23,6 +23,12 @@ module Datadog
 
           probe = Probe.from_remote_config(config)
           ProbeNotifier.notify_received(probe)
+
+          Hook.hook_line(probe.file, probe.line_nos.first) do |tp|
+            puts '*** probe executed ***'
+            ProbeNotifier.notify_executed(probe, tp)
+          end
+
           ProbeNotifier.notify_installed(probe)
 
           component.add_probe_from_remote(config)
