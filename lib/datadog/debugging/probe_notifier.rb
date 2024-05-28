@@ -17,6 +17,10 @@ module Datadog
         )
       end
 
+      module_function def notify_executed(probe, tracepoint)
+        puts 'executing'
+      end
+
       module_function def notify(probe, message:, status:)
         payload = {
           service: Datadog.configuration.service,
