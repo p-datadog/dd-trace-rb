@@ -45,7 +45,7 @@ module Datadog
         TRACEPOINT_MUTEX.synchronize do
           $tracepoint ||= TracePoint.new(:line) do |tp|
           #puts '******* tracepoint invoked ************'
-            on_line_tracepoint(tp)
+            on_line_tracepoint(tp, &block)
           end
 
           $tracepoint.enable
