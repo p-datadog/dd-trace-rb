@@ -28,14 +28,20 @@ module Datadog
 
           if probe.line?
             Hook.hook_line(probe.file, probe.line_nos.first) do |tp|
-              puts '*** probe executed ***'
+              puts '*** line probe executed ***'
               ProbeNotifier.notify_emitting(probe)
               ProbeNotifier.notify_executed(probe, tp)
             end
 
             INSTALLED_PROBES[probe.id] = probe
+          elsif probe.method?
+            Hook.hook_method(probe.type_name, probe.method_name) do |tp|
+              puts '*** method probe executed ***'
+              ProbeNotifier.notify_emitting(probe)
+              ProbeNotifier.notify_executed(probe, tp)
+            end
           else
-            puts "Not a line probe"
+            puts "Not a line or method probe"
           end
 
           ProbeNotifier.notify_installed(probe)

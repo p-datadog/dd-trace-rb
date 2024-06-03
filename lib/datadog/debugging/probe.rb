@@ -10,20 +10,22 @@ module Datadog
           file: config['where']&.[]('sourceFile'),
           # Sometimes lines are received as an array of nil
           line_nos: config['where']&.[]('lines')&.compact&.map(&:to_i),
+          type_name: config['where']&.[]('typeName'),
+          method_name: config['where']&.[]('methodName'),
           template: config['template'],
         )
       end
 
       def initialize(id:, type:,
-        file: nil, line_nos: nil, module_name: nil, function_name: nil,
+        file: nil, line_nos: nil, type_name: nil, method_name: nil,
         template: nil
       )
         @id = id
         @type = type
         @file = file
         @line_nos = line_nos
-        @module_name = module_name
-        @function_name = function_name
+        @type_name = type_name
+        @method_name = method_name
         @template = template
       end
 
@@ -31,12 +33,16 @@ module Datadog
       attr_reader :type
       attr_reader :file
       attr_reader :line_nos
-      attr_reader :module_name
-      attr_reader :function_name
+      attr_reader :type_name
+      attr_reader :method_name
       attr_reader :template
 
       def line?
         line_nos && !line_nos.empty?
+      end
+
+      def method?
+        type_name && method_name
       end
     end
   end
