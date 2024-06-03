@@ -36,7 +36,8 @@ module Datadog
             INSTALLED_PROBES[probe.id] = probe
           elsif probe.method?
             Hook.hook_method(probe.type_name, probe.method_name) do |tp|
-              puts '*** method probe executed ***'
+              puts "*** method probe executed: #{tp} ***"
+              #byebug
               ProbeNotifier.notify_emitting(probe)
               ProbeNotifier.notify_executed(probe, tp)
             end
