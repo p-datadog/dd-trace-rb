@@ -19,7 +19,7 @@ module Datadog
 
       def initialize(id:, type:,
         file: nil, line_nos: nil, type_name: nil, method_name: nil,
-        template: nil, capture_snapshot: false,
+        template: nil, capture_snapshot: false
       )
         @id = id
         @type = type
