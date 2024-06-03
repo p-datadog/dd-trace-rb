@@ -9,7 +9,7 @@ module Datadog
           type: config.fetch('type'),
           file: config['where']&.[]('sourceFile'),
           # Sometimes lines are received as an array of nil
-          line_nos: config['where']&.[]('lines').compact.map(&:to_i),
+          line_nos: config['where']&.[]('lines')&.compact&.map(&:to_i),
           template: config['template'],
         )
       end
@@ -33,6 +33,11 @@ module Datadog
       attr_reader :line_nos
       attr_reader :module_name
       attr_reader :function_name
+      attr_reader :template
+
+      def line?
+        line_nos && !line_nos.empty?
+      end
     end
   end
 end

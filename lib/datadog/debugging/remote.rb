@@ -3,6 +3,8 @@ module Datadog
     module Remote
       class ReadError < StandardError; end
 
+      INSTALLED_PROBES = Concurrent::Map.new
+
       class << self
         PRODUCT = 'LIVE_DEBUGGING'
 
@@ -24,10 +26,16 @@ module Datadog
           probe = Probe.from_remote_config(config)
           ProbeNotifier.notify_received(probe)
 
-          Hook.hook_line(probe.file, probe.line_nos.first) do |tp|
-            puts '*** probe executed ***'
-            ProbeNotifier.notify_emitting(probe)
-            ProbeNotifier.notify_executed(probe, tp)
+          if probe.line?
+            Hook.hook_line(probe.file, probe.line_nos.first) do |tp|
+              puts '*** probe executed ***'
+              ProbeNotifier.notify_emitting(probe)
+              ProbeNotifier.notify_executed(probe, tp)
+            end
+
+            INSTALLED_PROBES[probe.id] = probe
+          else
+            puts "Not a line probe"
           end
 
           ProbeNotifier.notify_installed(probe)
