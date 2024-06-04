@@ -49,7 +49,13 @@ module Datadog
             },
             language: 'ruby',
             #language: 'python',
-            stack: [],
+            stack: [
+              {
+                fileName: 'foo',
+                function: 'bar',
+                lineNumber: 2143,
+              },
+            ],
             captures: {
               entry: {
                 arguments: {},
