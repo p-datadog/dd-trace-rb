@@ -8,11 +8,15 @@ RSpec.describe Datadog::DI::Component do
       settings
     end
 
+    let(:agent_settings) do
+      double('agent settings')
+    end
+
     context 'when dynamic instrumentation is enabled' do
       let(:dynamic_instrumentation_enabled) { true }
 
       it 'returns a Datadog::DI::Component instance' do
-        component = described_class.build(settings)
+        component = described_class.build(settings, agent_settings)
         expect(component).to be_a(described_class)
       end
     end
@@ -21,7 +25,7 @@ RSpec.describe Datadog::DI::Component do
       let(:dynamic_instrumentation_enabled) { false }
 
       it 'returns nil' do
-        component = described_class.build(settings)
+        component = described_class.build(settings, agent_settings)
         expect(component).to be nil
       end
     end
