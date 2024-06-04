@@ -1,4 +1,5 @@
 require 'concurrent-ruby'
+require 'benchmark'
 require 'byebug'
 
 module Datadog

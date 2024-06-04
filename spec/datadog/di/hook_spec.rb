@@ -1,5 +1,5 @@
 #require 'spec_helper'
-require 'datadog/debugger/hook'
+require 'datadog/di/hook'
 require_relative 'hook_line'
 
 Warning.ignore(/void context/, /spec/)
