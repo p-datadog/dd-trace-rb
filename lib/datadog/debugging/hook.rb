@@ -23,9 +23,12 @@ module Datadog
           remove_method(meth_name)
           define_method(meth_name) do |*args, **kwargs|
             if INSTRUMENTED_METHODS[[cls_name, meth_name]] == id
-              saved.bind(self).call(*args, **kwargs).tap do |rv|
-                yield rv: rv
+              rv = nil
+              duration = Benchmark.realtime do
+                rv = saved.bind(self).call(*args, **kwargs)
               end
+              yield rv: rv, duration: duration
+              rv
             else
               saved.bind(self).call(*args, **kwargs)
             end
