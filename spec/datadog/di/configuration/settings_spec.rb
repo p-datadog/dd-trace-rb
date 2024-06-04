@@ -60,7 +60,7 @@ RSpec.describe Datadog::DI::Configuration::Settings do
 
           before { set_dynamic_instrumentation_enabled }
 
-          it { expect(settings.dynamic_instrumentation.enabled).to eq(value) }
+          it { expect(settings.internal_dynamic_instrumentation.enabled).to eq(value) }
         end
       end
     end
