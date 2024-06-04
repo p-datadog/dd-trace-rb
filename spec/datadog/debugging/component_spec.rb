@@ -1,6 +1,6 @@
 require 'datadog/debugging/component'
 
-RSpec.describe Datadog::Debugging::Component do
+RSpec.describe Datadog::DI::Component do
   describe '.build' do
     let(:settings) do
       settings = Datadog::Core::Configuration::Settings.new
@@ -11,7 +11,7 @@ RSpec.describe Datadog::Debugging::Component do
     context 'when debugging is enabled' do
       let(:debugging_enabled) { true }
 
-      it 'returns a Datadog::Debugging::Component instance' do
+      it 'returns a Datadog::DI::Component instance' do
         component = described_class.build(settings)
         expect(component).to be_a(described_class)
       end

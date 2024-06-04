@@ -82,7 +82,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
     end
   end
 
-  context 'Debugging component' do
+  context 'DI component' do
     context 'when disabled' do
       let(:settings) do
         settings = Datadog::Core::Configuration::Settings.new
