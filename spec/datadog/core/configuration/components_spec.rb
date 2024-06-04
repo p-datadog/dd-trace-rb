@@ -1160,6 +1160,7 @@ RSpec.describe Datadog::Core::Configuration::Components do
         let(:profiler) { Datadog::Profiling.supported? ? instance_double(Datadog::Profiling::Profiler) : nil }
         let(:remote) { instance_double(Datadog::Core::Remote::Component) }
         let(:appsec) { instance_double(Datadog::AppSec::Component) }
+        let(:debugging) { instance_double(Datadog::DI::Component) }
         let(:runtime_metrics_worker) { instance_double(Datadog::Core::Workers::RuntimeMetrics, metrics: runtime_metrics) }
         let(:runtime_metrics) { instance_double(Datadog::Core::Runtime::Metrics, statsd: statsd) }
         let(:health_metrics) { instance_double(Datadog::Core::Diagnostics::Health::Metrics, statsd: statsd) }

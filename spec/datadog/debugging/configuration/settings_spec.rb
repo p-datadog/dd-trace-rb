@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Datadog::Debugging::Configuration::Settings do
+RSpec.describe Datadog::DI::Configuration::Settings do
   subject(:settings) { Datadog::Core::Configuration::Settings.new }
 
   describe 'debugging' do
