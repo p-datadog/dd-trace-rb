@@ -24,12 +24,12 @@ module Datadog
         )
       end
 
-      module_function def notify_executed(probe, tracepoint)
+      module_function def notify_executed(probe, tracepoint: nil, rv: nil, duration: nil)
         puts '------------ executing -------------------'
-        notify_snapshot(probe)
+        notify_snapshot(probe, rv: rv, duration: duration)
       end
 
-      module_function def notify_snapshot(probe)
+      module_function def notify_snapshot(probe, rv: nil, duration: nil)
         timestamp = timestamp_now
         payload = {
           service: Datadog.configuration.service,
@@ -43,12 +43,31 @@ module Datadog
               location: {
                 file: probe.file,
                 lines: probe.line_nos,
+                method: probe.method_name,
+                type: probe.type_name,
               },
             },
-            language: 'ruby',
+            #language: 'ruby',
+            language: 'python',
             stack: [],
-            captures: nil,
-            duration: nil,
+            captures: {
+              entry: {
+                arguments: {},
+                locals: {},
+                throwable: nil,
+              },
+              return: {
+                arguments: {},
+                locals: {
+                  '@return': {
+                    value: rv.to_s,
+                    type: rv.class.name,
+                  },
+                },
+                throwable: nil,
+              },
+            },
+            duration: duration ? (duration * 1000000).to_i : nil,
           },
           host: nil,
           logger: {
@@ -58,8 +77,8 @@ module Datadog
             thread_id: 'thread id',
             version: 2,
           },
-          'dd.trace_id': 423,
-          'dd.span_id': 4234,
+          'dd.trace_id': 423.to_s,
+          'dd.span_id': 4234.to_s,
           ddsource: 'dd_debugger',
           message: "hello world: #{probe.template}",
           timestamp: timestamp,
@@ -87,6 +106,17 @@ module Datadog
         }
 
         send_payload('/debugger/v1/diagnostics', payload)
+      end
+
+      module_function def value_type(value)
+        case value
+        when Integer
+          'int'
+        when String
+          'string'
+        else
+          'something else'
+        end
       end
 
       module_function def send_payload(path, payload)
