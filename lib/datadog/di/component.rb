@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Datadog
-  module Debugging
-    # Core-pluggable component for Debugging
+  module DI
+    # Core-pluggable component for DI
     class Component
       class << self
         def build(settings, agent_settings)

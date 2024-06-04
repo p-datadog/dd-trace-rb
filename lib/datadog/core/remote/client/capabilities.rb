@@ -32,9 +32,9 @@ module Datadog
             end
 
             if settings.respond_to?(:debugging) && settings.debugging.enabled
-              register_capabilities(Datadog::Debugging::Remote.capabilities)
-              register_products(Datadog::Debugging::Remote.products)
-              register_receivers(Datadog::Debugging::Remote.receivers)
+              register_capabilities(Datadog::DI::Remote.capabilities)
+              register_products(Datadog::DI::Remote.products)
+              register_receivers(Datadog::DI::Remote.receivers)
             end
 
             register_capabilities(Datadog::Tracing::Remote.capabilities)

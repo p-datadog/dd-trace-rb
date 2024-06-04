@@ -109,7 +109,7 @@ module Datadog
           @health_metrics = self.class.build_health_metrics(settings)
           @telemetry = self.class.build_telemetry(settings, agent_settings, logger)
           @appsec = Datadog::AppSec::Component.build_appsec_component(settings)
-          @debugging = Datadog::Debugging::Component.build(settings, agent_settings)
+          @debugging = Datadog::DI::Component.build(settings, agent_settings)
 
           self.class.configure_tracing(settings)
         end

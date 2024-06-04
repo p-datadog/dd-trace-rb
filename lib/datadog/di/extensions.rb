@@ -3,10 +3,10 @@
 require_relative 'configuration'
 
 module Datadog
-  module Debugging
-    # Extends Datadog tracing with Debugging features
+  module DI
+    # Extends Datadog tracing with DI features
     module Extensions
-      # Inject Debugging into global objects.
+      # Inject DI into global objects.
       def self.activate!
         Core::Configuration::Settings.extend(Configuration::Settings)
       end
