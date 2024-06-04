@@ -1,4 +1,3 @@
-#require 'spec_helper'
 require 'datadog/di/hook'
 require_relative 'hook_line'
 
@@ -24,7 +23,7 @@ class HookTestClass
   end
 end
 
-describe Datadog::DI::Hook do
+RSpec.describe Datadog::DI::Hook do
   let(:observed_calls) { [] }
 
   after do
@@ -41,7 +40,9 @@ describe Datadog::DI::Hook do
         HookTestClass.new.hook_test_method.should == 42
 
         observed_calls.length.should == 1
-        observed_calls.first.should == {rv: 42}
+        observed_calls.first.keys.sort.should == [:duration, :rv]
+        observed_calls.first[:rv].should == 42
+        observed_calls.first[:duration].should be_a(Float)
       end
     end
 
@@ -54,7 +55,9 @@ describe Datadog::DI::Hook do
         HookTestClass.new.hook_test_method_with_arg(2).should == 2
 
         observed_calls.length.should == 1
-        observed_calls.first.should == {rv: 2}
+        observed_calls.first.keys.sort.should == [:duration, :rv]
+        observed_calls.first[:rv].should == 2
+        observed_calls.first[:duration].should be_a(Float)
       end
     end
 
@@ -71,7 +74,9 @@ describe Datadog::DI::Hook do
         HookTestClass.new.hook_test_method.should == 42
 
         observed_calls.length.should == 1
-        observed_calls.first.should == {rv: 42}
+        observed_calls.first.keys.sort.should == [:duration, :rv]
+        observed_calls.first[:rv].should == 42
+        observed_calls.first[:duration].should be_a(Float)
       end
     end
   end
