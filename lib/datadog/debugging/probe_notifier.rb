@@ -47,8 +47,8 @@ module Datadog
                 type: probe.type_name,
               },
             },
-            #language: 'ruby',
-            language: 'python',
+            language: 'ruby',
+            #language: 'python',
             stack: [],
             captures: {
               entry: {
