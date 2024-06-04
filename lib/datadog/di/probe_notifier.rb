@@ -1,5 +1,5 @@
 module Datadog
-  module Debugging
+  module DI
     # @api private
     module ProbeNotifier
 

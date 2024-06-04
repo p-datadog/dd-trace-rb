@@ -1,5 +1,5 @@
 module Datadog
-  module Debugging
+  module DI
     module Remote
       class ReadError < StandardError; end
 

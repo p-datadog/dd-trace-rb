@@ -10,7 +10,7 @@ require_relative 'debugging/remote'
 
 module Datadog
   # Namespace for Datadog debugging instrumentation
-  module Debugging
+  module DI
     class << self
       def enabled?
         Datadog.configuration.debugging.enabled
