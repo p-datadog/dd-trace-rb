@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 RSpec.describe Datadog::DI::Configuration::Settings do
   subject(:settings) { Datadog::Core::Configuration::Settings.new }
 
