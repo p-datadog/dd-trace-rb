@@ -87,7 +87,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
     context 'when disabled' do
       let(:settings) do
         settings = Datadog::Core::Configuration::Settings.new
-        settings.debugging.enabled = false
+        settings.internal_dynamic_instrumentation.enabled = false
         settings
       end
 
@@ -127,7 +127,7 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
     context 'when enabled' do
       let(:settings) do
         settings = Datadog::Core::Configuration::Settings.new
-        settings.debugging.enabled = true
+        settings.internal_dynamic_instrumentation.enabled = true
         settings
       end
 
