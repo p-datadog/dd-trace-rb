@@ -20,6 +20,29 @@ RSpec.describe Datadog::DI::Configuration::Settings do
           it { is_expected.to eq false }
         end
 
+        # Currently we use the internal environment variable name to
+        # avoid enabling DI in production for customers who have the
+        # standard environment variable set to true for whatever reason.
+        context 'is not defined' do
+          let(:dynamic_instrumentation_enabled) { 'true' }
+
+          it { is_expected.to eq(false) }
+        end
+      end
+
+      context 'when DD_INTERNAL_DYNAMIC_INSTRUMENTATION_ENABLED' do
+        around do |example|
+          ClimateControl.modify('DD_INTERNAL_DYNAMIC_INSTRUMENTATION_ENABLED' => dynamic_instrumentation_enabled) do
+            example.run
+          end
+        end
+
+        context 'is not defined' do
+          let(:dynamic_instrumentation_enabled) { nil }
+
+          it { is_expected.to eq false }
+        end
+
         context 'is defined' do
           let(:dynamic_instrumentation_enabled) { 'true' }
 
