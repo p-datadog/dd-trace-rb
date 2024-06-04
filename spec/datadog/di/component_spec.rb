@@ -1,15 +1,15 @@
-require 'datadog/debugging/component'
+require 'datadog/di/component'
 
 RSpec.describe Datadog::DI::Component do
   describe '.build' do
     let(:settings) do
       settings = Datadog::Core::Configuration::Settings.new
-      settings.debugging.enabled = debugging_enabled
+      settings.internal_dynamic_instrumentation.enabled = dynamic_instrumentation_enabled
       settings
     end
 
-    context 'when debugging is enabled' do
-      let(:debugging_enabled) { true }
+    context 'when dynamic instrumentation is enabled' do
+      let(:dynamic_instrumentation_enabled) { true }
 
       it 'returns a Datadog::DI::Component instance' do
         component = described_class.build(settings)
@@ -17,8 +17,8 @@ RSpec.describe Datadog::DI::Component do
       end
     end
 
-    context 'when debugging is disabled' do
-      let(:debugging_enabled) { false }
+    context 'when dynamic instrumentation is disabled' do
+      let(:dynamic_instrumentation_enabled) { false }
 
       it 'returns nil' do
         component = described_class.build(settings)

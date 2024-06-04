@@ -3,25 +3,25 @@ require 'spec_helper'
 RSpec.describe Datadog::DI::Configuration::Settings do
   subject(:settings) { Datadog::Core::Configuration::Settings.new }
 
-  describe 'debugging' do
+  describe 'internal_dynamic_instrumentation' do
     describe '#enabled' do
-      subject(:enabled) { settings.debugging.enabled }
+      subject(:enabled) { settings.internal_dynamic_instrumentation.enabled }
 
       context 'when DD_DYNAMIC_INSTRUMENTATION_ENABLED' do
         around do |example|
-          ClimateControl.modify('DD_DYNAMIC_INSTRUMENTATION_ENABLED' => debugging_enabled) do
+          ClimateControl.modify('DD_DYNAMIC_INSTRUMENTATION_ENABLED' => dynamic_instrumentation_enabled) do
             example.run
           end
         end
 
         context 'is not defined' do
-          let(:debugging_enabled) { nil }
+          let(:dynamic_instrumentation_enabled) { nil }
 
           it { is_expected.to eq false }
         end
 
         context 'is defined' do
-          let(:debugging_enabled) { 'true' }
+          let(:dynamic_instrumentation_enabled) { 'true' }
 
           it { is_expected.to eq(true) }
         end
@@ -29,15 +29,15 @@ RSpec.describe Datadog::DI::Configuration::Settings do
     end
 
     describe '#enabled=' do
-      subject(:set_debugging_enabled) { settings.debugging.enabled = debugging_enabled }
+      subject(:set_dynamic_instrumentation_enabled) { settings.internal_dynamic_instrumentation.enabled = dynamic_instrumentation_enabled }
 
       [true, false].each do |value|
         context "when given #{value}" do
-          let(:debugging_enabled) { value }
+          let(:dynamic_instrumentation_enabled) { value }
 
-          before { set_debugging_enabled }
+          before { set_dynamic_instrumentation_enabled }
 
-          it { expect(settings.debugging.enabled).to eq(value) }
+          it { expect(settings.dynamic_instrumentation.enabled).to eq(value) }
         end
       end
     end
