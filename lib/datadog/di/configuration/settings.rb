@@ -14,10 +14,10 @@ module Datadog
         # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         def self.add_settings!(base)
           base.class_eval do
-            settings :debugging do
+            settings :intrenal_dynamic_instrumentation do
               option :enabled do |o|
                 o.type :bool
-                o.env 'DD_DYNAMIC_INSTRUMENTATION_ENABLED'
+                o.env 'DD_INTERNAL_DYNAMIC_INSTRUMENTATION_ENABLED'
                 o.default false
               end
 

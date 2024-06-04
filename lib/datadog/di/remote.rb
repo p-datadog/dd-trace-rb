@@ -18,7 +18,7 @@ module Datadog
 
         def process_config(config, content)
           # config is one probe info
-          component = Datadog.send(:components).debugging
+          component = Datadog.send(:components).dynamic_instrumentation
 
           puts '--- got probe:'
           pp config

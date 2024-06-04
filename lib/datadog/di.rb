@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
-require_relative 'debugging/component'
-require_relative 'debugging/configuration'
-require_relative 'debugging/extensions'
-require_relative 'debugging/hook'
-require_relative 'debugging/probe'
-require_relative 'debugging/probe_notifier'
-require_relative 'debugging/remote'
+require_relative 'di/component'
+require_relative 'di/configuration'
+require_relative 'di/extensions'
+require_relative 'di/hook'
+require_relative 'di/probe'
+require_relative 'di/probe_notifier'
+require_relative 'di/remote'
 
 module Datadog
-  # Namespace for Datadog debugging instrumentation
+  # Namespace for Datadog dynamic instrumentation
   module DI
     class << self
       def enabled?
-        Datadog.configuration.debugging.enabled
+        Datadog.configuration.internal_dynamic_instrumentation.enabled
       end
     end
 
-    # Expose debugging to global shared objects
+    # Expose DI to global shared objects
     Extensions.activate!
   end
 end

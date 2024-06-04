@@ -13,6 +13,7 @@ require_relative '../remote/component'
 require_relative '../../tracing/component'
 require_relative '../../profiling/component'
 require_relative '../../appsec/component'
+require_relative '../../di/component'
 require_relative '../crashtracking/component'
 
 module Datadog
@@ -83,6 +84,7 @@ module Datadog
           :telemetry,
           :tracer,
           :crashtracker,
+          :dynamic_instrumentation,
           :appsec
 
         def initialize(settings)
@@ -110,7 +112,7 @@ module Datadog
           @runtime_metrics = self.class.build_runtime_metrics_worker(settings)
           @health_metrics = self.class.build_health_metrics(settings)
           @appsec = Datadog::AppSec::Component.build_appsec_component(settings, telemetry: telemetry)
-          @debugging = Datadog::DI::Component.build(settings, agent_settings)
+          @dynamic_instrumentation = Datadog::DI::Component.build(settings, agent_settings)
 
           self.class.configure_tracing(settings)
         end

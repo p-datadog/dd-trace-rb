@@ -32,7 +32,7 @@ module Datadog
               register_receivers(Datadog::AppSec::Remote.receivers(@telemetry))
             end
 
-            if settings.respond_to?(:debugging) && settings.debugging.enabled
+            if settings.respond_to?(:intrenal_dynamic_instrumentation) && settings.intrenal_dynamic_instrumentation.enabled
               register_capabilities(Datadog::DI::Remote.capabilities)
               register_products(Datadog::DI::Remote.products)
               register_receivers(Datadog::DI::Remote.receivers)
