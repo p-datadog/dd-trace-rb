@@ -5,6 +5,7 @@ require_relative 'di/configuration'
 require_relative 'di/extensions'
 require_relative 'di/hook'
 require_relative 'di/probe'
+require_relative 'di/probe_builder'
 require_relative 'di/probe_notifier'
 require_relative 'di/remote'
 
