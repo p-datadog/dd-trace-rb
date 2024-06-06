@@ -1,14 +1,6 @@
 require 'datadog/di/hook'
 require_relative 'hook_line'
 
-Warning.ignore(/void context/, /spec/)
-RSpec.configure do |config|
-  config.expose_dsl_globally = true
-  config.expect_with :rspec do |expectations|
-    expectations.syntax = [:should, :expect]
-  end
-end
-
 class HookTestClass
   def hook_test_method
     42
@@ -37,12 +29,12 @@ RSpec.describe Datadog::DI::Hook do
           observed_calls << payload
         end
 
-        HookTestClass.new.hook_test_method.should == 42
+        expect(HookTestClass.new.hook_test_method).to eq 42
 
-        observed_calls.length.should == 1
-        observed_calls.first.keys.sort.should == [:duration, :rv]
-        observed_calls.first[:rv].should == 42
-        observed_calls.first[:duration].should be_a(Float)
+        expect(observed_calls.length).to eq 1
+        expect(observed_calls.first.keys.sort).to eq [:duration, :rv]
+        expect(observed_calls.first[:rv]).to eq 42
+        expect(observed_calls.first[:duration]).to be_a(Float)
       end
     end
 
@@ -52,12 +44,12 @@ RSpec.describe Datadog::DI::Hook do
           observed_calls << payload
         end
 
-        HookTestClass.new.hook_test_method_with_arg(2).should == 2
+        expect(HookTestClass.new.hook_test_method_with_arg(2)).to eq 2
 
-        observed_calls.length.should == 1
-        observed_calls.first.keys.sort.should == [:duration, :rv]
-        observed_calls.first[:rv].should == 2
-        observed_calls.first[:duration].should be_a(Float)
+        expect(observed_calls.length).to eq 1
+        expect(observed_calls.first.keys.sort).to eq [:duration, :rv]
+        expect(observed_calls.first[:rv]).to eq 2
+        expect(observed_calls.first[:duration]).to be_a(Float)
       end
     end
 
@@ -71,12 +63,12 @@ RSpec.describe Datadog::DI::Hook do
           observed_calls << payload
         end
 
-        HookTestClass.new.hook_test_method.should == 42
+        expect(HookTestClass.new.hook_test_method).to eq 42
 
-        observed_calls.length.should == 1
-        observed_calls.first.keys.sort.should == [:duration, :rv]
-        observed_calls.first[:rv].should == 42
-        observed_calls.first[:duration].should be_a(Float)
+        expect(observed_calls.length).to eq 1
+        expect(observed_calls.first.keys.sort).to eq [:duration, :rv]
+        expect(observed_calls.first[:rv]).to eq 42
+        expect(observed_calls.first[:duration]).to be_a(Float)
       end
     end
   end
@@ -90,7 +82,7 @@ RSpec.describe Datadog::DI::Hook do
 
         HookLineTestClass.new.test_method
 
-        observed_calls.should be_empty
+        expect(observed_calls).to be_empty
       end
     end
 
@@ -102,8 +94,8 @@ RSpec.describe Datadog::DI::Hook do
 
         HookLineTestClass.new.test_method
 
-        observed_calls.length.should == 1
-        observed_calls.first.should be_a(TracePoint)
+        expect(observed_calls.length).to eq 1
+        expect(observed_calls.first).to be_a(TracePoint)
       end
     end
 
@@ -119,8 +111,8 @@ RSpec.describe Datadog::DI::Hook do
 
         HookLineTestClass.new.test_method
 
-        observed_calls.length.should == 1
-        observed_calls.first.should be_a(TracePoint)
+        expect(observed_calls.length).to eq 1
+        expect(observed_calls.first).to be_a(TracePoint)
       end
     end
   end
