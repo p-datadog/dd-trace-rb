@@ -30,11 +30,11 @@ module Datadog
       end
 
       def line?
-        line_nos && !line_nos.empty?
+        !!(line_nos && !line_nos.empty?)
       end
 
       def method?
-        type_name && method_name
+        !!(type_name && method_name)
       end
     end
   end
