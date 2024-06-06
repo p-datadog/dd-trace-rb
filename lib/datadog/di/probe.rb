@@ -3,20 +3,6 @@ module Datadog
     # @api private
     class Probe
 
-      def self.from_remote_config(config)
-        new(
-          id: config.fetch('id'),
-          type: config.fetch('type'),
-          file: config['where']&.[]('sourceFile'),
-          # Sometimes lines are received as an array of nil
-          line_nos: config['where']&.[]('lines')&.compact&.map(&:to_i),
-          type_name: config['where']&.[]('typeName'),
-          method_name: config['where']&.[]('methodName'),
-          template: config['template'],
-          capture_snapshot: !!config['captureSnapshot'],
-        )
-      end
-
       def initialize(id:, type:,
         file: nil, line_nos: nil, type_name: nil, method_name: nil,
         template: nil, capture_snapshot: false
