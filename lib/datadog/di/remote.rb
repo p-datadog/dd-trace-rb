@@ -23,7 +23,7 @@ module Datadog
           puts '--- got probe:'
           pp config
 
-          probe = Probe.from_remote_config(config)
+          probe = ProbeBuilder.build_from_remote_config(config)
           ProbeNotifier.notify_received(probe)
 
           if probe.line?
