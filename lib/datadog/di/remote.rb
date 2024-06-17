@@ -30,7 +30,7 @@ module Datadog
             Hook.hook_line(probe.file, probe.line_nos.first) do |tp|
               puts '*** line probe executed ***'
               ProbeNotifier.notify_emitting(probe)
-              ProbeNotifier.notify_executed(probe, tracepoint: tp)
+              ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: caller)
             end
 
             INSTALLED_PROBES[probe.id] = probe

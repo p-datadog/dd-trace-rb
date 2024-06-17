@@ -28,7 +28,7 @@ module Datadog
               duration = Benchmark.realtime do
                 rv = saved.bind(self).call(*args, **kwargs)
               end
-              yield rv: rv, duration: duration
+              yield rv: rv, duration: duration, callers: caller
               rv
             else
               saved.bind(self).call(*args, **kwargs)
@@ -49,7 +49,7 @@ module Datadog
         TRACEPOINT_MUTEX.synchronize do
           $tracepoint ||= TracePoint.new(:line) do |tp|
           #puts '******* tracepoint invoked ************'
-            on_line_tracepoint(tp, &block)
+            on_line_tracepoint(tp, callers: caller, &block)
           end
 
           $tracepoint.enable

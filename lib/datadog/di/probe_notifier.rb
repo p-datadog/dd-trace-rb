@@ -24,12 +24,14 @@ module Datadog
         )
       end
 
-      module_function def notify_executed(probe, tracepoint: nil, rv: nil, duration: nil)
+      module_function def notify_executed(probe,
+        tracepoint: nil, rv: nil, duration: nil, callers: nil
+      )
         puts '------------ executing -------------------'
-        notify_snapshot(probe, rv: rv, duration: duration)
+        notify_snapshot(probe, rv: rv, duration: duration, callers: callers)
       end
 
-      module_function def notify_snapshot(probe, rv: nil, duration: nil)
+      module_function def notify_snapshot(probe, rv: nil, duration: nil, callers: nil)
         timestamp = timestamp_now
         payload = {
           service: Datadog.configuration.service,
@@ -49,13 +51,7 @@ module Datadog
             },
             language: 'ruby',
             #language: 'python',
-            stack: [
-              {
-                fileName: 'foo',
-                function: 'bar',
-                lineNumber: 2143,
-              },
-            ],
+            stack: format_callers(callers),
             captures: {
               entry: {
                 arguments: {},
@@ -73,14 +69,16 @@ module Datadog
                 throwable: nil,
               },
             },
-            duration: duration ? (duration * 1000000).to_i : nil,
           },
+          # In python tracer duration is under debugger.snapshot,
+          # but UI appears to expect it here at top level.
+          duration: duration ? (duration * 10**9).to_i : nil,
           host: nil,
           logger: {
             name: probe.file,
-            method: 'fixme',
-            thread_name: 'thread name',
-            thread_id: 'thread id',
+            method: probe.method_name,
+            thread_name: Thread.current.name,
+            thread_id: Thread.current.native_thread_id,
             version: 2,
           },
           'dd.trace_id': 423.to_s,
@@ -113,6 +111,20 @@ module Datadog
         }
 
         send_payload('/debugger/v1/diagnostics', payload)
+      end
+
+      module_function def format_callers(callers)
+        callers.map do |caller|
+          if caller =~ /\A(.+):(\d+):in `([^']+)'\z/
+            {
+              fileName: $1, function: $3, lineNumber: Integer($2),
+            }
+          else
+            {
+              fileName: 'unknown', function: 'unknown', lineNumber: 0,
+            }
+          end
+        end
       end
 
       module_function def value_type(value)
