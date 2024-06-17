@@ -86,7 +86,8 @@ module Datadog
           'dd.trace_id': 423.to_s,
           'dd.span_id': 4234.to_s,
           ddsource: 'dd_debugger',
-          message: "hello world: #{probe.template}",
+          message: evaluate_template(probe.template,
+            duration: duration ? duration * 1000 : nil),
           timestamp: timestamp,
         }
 
@@ -123,6 +124,14 @@ module Datadog
         else
           'something else'
         end
+      end
+
+      module_function def evaluate_template(template, **vars)
+        message = template.dup
+        vars.each do |key, value|
+          message.gsub!("{@#{key}}", value.to_s)
+        end
+        message
       end
 
       module_function def send_payload(path, payload)
