@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Datadog
   module DI
     # Encapsulates probe information (as received via remote config)

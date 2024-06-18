@@ -8,6 +8,7 @@ require_relative 'di/probe'
 require_relative 'di/probe_builder'
 require_relative 'di/probe_notifier'
 require_relative 'di/remote'
+require_relative 'di/remote_processor'
 
 module Datadog
   # Namespace for Datadog dynamic instrumentation

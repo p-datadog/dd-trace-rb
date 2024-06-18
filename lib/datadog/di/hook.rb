@@ -27,8 +27,8 @@ module Datadog
     # impact on the application.
     #
     # @api private
-    module Hook
-      module_function def clear_hooks
+    class HookManager
+      def clear_hooks
         TRACEPOINT_MUTEX.synchronize do
           INSTRUMENTED_METHODS.clear
           INSTRUMENTED_LINES.clear
@@ -41,7 +41,7 @@ module Datadog
         end
       end
 
-      module_function def hook_method(cls_name, meth_name)
+      def hook_method(cls_name, meth_name)
         cls = symbolize_class_name(cls_name)
         id = next_id
 
@@ -66,7 +66,7 @@ module Datadog
         INSTRUMENTED_METHODS[[cls_name, meth_name]] = id
       end
 
-      module_function def hook_line(file, line_no, &block)
+      def hook_line(file, line_no, &block)
         # TODO is file a basename, path suffix or full path?
         INSTRUMENTED_LINES[line_no] ||= {}
         INSTRUMENTED_LINES[line_no][file] = block
@@ -101,18 +101,18 @@ module Datadog
       NEXT_MUTEX = Mutex.new
       TRACEPOINT_MUTEX = Mutex.new
 
-      module_function def next_id
+      def next_id
         NEXT_MUTEX.synchronize do
           @next_id ||= 0
           @next_id += 1
         end
       end
 
-      module_function def symbolize_class_name(cls_name)
+      def symbolize_class_name(cls_name)
         Object.const_get(cls_name)
       end
 
-      module_function def on_line_tracepoint(tp, **opts)
+      def on_line_tracepoint(tp, **opts)
         cb = INSTRUMENTED_LINES[tp.lineno]&.[](File.basename(tp.path))
         cb&.call(tp, **opts)
       end
