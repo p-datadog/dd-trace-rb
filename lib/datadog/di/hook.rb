@@ -6,11 +6,15 @@ module Datadog
   module DI
     module Hook
       module_function def clear_hooks
-        INSTRUMENTED_METHODS.clear
-        INSTRUMENTED_LINES.clear
-
         TRACEPOINT_MUTEX.synchronize do
-          @tracepoint&.disable
+          INSTRUMENTED_METHODS.clear
+          INSTRUMENTED_LINES.clear
+          TRACEPOINTS.each do |line, submap|
+            submap.each do |file, tracepoint|
+              tracepoint.disable
+            end
+          end
+          TRACEPOINTS.clear
         end
       end
 
@@ -43,16 +47,26 @@ module Datadog
         # TODO is file a basename, path suffix or full path?
         INSTRUMENTED_LINES[line_no] ||= {}
         INSTRUMENTED_LINES[line_no][file] = block
-        p '--'
-        pp INSTRUMENTED_LINES.each.to_a
 
         TRACEPOINT_MUTEX.synchronize do
-          $tracepoint ||= TracePoint.new(:line) do |tp|
-          #puts '******* tracepoint invoked ************'
+          # Delete previous tracepoint, if any.
+          # We could have reused the previous tracepoint but there are
+          # comments elsewhere in the datadog codebase about tracepoints
+          # needing to be reinstalled on occasion, therefore be safe and
+          # create a new tracepoint here.
+          tp = TRACEPOINTS[line_no]&.[](file)
+          tp&.disable
+
+          tp = TracePoint.new(:line) do |tp|
             on_line_tracepoint(tp, callers: caller, &block)
           end
 
-          $tracepoint.enable
+          # Put the tracepoint into our tracking map first to prevent
+          # possible leakage if enabling it fails for any reason.
+          TRACEPOINTS[line_no] ||= {}
+          TRACEPOINTS[line_no][file] = tp
+
+          tp.enable
         end
       end
 
@@ -60,6 +74,7 @@ module Datadog
 
       INSTRUMENTED_METHODS = Concurrent::Map.new
       INSTRUMENTED_LINES = Concurrent::Map.new
+      TRACEPOINTS = Concurrent::Map.new
       NEXT_MUTEX = Mutex.new
       TRACEPOINT_MUTEX = Mutex.new
 
