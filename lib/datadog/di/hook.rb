@@ -91,9 +91,6 @@ module Datadog
 
       module_function def on_line_tracepoint(tp, **opts)
         cb = INSTRUMENTED_LINES[tp.lineno]&.[](File.basename(tp.path))
-        puts "*** line tracepoint: #{cb}" if cb
-        #p tp.object_id
-        #p tp if cb
         cb&.call(tp, **opts)
       end
     end
