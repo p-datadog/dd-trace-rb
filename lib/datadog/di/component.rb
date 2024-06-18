@@ -2,7 +2,16 @@
 
 module Datadog
   module DI
-    # Core-pluggable component for DI
+    # Component for DI.
+    #
+    # Only one instance of the Component should ever be active;
+    # if configuration is changed, the old distance should be shut down
+    # prior to the new instance being created.
+    #
+    # The Component instance stores all state related to DI, for example
+    # which probes have been retrieved via remote config,
+    # intalled tracepoints and so on. Component will clean up all
+    # resources and installed tracepoints upon shutdown.
     class Component
       class << self
         def build(settings, agent_settings)
