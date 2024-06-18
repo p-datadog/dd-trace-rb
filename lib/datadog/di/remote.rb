@@ -2,6 +2,15 @@
 
 module Datadog
   module DI
+    # Provides an interface expected by the core Remote subsystem to
+    # receive DI-specific remote configuration.
+    #
+    # In order to apply (i.e., act on) the configuration, we need the
+    # state stored under DI Component. Thus, this module forwards actual
+    # configuration application to the RemoteProcessor associated with the
+    # global DI Component.
+    #
+    # @api private
     module Remote
       class ReadError < StandardError; end
 
