@@ -1,9 +1,32 @@
 require 'concurrent-ruby'
 require 'benchmark'
-require 'byebug'
 
 module Datadog
   module DI
+    # Arranges to invoke a callback when a particular Ruby method or
+    # line of code is executed.
+    #
+    # The method hooking is currently accomplished via method aliasing.
+    # Unlike the traditional alias_method_chain pattern, the original
+    # method is stored in a local variable and is thus not leaking out.
+    # This should also prevent possible issues with infinite loops
+    # when the original or the aliased method is called incorrerctly
+    # due to conflicting aliasing happening.
+    #
+    # Line hooking is currently done with a naive line tracepoint which
+    # imposes no requirements on the code being instrumented, but carries
+    # a serious performance penalty for the entire running application.
+    #
+    # An alternative line hooking implementation is to use targeted line
+    # tracepoints. These require all code to be instrumented to have been
+    # loaded after a require tracepoint is installed to map the loaded
+    # code to its files, and the tracepoint then targets the particular
+    # code object where the instrumented code is defined.
+    # The targeted tracepoints rewrites VM instructions to trigger the
+    # tracepoints on the desired line and otherwise has no performance
+    # impact on the application.
+    #
+    # @api private
     module Hook
       module_function def clear_hooks
         TRACEPOINT_MUTEX.synchronize do
