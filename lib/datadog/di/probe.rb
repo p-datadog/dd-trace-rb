@@ -1,5 +1,8 @@
 module Datadog
   module DI
+    # Encapsulates probe information (as received via remote config)
+    # and state (e.g. whether the probe was installed, or executed).
+    #
     # @api private
     class Probe
 
