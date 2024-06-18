@@ -15,11 +15,15 @@ class HookTestClass
   end
 end
 
-RSpec.describe Datadog::DI::Hook do
+RSpec.describe Datadog::DI::HookManager do
   let(:observed_calls) { [] }
 
+  let(:manager) do
+    described_class.new
+  end
+
   after do
-    described_class.clear_hooks
+    manager.clear_hooks
   end
 
   let(:call_keys) do
@@ -29,7 +33,7 @@ RSpec.describe Datadog::DI::Hook do
   describe '.hook_method' do
     context 'no args' do
       it 'invokes callback' do
-        described_class.hook_method(:HookTestClass, :hook_test_method) do |payload|
+        manager.hook_method(:HookTestClass, :hook_test_method) do |payload|
           observed_calls << payload
         end
 
@@ -44,7 +48,7 @@ RSpec.describe Datadog::DI::Hook do
 
     context 'positional args' do
       it 'invokes callback' do
-        described_class.hook_method(:HookTestClass, :hook_test_method_with_arg) do |payload|
+        manager.hook_method(:HookTestClass, :hook_test_method_with_arg) do |payload|
           observed_calls << payload
         end
 
@@ -59,11 +63,11 @@ RSpec.describe Datadog::DI::Hook do
 
     context 'when hooked twice' do
       it 'only invokes callback once' do
-        described_class.hook_method(:HookTestClass, :hook_test_method) do |payload|
+        manager.hook_method(:HookTestClass, :hook_test_method) do |payload|
           observed_calls << payload
         end
 
-        described_class.hook_method(:HookTestClass, :hook_test_method) do |payload|
+        manager.hook_method(:HookTestClass, :hook_test_method) do |payload|
           observed_calls << payload
         end
 
@@ -80,7 +84,7 @@ RSpec.describe Datadog::DI::Hook do
   describe '.hook_line' do
     context 'method definition line' do
       it 'does not invoke callback' do
-        described_class.hook_line('hook_line.rb', 2) do |payload|
+        manager.hook_line('hook_line.rb', 2) do |payload|
           observed_calls << payload
         end
 
@@ -92,7 +96,7 @@ RSpec.describe Datadog::DI::Hook do
 
     context 'line inside of method' do
       it 'invokes callback' do
-        described_class.hook_line('hook_line.rb', 3) do |payload|
+        manager.hook_line('hook_line.rb', 3) do |payload|
           observed_calls << payload
         end
 
@@ -105,11 +109,11 @@ RSpec.describe Datadog::DI::Hook do
 
     context 'when hooked twice' do
       xit 'invokes callback only once' do
-        described_class.hook_line('hook_line.rb', 3) do |payload|
+        manager.hook_line('hook_line.rb', 3) do |payload|
           observed_calls << payload
         end
 
-        described_class.hook_line('hook_line.rb', 3) do |payload|
+        manager.hook_line('hook_line.rb', 3) do |payload|
           observed_calls << payload
         end
 

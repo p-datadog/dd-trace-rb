@@ -24,10 +24,14 @@ module Datadog
       def initialize(settings, agent_settings)
         @settings = settings
         @agent_settings = agent_settings
+        @hook_manager = HookManager.new
+        @remote_processor = RemoteProcessor.new(hook_manager)
       end
 
       attr_reader :settings
       attr_reader :agent_settings
+      attr_reader :hook_manager
+      attr_reader :remote_processor
 
       def shutdown!(replacement = nil)
       end
@@ -40,7 +44,7 @@ module Datadog
 
           lines.each do |line|
             line = Integer(line)
-            Hook.hook_line(file, line) do
+            hook_manager.hook_line(file, line) do
               puts 'hook executed'
             end
           end
