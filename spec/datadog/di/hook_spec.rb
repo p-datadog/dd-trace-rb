@@ -22,6 +22,10 @@ RSpec.describe Datadog::DI::Hook do
     described_class.clear_hooks
   end
 
+  let(:call_keys) do
+    [:callers, :duration, :rv]
+  end
+
   describe '.hook_method' do
     context 'no args' do
       it 'invokes callback' do
@@ -32,7 +36,7 @@ RSpec.describe Datadog::DI::Hook do
         expect(HookTestClass.new.hook_test_method).to eq 42
 
         expect(observed_calls.length).to eq 1
-        expect(observed_calls.first.keys.sort).to eq [:duration, :rv]
+        expect(observed_calls.first.keys.sort).to eq call_keys
         expect(observed_calls.first[:rv]).to eq 42
         expect(observed_calls.first[:duration]).to be_a(Float)
       end
@@ -47,7 +51,7 @@ RSpec.describe Datadog::DI::Hook do
         expect(HookTestClass.new.hook_test_method_with_arg(2)).to eq 2
 
         expect(observed_calls.length).to eq 1
-        expect(observed_calls.first.keys.sort).to eq [:duration, :rv]
+        expect(observed_calls.first.keys.sort).to eq call_keys
         expect(observed_calls.first[:rv]).to eq 2
         expect(observed_calls.first[:duration]).to be_a(Float)
       end
@@ -66,7 +70,7 @@ RSpec.describe Datadog::DI::Hook do
         expect(HookTestClass.new.hook_test_method).to eq 42
 
         expect(observed_calls.length).to eq 1
-        expect(observed_calls.first.keys.sort).to eq [:duration, :rv]
+        expect(observed_calls.first.keys.sort).to eq call_keys
         expect(observed_calls.first[:rv]).to eq 42
         expect(observed_calls.first[:duration]).to be_a(Float)
       end
