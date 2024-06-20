@@ -2,6 +2,11 @@
 
 module Datadog
   module DI
+    # Tracks loaded Ruby code by source file and maintains a map from
+    # source file to the loaded code (instruction sequences).
+    #
+    # The loaded code is used to target line trace points when installing
+    # line probes which dramatically improves efficiency of line trace points.
     class CodeTracker
       def initialize
         @method_registry = Concurrent::Map.new
