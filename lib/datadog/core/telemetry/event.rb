@@ -38,6 +38,7 @@ module Datadog
           private
 
           def products
+            # @type var products: Hash[Symbol, Hash[Symbol, Object]]
             products = {
               appsec: {
                 enabled: Datadog::AppSec.enabled?,
@@ -113,7 +114,10 @@ module Datadog
               conf_value('tracing.opentelemetry.enabled', !defined?(Datadog::OpenTelemetry::LOADED).nil?),
             )
             list << conf_value('logger.instance', config.logger.instance.class.to_s) if config.logger.instance
-            list << conf_value('appsec.enabled', config.dig('appsec', 'enabled')) if config.respond_to?('appsec')
+            if config.respond_to?('appsec')
+              list << conf_value('appsec.enabled', config.dig('appsec', 'enabled'))
+              list << conf_value('appsec.sca_enabled', config.dig('appsec', 'sca_enabled'))
+            end
             list << conf_value('ci.enabled', config.dig('ci', 'enabled')) if config.respond_to?('ci')
 
             list.reject! { |entry| entry[:value].nil? }
@@ -242,15 +246,30 @@ module Datadog
           end
 
           def payload(seq_id)
-            {
-              configuration: @changes.map do |name, value|
-                {
-                  name: name,
-                  value: value,
-                  origin: @origin,
-                }
-              end
-            }
+            { configuration: configuration(seq_id) }
+          end
+
+          def configuration(seq_id)
+            config = Datadog.configuration
+
+            res = @changes.map do |name, value|
+              {
+                name: name,
+                value: value,
+                origin: @origin,
+              }
+            end
+
+            unless config.dig('appsec', 'sca_enabled').nil?
+              res << {
+                name: 'appsec.sca_enabled',
+                value: config.appsec.sca_enabled,
+                origin: 'code',
+                seq_id: seq_id,
+              }
+            end
+
+            res
           end
         end
 
