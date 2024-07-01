@@ -33,5 +33,26 @@ RSpec.describe Datadog::DI::RemoteProcessor do
         processor.process(config)
       end
     end
+
+    context 'log probe' do
+      let(:config) do
+         {"id"=>"3ecfd456-2d7c-4359-a51f-d4cc44141ffe",
+          "version"=>0,
+          "type"=>"LOG_PROBE",
+          "language"=>"python",
+          "where"=>{"sourceFile"=>"aaa", "lines"=>[nil]},
+          "tags"=>[],
+          "template"=>"In aaa, line 1",
+          "segments"=>[{"str"=>"In aaa, line 1"}],
+          "captureSnapshot"=>false,
+          "capture"=>{"maxReferenceDepth"=>3},
+          "sampling"=>{"snapshotsPerSecond"=>5000},
+          "evaluateAt"=>"EXIT"}
+      end
+
+      it 'parses the probe and adds it to the defined probe list' do
+        processor.process(config)
+      end
+    end
   end
 end
