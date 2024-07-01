@@ -15,7 +15,7 @@ module Datadog
           capture_snapshot: !!config['captureSnapshot'],
         )
       rescue KeyError => exc
-        raise ArgumentError, "Malformed remote configuration entry for probe: #{config}"
+        raise ArgumentError, "Malformed remote configuration entry for probe: #{exc.class}: #{exc}: #{config}"
       end
     end
   end
