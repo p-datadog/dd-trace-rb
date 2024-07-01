@@ -14,11 +14,8 @@ module Datadog
       attr_reader :defined_probes
       attr_reader :installed_probes
 
+      # config is one probe info
       def process(config)
-        # config is one probe info
-        puts '--- got probe:'
-        pp config
-
         probe = ProbeBuilder.build_from_remote_config(config)
         defined_probes[probe.id] = probe
         ProbeNotifier.notify_received(probe)

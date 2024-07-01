@@ -52,6 +52,9 @@ RSpec.describe Datadog::DI::RemoteProcessor do
 
       it 'parses the probe and adds it to the defined probe list' do
         processor.process(config)
+
+        expect(defined_probes.length).to be 1
+        expect(defined_probes["3ecfd456-2d7c-4359-a51f-d4cc44141ffe"]).to be_a(Datadog::DI::Probe)
       end
     end
   end
