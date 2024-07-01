@@ -25,12 +25,16 @@ module Datadog
         @settings = settings
         @agent_settings = agent_settings
         @hook_manager = HookManager.new
-        @remote_processor = RemoteProcessor.new(hook_manager)
+        @defined_probes = Concurrent::Map.new
+        @installed_probes = Concurrent::Map.new
+        @remote_processor = RemoteProcessor.new(hook_manager, defined_probes, installed_probes)
       end
 
       attr_reader :settings
       attr_reader :agent_settings
       attr_reader :hook_manager
+      attr_reader :defined_probes
+      attr_reader :installed_probes
       attr_reader :remote_processor
 
       def shutdown!(replacement = nil)
