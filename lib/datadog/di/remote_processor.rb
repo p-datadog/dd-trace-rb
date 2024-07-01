@@ -43,6 +43,9 @@ module Datadog
 
         installed_probes[probe.id] = probe
         ProbeNotifier.notify_installed(probe)
+      rescue => exc
+        # Silence all exceptions?
+        warn "Error processing probe configuration: #{exc.class}: #{exc}"
       end
     end
   end
