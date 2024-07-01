@@ -29,7 +29,6 @@ module Datadog
         elsif probe.method?
           hook_manager.hook_method(probe.type_name, probe.method_name) do |**opts|
             puts "*** method probe executed: #{opts} ***"
-            #byebug
             ProbeNotifier.notify_emitting(probe)
             ProbeNotifier.notify_executed(probe, **opts)
           end
