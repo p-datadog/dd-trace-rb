@@ -2,12 +2,17 @@
 
 module Datadog
   module DI
+    # @api private
     class RemoteProcessor
-      def initialize(hook_manager)
+      def initialize(hook_manager, defined_probes, installed_probes)
         @hook_manager = hook_manager
+        @defined_probes = defined_probes
+        @installed_probes = installed_probes
       end
 
       attr_reader :hook_manager
+      attr_reader :defined_probes
+      attr_reader :installed_probes
 
       def process(config)
         # config is one probe info
@@ -15,6 +20,7 @@ module Datadog
         pp config
 
         probe = ProbeBuilder.build_from_remote_config(config)
+        defined_probes[probe.id] = probe
         ProbeNotifier.notify_received(probe)
 
         if probe.line?
@@ -23,8 +29,6 @@ module Datadog
             ProbeNotifier.notify_emitting(probe)
             ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: caller)
           end
-
-          INSTALLED_PROBES[probe.id] = probe
         elsif probe.method?
           hook_manager.hook_method(probe.type_name, probe.method_name) do |**opts|
             puts "*** method probe executed: #{opts} ***"
@@ -33,9 +37,11 @@ module Datadog
             ProbeNotifier.notify_executed(probe, **opts)
           end
         else
-          puts "Not a line or method probe"
+          warn "Not a line or method probe: #{probe.id}"
+          return
         end
 
+        installed_probes[probe.id] = probe
         ProbeNotifier.notify_installed(probe)
       end
     end

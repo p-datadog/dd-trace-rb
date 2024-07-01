@@ -14,8 +14,6 @@ module Datadog
     module Remote
       class ReadError < StandardError; end
 
-      INSTALLED_PROBES = Concurrent::Map.new
-
       class << self
         PRODUCT = 'LIVE_DEBUGGING'
 
