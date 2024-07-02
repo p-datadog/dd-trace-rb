@@ -151,7 +151,7 @@ module Datadog
       end
 
       module_function def send_json_payload(path, payload)
-        client = ProbeSnapshotClient.new
+        client = ProbeSnapshotClient.new(agent_settings)
         client.dispatch(path, payload)
       end
 
