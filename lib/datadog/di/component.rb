@@ -27,6 +27,7 @@ module Datadog
         @hook_manager = HookManager.new
         @defined_probes = Concurrent::Map.new
         @installed_probes = Concurrent::Map.new
+        @probe_notifier_worker = ProbeNotifierWorker.new
         @remote_processor = RemoteProcessor.new(hook_manager, defined_probes, installed_probes)
       end
 
@@ -35,6 +36,7 @@ module Datadog
       attr_reader :hook_manager
       attr_reader :defined_probes
       attr_reader :installed_probes
+      attr_reader :probe_notifier_worker
       attr_reader :remote_processor
 
       def shutdown!(replacement = nil)

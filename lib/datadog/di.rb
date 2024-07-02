@@ -11,6 +11,8 @@ require_relative 'di/probe_notifier'
 require_relative 'di/probe_notifier_worker'
 require_relative 'di/remote'
 require_relative 'di/remote_processor'
+require_relative 'di/probe_status_client'
+require_relative 'di/probe_snapshot_client'
 
 module Datadog
   # Namespace for Datadog dynamic instrumentation.

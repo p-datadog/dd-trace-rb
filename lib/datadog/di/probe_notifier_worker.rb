@@ -22,7 +22,7 @@ module Datadog
       end
 
       def run
-        Thread.new
+        Thread.new do
           loop do
             maybe_send
             sleep 1

@@ -146,50 +146,13 @@ module Datadog
       end
 
       module_function def send_payload(path, payload)
-        #uri = URI("http://localhost:8126/debugger/v1/diagnostics")
-        #http = Net::HTTP.new(uri.host, uri.port)
-        http = Datadog::Core::Transport::HTTP::Adapters::Net.new(agent_settings)
-        headers =
-        {
-            'content-type' => 'application/json',
-        }
-
-        event_payload = Datadog::Core::Vendor::Multipart::Post::UploadIO.new(
-          StringIO.new(JSON.dump(payload)), 'application/json', 'event.json')
-        payload = {'event' => event_payload}
-        env = OpenStruct.new(
-          path: path,
-          form: payload,
-          headers: {},
-        )
-
-        response = http.post(env)
-
-        p response
+        client = ProbeStatusClient.new
+        client.dispatch(path, payload)
       end
 
       module_function def send_json_payload(path, payload)
-        uri = URI("http://localhost:8126/debugger/v1/input")
-        http = Net::HTTP.new(uri.host, uri.port)
-        #http = Datadog::Core::Transport::HTTP::Adapters::Net.new(agent_settings)
-        headers =
-        {
-            'content-type' => 'application/json',
-        }
-
-        env = OpenStruct.new(
-          path: path,
-          form: payload,
-          headers: headers,
-        )
-
-        puts '-- notifying:'
-        pp payload
-
-        #response = http.post(env)
-        response = http.post(uri.path, JSON.dump(payload), headers)
-
-        p response
+        client = ProbeSnapshotClient.new
+        client.dispatch(path, payload)
       end
 
       module_function def timestamp_now
