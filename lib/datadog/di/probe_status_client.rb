@@ -1,5 +1,7 @@
 module Datadog
   module DI
+    # todo: timeout handling
+    #
     # @api private
     class ProbeStatusClient
       def initialize(agent_settings)
