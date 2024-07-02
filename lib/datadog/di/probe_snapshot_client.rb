@@ -20,10 +20,6 @@ module Datadog
           headers: headers,
         )
 
-        puts '-- notifying:'
-        pp payload
-
-        #response = http.post(env)
         response = client.post(uri.path, JSON.dump(payload), headers)
 
         p response
