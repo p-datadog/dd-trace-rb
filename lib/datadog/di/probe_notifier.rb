@@ -146,7 +146,7 @@ module Datadog
       end
 
       module_function def send_payload(path, payload)
-        client = ProbeStatusClient.new
+        client = ProbeStatusClient.new(agent_settings)
         client.dispatch(path, payload)
       end
 
