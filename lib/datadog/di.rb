@@ -8,6 +8,7 @@ require_relative 'di/hook'
 require_relative 'di/probe'
 require_relative 'di/probe_builder'
 require_relative 'di/probe_notifier'
+require_relative 'di/probe_notifier_worker'
 require_relative 'di/remote'
 require_relative 'di/remote_processor'
 
