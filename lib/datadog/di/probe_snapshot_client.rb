@@ -1,5 +1,7 @@
 module Datadog
   module DI
+    # todo: timeout handling
+    #
     # @api private
     class ProbeSnapshotClient
       def initialize(agent_settings)
