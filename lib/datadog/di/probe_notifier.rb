@@ -154,16 +154,14 @@ module Datadog
             'content-type' => 'application/json',
         }
 
-        epayload = Datadog::Core::Vendor::Multipart::Post::UploadIO.new(
+        event_payload = Datadog::Core::Vendor::Multipart::Post::UploadIO.new(
           StringIO.new(JSON.dump(payload)), 'application/json', 'event.json')
+        payload = {'event' => event_payload}
         env = OpenStruct.new(
           path: path,
-          form: {'event' => epayload},
+          form: payload,
           headers: {},
         )
-
-        puts '-- notifying:'
-        pp payload
 
         response = http.post(env)
 
