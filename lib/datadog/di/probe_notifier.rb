@@ -27,7 +27,6 @@ module Datadog
       module_function def notify_executed(probe,
         tracepoint: nil, rv: nil, duration: nil, callers: nil
       )
-        puts '------------ executing -------------------'
         notify_snapshot(probe, rv: rv, duration: duration, callers: callers)
       end
 
