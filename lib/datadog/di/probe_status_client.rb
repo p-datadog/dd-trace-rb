@@ -2,7 +2,7 @@ module Datadog
   module DI
     # @api private
     class ProbeStatusClient
-      def initialize
+      def initialize(agent_settings)
         @client = Datadog::Core::Transport::HTTP::Adapters::Net.new(agent_settings)
       end
 
