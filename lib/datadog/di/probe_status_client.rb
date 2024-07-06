@@ -27,6 +27,8 @@ module Datadog
         unless (200..299).include?(response.code)
           raise Error::AgentCommunicationError, "Probe status submission failed: #{response.code}"
         end
+      rescue IOError, SystemCallError => exc
+        raise Error::AgentCommunicationError, "Probe status submission failed: #{exc.class}: #{exc}"
       end
 
       private
