@@ -10,6 +10,14 @@ module Datadog
       attr_reader :status_queue
       attr_reader :snapshot_queue
 
+      def add_status(status)
+        status_queue << status
+      end
+
+      def add_snapshot
+        snapshot_queue << snapshot
+      end
+
       private
 
       def maybe_send

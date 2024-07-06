@@ -36,6 +36,10 @@ module Datadog
         @code_tracker = CodeTracker.new
         code_tracker.start
       end
+
+      def component
+        Datadog.send(:components).dynamic_instrumentation
+      end
     end
   end
 end
