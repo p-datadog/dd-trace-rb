@@ -16,15 +16,12 @@ module Datadog
             'content-type' => 'application/json',
         }
 
-        env = OpenStruct.new(
-          path: path,
-          form: payload,
-          headers: headers,
-        )
-
         response = client.post(uri.path, JSON.dump(payload), headers)
-
-        p response
+        unless (200..299).include?(response.code)
+          raise Error::AgentCommunicationError, "Probe status submission failed: #{response.code}"
+        end
+      rescue IOError, SystemCallError => exc
+        raise Error::AgentCommunicationError, "Probe status submission failed: #{exc.class}: #{exc}"
       end
 
       private
