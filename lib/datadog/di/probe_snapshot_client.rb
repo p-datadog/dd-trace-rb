@@ -5,9 +5,7 @@ module Datadog
     # @api private
     class ProbeSnapshotClient
       def initialize(agent_settings)
-        #uri = URI("http://localhost:8126/debugger/v1/input")
         @client = Net::HTTP.new(agent_settings.hostname, uri.port)
-        #http = Datadog::Core::Transport::HTTP::Adapters::Net.new(agent_settings)
       end
 
       def dispatch(path, payload)
