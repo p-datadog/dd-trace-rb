@@ -2,13 +2,12 @@ module Datadog
   module DI
     # @api private
     class ProbeNotifierWorker
-      def initialize
+      def initialize(agent_settings)
         @status_queue = Queue.new
         @snapshot_queue = Queue.new
+        @status_client = ProbeStatusClient.new(agent_settings)
+        @snapshot_client = ProbeSnapshotClient.new(agent_settings)
       end
-
-      attr_reader :status_queue
-      attr_reader :snapshot_queue
 
       def add_status(status)
         status_queue << status
@@ -20,12 +19,43 @@ module Datadog
 
       private
 
+      attr_reader :status_queue
+      attr_reader :snapshot_queue
+      attr_reader :status_client
+      attr_reader :snapshot_client
+
       def maybe_send
+        maybe_send_statuses
+        maybe_send_snapshots
+      end
+
+      def maybe_send_statuses
         statuses = []
         until status_queue.empty?
           statuses << status_queue.shift
         end
         if statuses.any?
+          begin
+            status_client.dispatch('/debugger/v1/diagnostics', statuses)
+          rescue Error::AgentCommunicationError
+            # TODO
+            puts "failed to send probe statuses"
+          end
+        end
+      end
+
+      def maybe_send_snapshots
+        snapshots = []
+        until snapshot_queue.empty?
+          snapshots << status_queue.shift
+        end
+        if snapshots.any?
+          begin
+            status_client.dispatch('/debugger/v1/input', snapshots)
+          rescue Error::AgentCommunicationError
+            # TODO
+            puts "failed to send probe snapshots"
+          end
         end
       end
 

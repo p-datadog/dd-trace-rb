@@ -144,23 +144,8 @@ module Datadog
         message
       end
 
-      module_function def send_payload(path, payload)
-        client = ProbeStatusClient.new(agent_settings)
-        client.dispatch(path, payload)
-      end
-
-      module_function def send_json_payload(path, payload)
-        client = ProbeSnapshotClient.new(agent_settings)
-        client.dispatch(path, payload)
-      end
-
       module_function def timestamp_now
         (Time.now.to_f * 1000).to_i
-      end
-
-      module_function def agent_settings
-        settings = Datadog.configuration
-        Core::Configuration::AgentSettingsResolver.call(settings, logger: @logger)
       end
     end
   end
