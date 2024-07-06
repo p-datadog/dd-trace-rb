@@ -9,11 +9,6 @@ module Datadog
       end
 
       def dispatch(path, payload)
-        headers =
-        {
-            'content-type' => 'application/json',
-        }
-
         event_payload = Datadog::Core::Vendor::Multipart::Post::UploadIO.new(
           StringIO.new(JSON.dump(payload)), 'application/json', 'event.json')
         payload = {'event' => event_payload}
