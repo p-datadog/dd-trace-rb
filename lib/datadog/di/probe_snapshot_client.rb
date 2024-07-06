@@ -5,7 +5,7 @@ module Datadog
     # @api private
     class ProbeSnapshotClient
       def initialize(agent_settings)
-        @client = Net::HTTP.new(agent_settings.hostname, uri.port)
+        @client = Net::HTTP.new(agent_settings.hostname, agent_settings.port)
       end
 
       def dispatch(path, payload)
