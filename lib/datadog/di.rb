@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'di/error'
 require_relative 'di/code_tracker'
 require_relative 'di/component'
 require_relative 'di/configuration'

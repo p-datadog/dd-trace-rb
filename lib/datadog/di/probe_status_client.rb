@@ -24,8 +24,9 @@ module Datadog
         )
 
         response = client.post(env)
-
-        p response
+        unless (200..299).include?(response.code)
+          raise Error::AgentCommunicationError, "Probe status submission failed: #{response.code}"
+        end
       end
 
       private
