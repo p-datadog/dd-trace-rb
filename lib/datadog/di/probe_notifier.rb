@@ -88,8 +88,7 @@ module Datadog
           timestamp: timestamp,
         }
 
-        # TODO also send query string parameters
-        send_json_payload('/debugger/v1/input', [payload])
+        DI.component.probe_notifier_worker.add_snapshot(payload)
       end
 
       module_function def notify(probe, message:, status:)
@@ -109,7 +108,7 @@ module Datadog
           },
         }
 
-        send_payload('/debugger/v1/diagnostics', payload)
+        DI.component.probe_notifier_worker.add_status(payload)
       end
 
       module_function def format_callers(callers)

@@ -25,9 +25,9 @@ module Datadog
           []
         end
 
+        # config is one probe info
         def process_config(config, content)
-          # config is one probe info
-          component = Datadog.send(:components).dynamic_instrumentation
+          component = DI.component
           component.remote_processor.process(config)
 
           content.applied
