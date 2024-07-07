@@ -15,7 +15,7 @@ module Datadog
         wake.signal
       end
 
-      def add_snapshot
+      def add_snapshot(snapshot)
         snapshot_queue << snapshot
         wake.signal
       end
