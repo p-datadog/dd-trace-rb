@@ -39,7 +39,17 @@ module Datadog
       attr_reader :probe_notifier_worker
       attr_reader :remote_processor
 
+      # Shuts down dynamic instrumentation.
+      #
+      # Removes all code hooks and stops background threads.
+      #
+      # Does not clear out the code tracker, because it's only populated
+      # by code when code is compiled and therefore, if the code tracker
+      # was replaced by a new instance, the new instance of it wouldn't have
+      # any of the already loaded code tracked.
       def shutdown!(replacement = nil)
+        hook_manager.clear_hooks
+        probe_notifier_worker.stop
       end
     end
   end
