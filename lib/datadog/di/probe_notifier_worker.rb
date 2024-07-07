@@ -24,6 +24,9 @@ module Datadog
       attr_reader :status_client
       attr_reader :snapshot_client
 
+      DIAGNOSTICS_PATH = '/debugger/v1/diagnostics'
+      INPUT_PATH = '/debugger/v1/input'
+
       def maybe_send
         maybe_send_statuses
         maybe_send_snapshots
@@ -36,7 +39,7 @@ module Datadog
         end
         if statuses.any?
           begin
-            status_client.dispatch('/debugger/v1/diagnostics', statuses)
+            status_client.dispatch(DIAGNOSTICS_PATH, statuses)
           rescue Error::AgentCommunicationError
             # TODO
             puts "failed to send probe statuses"
@@ -51,7 +54,7 @@ module Datadog
         end
         if snapshots.any?
           begin
-            status_client.dispatch('/debugger/v1/input', snapshots)
+            status_client.dispatch(INPUT_PATH, snapshots)
           rescue Error::AgentCommunicationError
             # TODO
             puts "failed to send probe snapshots"
