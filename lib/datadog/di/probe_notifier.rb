@@ -50,7 +50,8 @@ module Datadog
             },
             language: 'ruby',
             #language: 'python',
-            stack: format_callers(callers),
+            # TODO add test coverage for callers being nil
+            stack: callers && format_callers(callers),
             captures: {
               entry: {
                 arguments: {},
