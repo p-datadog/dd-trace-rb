@@ -2,7 +2,7 @@
 
 module Datadog
   module DI
-    # Component for DI.
+    # Component for dynamic instrumentation.
     #
     # Only one instance of the Component should ever be active;
     # if configuration is changed, the old distance should be shut down
