@@ -34,7 +34,7 @@ module Datadog
 
 #          Datadog.send(:components).telemetry.client_configuration_change!(env_vars)
         rescue => e
-          raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
+          raise if component.settings.internal_dynamic_instrumentation.propagate_all_exceptions
 
           # TODO log?
 
