@@ -34,7 +34,10 @@ module Datadog
 
 #          Datadog.send(:components).telemetry.client_configuration_change!(env_vars)
         rescue => e
-        raise
+          raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
+
+          # TODO log?
+
           content.errored("#{e.class.name} #{e.message}: #{Array(e.backtrace).join("\n")}")
         end
 

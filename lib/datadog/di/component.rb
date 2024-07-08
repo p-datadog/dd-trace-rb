@@ -27,7 +27,7 @@ module Datadog
         @hook_manager = HookManager.new
         @defined_probes = Concurrent::Map.new
         @installed_probes = Concurrent::Map.new
-        @probe_notifier_worker = ProbeNotifierWorker.new(agent_settings)
+        @probe_notifier_worker = ProbeNotifierWorker.new(settings, agent_settings)
         @remote_processor = RemoteProcessor.new(hook_manager, defined_probes, installed_probes)
       end
 

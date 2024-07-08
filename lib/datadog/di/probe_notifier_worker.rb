@@ -2,7 +2,7 @@ module Datadog
   module DI
     # @api private
     class ProbeNotifierWorker
-      def initialize(agent_settings)
+      def initialize(settings, agent_settings)
         @status_queue = Queue.new
         @snapshot_queue = Queue.new
         @status_client = ProbeStatusClient.new(agent_settings)
@@ -63,7 +63,8 @@ module Datadog
         if statuses.any?
           begin
             status_client.dispatch(DIAGNOSTICS_PATH, statuses)
-          rescue Error::AgentCommunicationError
+          rescue Error::AgentCommunicationError => exc
+            raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
             # TODO
             puts "failed to send probe statuses"
           end
@@ -79,7 +80,8 @@ module Datadog
         if snapshots.any?
           begin
             status_client.dispatch(INPUT_PATH, snapshots)
-          rescue Error::AgentCommunicationError
+          rescue Error::AgentCommunicationError => exc
+            raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
             # TODO
             puts "failed to send probe snapshots"
           end

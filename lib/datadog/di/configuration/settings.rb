@@ -28,6 +28,17 @@ module Datadog
                 o.default false
               end
 
+              # If true, all of the catch-all rescue blocks in DI
+              # will propagate the exceptions onward.
+              # WARNING: for internal Datadog use only - this will break
+              # the DI product and potentially the library in general in
+              # a multitude of ways, cause resource leakage, permanent
+              # performance decreases, etc.
+              option :propagate_all_exceptions do |o|
+                o.type :bool
+                o.default false
+              end
+
             end
           end
         end
