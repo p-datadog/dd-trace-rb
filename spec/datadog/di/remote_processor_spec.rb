@@ -1,6 +1,19 @@
 require 'datadog/di/probe'
 
 RSpec.describe Datadog::DI::RemoteProcessor do
+  let(:settings) do
+    double('settings').tap do |settings|
+      allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
+    end
+  end
+
+  let(:di_settings) do
+    double('di settings').tap do |settings|
+      allow(settings).to receive(:enabled).and_return(true)
+      allow(settings).to receive(:propagate_all_exceptions).and_return(false)
+    end
+  end
+
   let(:hook_manager) do
     double('hook manager')
   end
@@ -14,7 +27,7 @@ RSpec.describe Datadog::DI::RemoteProcessor do
   end
 
   let(:processor) do
-    described_class.new(hook_manager, defined_probes, installed_probes)
+    described_class.new(settings, hook_manager, defined_probes, installed_probes)
   end
 
   describe '.new' do
