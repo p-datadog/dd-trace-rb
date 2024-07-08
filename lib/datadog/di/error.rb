@@ -5,6 +5,9 @@ module Datadog
     class Error < StandardError
       class AgentCommunicationError < Error
       end
+
+      class DITargetNotDefined < Error
+      end
     end
   end
 end

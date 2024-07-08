@@ -110,6 +110,8 @@ module Datadog
 
       def symbolize_class_name(cls_name)
         Object.const_get(cls_name)
+      rescue NameError => exc
+        raise Error::DITargetNotDefined, "Class not defined: #{cls_name}: #{exc.class}: #{exc}"
       end
 
       def on_line_tracepoint(tp, **opts)
