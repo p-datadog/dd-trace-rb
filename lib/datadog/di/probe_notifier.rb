@@ -31,6 +31,10 @@ module Datadog
       end
 
       module_function def notify_snapshot(probe, rv: nil, duration: nil, callers: nil)
+        component = DI.component
+        # Component can be nil in unit tests.
+        return unless component
+
         timestamp = timestamp_now
         payload = {
           service: Datadog.configuration.service,
@@ -89,10 +93,14 @@ module Datadog
           timestamp: timestamp,
         }
 
-        DI.component.probe_notifier_worker.add_snapshot(payload)
+        component.probe_notifier_worker.add_snapshot(payload)
       end
 
       module_function def notify(probe, message:, status:)
+        component = DI.component
+        # Component can be nil in unit tests.
+        return unless component
+
         payload = {
           service: Datadog.configuration.service,
           timestamp: timestamp_now,
@@ -109,7 +117,7 @@ module Datadog
           },
         }
 
-        DI.component.probe_notifier_worker.add_status(payload)
+        component.probe_notifier_worker.add_status(payload)
       end
 
       module_function def format_callers(callers)
