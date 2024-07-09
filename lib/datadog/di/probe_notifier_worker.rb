@@ -87,7 +87,7 @@ module Datadog
         end
         if snapshots.any?
           begin
-            status_client.dispatch(INPUT_PATH, snapshots)
+            snapshot_client.dispatch(INPUT_PATH, snapshots)
           rescue Error::AgentCommunicationError => exc
             raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
             # TODO
