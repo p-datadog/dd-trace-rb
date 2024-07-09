@@ -3,12 +3,15 @@ module Datadog
     # @api private
     class ProbeNotifierWorker
       def initialize(settings, agent_settings)
+        @settings = settings
         @status_queue = Queue.new
         @snapshot_queue = Queue.new
         @status_client = ProbeStatusClient.new(agent_settings)
         @snapshot_client = ProbeSnapshotClient.new(agent_settings)
         @wake = ConditionVariable.new
       end
+
+      attr_reader :settings
 
       def add_status(status)
         status_queue << status
@@ -58,7 +61,7 @@ module Datadog
       def maybe_send_statuses
         statuses = []
         until status_queue.empty?
-          statuses << status_queue.shift
+          statuses << status_queue.shift(true)
         end
         if statuses.any?
           begin
@@ -70,12 +73,17 @@ module Datadog
           end
         end
         statuses.any?
+      rescue ThreadError
+        # Normally the queue should only be consumed in this method,
+        # however if anyone consumes it elsewhere we don't want to block
+        # while consuming it here. Rescue ThreadError and return.
+        warn "unexpected status queue underflow - consumed elsewhere?"
       end
 
       def maybe_send_snapshots
         snapshots = []
         until snapshot_queue.empty?
-          snapshots << status_queue.shift
+          snapshots << snapshot_queue.shift(true)
         end
         if snapshots.any?
           begin
@@ -87,6 +95,11 @@ module Datadog
           end
         end
         snapshots.any?
+      rescue ThreadError
+        # Normally the queue should only be consumed in this method,
+        # however if anyone consumes it elsewhere we don't want to block
+        # while consuming it here. Rescue ThreadError and return.
+        warn "unexpected snapshot queue underflow - consumed elsewhere?"
       end
     end
   end
