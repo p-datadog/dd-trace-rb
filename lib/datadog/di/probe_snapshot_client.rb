@@ -14,8 +14,8 @@ module Datadog
             'content-type' => 'application/json',
         }
 
-        response = client.post(uri.path, JSON.dump(payload), headers)
-        unless (200..299).include?(response.code)
+        response = client.post(path, JSON.dump(payload), headers)
+        unless (200..299).include?(Integer(response.code))
           raise Error::AgentCommunicationError, "Probe status submission failed: #{response.code}"
         end
       rescue IOError, SystemCallError => exc
