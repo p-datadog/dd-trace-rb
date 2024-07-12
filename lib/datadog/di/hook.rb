@@ -92,7 +92,9 @@ module Datadog
           TRACEPOINTS[line_no] ||= {}
           TRACEPOINTS[line_no][file] = tp
 
-          tp.enable
+          iseq = DI.code_tracker&.[](file)
+
+          tp.enable(target: iseq)
         end
       end
 
