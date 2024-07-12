@@ -123,5 +123,23 @@ RSpec.describe Datadog::DI::HookManager do
         expect(observed_calls.first).to be_a(TracePoint)
       end
     end
+
+    context 'when code tracking is available' do
+      before do
+        Datadog::DI.activate_tracking!
+        require_relative 'hook_line_targeted'
+      end
+
+      it 'targets the trace point' do
+        manager.hook_line('hook_line_targeted.rb', 3) do |payload|
+          observed_calls << payload
+        end
+
+        HookLineTargetedTestClass.new.test_method
+
+        expect(observed_calls.length).to eq 1
+        expect(observed_calls.first).to be_a(TracePoint)
+      end
+    end
   end
 end
