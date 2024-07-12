@@ -32,6 +32,38 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
+    
+    hook_manager = Datadog::DI::HookManager.new
+    calls = 0
+    hook_manager.hook_method('DIInstrumentMethodBenchmark::Target', 'test_method') do
+      calls += 1
+    end
+
+    Benchmark.ips do |x|
+      benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
+      x.config(
+        **benchmark_time,
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+      )
+
+      # The idea of this benchmark is to test the overall cost of the Ruby VM calling these methods on every GC.
+      # We're going as fast as possible (not realistic), but this should give us an upper bound for expected performance.
+      x.report('method instrumentation') do
+        Target.new.test_method
+      end
+
+      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.compare!
+    end
+    
+    if calls < 1
+      raise "Instrumentation did not work - callback was never invoked"
+    end
+    
+    if calls < 1000 && !VALIDATE_BENCHMARK_MODE
+      raise "Expected at least 1000 calls to the method, got #{calls}"
+    end
+
   end
 
 end
