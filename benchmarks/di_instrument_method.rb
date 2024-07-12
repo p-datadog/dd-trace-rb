@@ -13,9 +13,23 @@ class DIInstrumentMethodBenchmark
       # Perform some work to take up time
       SecureRandom.uuid
     end
+    
+    # This method must have an executable line as its first line,
+    # otherwise line instrumentation won't work.
+    # The code in this method should be identical to test_method above.
+    # The two methods are separate so that instrumentation targets are
+    # different, to avoid a false positive if line instrumemntation fails
+    # to work and method instrumentation isn't cleared and continues to
+    # invoke the callback.
+    def test_method_for_line_probe
+      SecureRandom.uuid
+    end
   end
   
   def run_benchmark
+    m = Target.instance_method(:test_method_for_line_probe)
+    file, line = m.source_location
+    
     Benchmark.ips do |x|
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
@@ -46,8 +60,6 @@ class DIInstrumentMethodBenchmark
         suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
       )
 
-      # The idea of this benchmark is to test the overall cost of the Ruby VM calling these methods on every GC.
-      # We're going as fast as possible (not realistic), but this should give us an upper bound for expected performance.
       x.report('method instrumentation') do
         Target.new.test_method
       end
@@ -57,12 +69,43 @@ class DIInstrumentMethodBenchmark
     end
     
     if calls < 1
-      raise "Instrumentation did not work - callback was never invoked"
+      raise "Method instrumentation did not work - callback was never invoked"
     end
     
     if calls < 1000 && !VALIDATE_BENCHMARK_MODE
       raise "Expected at least 1000 calls to the method, got #{calls}"
     end
+    
+    hook_manager.clear_hooks
+    calls = 0
+    hook_manager.hook_line(file, line + 1) do
+      calls += 1
+    end
+
+    Benchmark.ips do |x|
+      benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
+      x.config(
+        **benchmark_time,
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+      )
+
+      x.report('line instrumentation') do
+        Target.new.test_method_for_line_probe
+      end
+
+      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.compare!
+    end
+    
+    if calls < 1
+      raise "Line instrumentation did not work - callback was never invoked"
+    end
+    
+    if calls < 1000 && !VALIDATE_BENCHMARK_MODE
+      raise "Expected at least 1000 calls to the method, got #{calls}"
+    end
+    
+    hook_manager.clear_hooks
 
   end
 
