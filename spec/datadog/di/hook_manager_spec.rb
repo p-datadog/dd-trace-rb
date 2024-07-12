@@ -128,6 +128,9 @@ RSpec.describe Datadog::DI::HookManager do
       before do
         Datadog::DI.activate_tracking!
         require_relative 'hook_line_targeted'
+
+        # TODO the path key could be different in the future
+        expect(Datadog::DI.code_tracker.send(:method_registry)['hook_line_targeted.rb']).to be_a(RubyVM::InstructionSequence)
       end
 
       it 'targets the trace point' do

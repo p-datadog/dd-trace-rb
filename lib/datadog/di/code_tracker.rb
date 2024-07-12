@@ -17,13 +17,23 @@ module Datadog
           # Useful attributes of the trace point here:
           # .instruction_sequence
           # .method_id
-          # .path
+          # .path (refers to the code location that called the require/eval/etc.,
+          #   not where the loaded code is; use .path on the instruction sequence
+          #   to obtain the location of the compiled code)
           # .eval_script
           #
           # For now just map the path to the instruction sequence.
-          method_registry[tp.path] = tp.instruction_sequence
+          path = tp.instruction_sequence.path
+          method_registry[path] = tp.instruction_sequence
+
+          # TODO fix this to properly deal with paths
+          method_registry[File.basename(path)] = tp.instruction_sequence
         end
         @compiled_trace_point.enable
+      end
+
+      def [](path)
+        method_registry[path]
       end
 
       private
