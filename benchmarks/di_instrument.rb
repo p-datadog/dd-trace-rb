@@ -7,13 +7,13 @@ require 'benchmark/ips'
 require 'datadog'
 require_relative 'dogstatsd_reporter'
 
-class DIInstrumentMethodBenchmark
+class DIInstrumentBenchmark
   class Target
     def test_method
       # Perform some work to take up time
       SecureRandom.uuid
     end
-    
+
     # This method must have an executable line as its first line,
     # otherwise line instrumentation won't work.
     # The code in this method should be identical to test_method above.
@@ -25,16 +25,16 @@ class DIInstrumentMethodBenchmark
       SecureRandom.uuid
     end
   end
-  
+
   def run_benchmark
     m = Target.instance_method(:test_method_for_line_probe)
     file, line = m.source_location
-    
+
     Benchmark.ips do |x|
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
 
       # The idea of this benchmark is to test the overall cost of the Ruby VM calling these methods on every GC.
@@ -46,10 +46,10 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
-    
+
     hook_manager = Datadog::DI::HookManager.new
     calls = 0
-    hook_manager.hook_method('DIInstrumentMethodBenchmark::Target', 'test_method') do
+    hook_manager.hook_method('DIInstrumentBenchmark::Target', 'test_method') do
       calls += 1
     end
 
@@ -57,7 +57,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
 
       x.report('method instrumentation') do
@@ -67,15 +67,15 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
-    
+
     if calls < 1
       raise "Method instrumentation did not work - callback was never invoked"
     end
-    
+
     if calls < 1000 && !VALIDATE_BENCHMARK_MODE
       raise "Expected at least 1000 calls to the method, got #{calls}"
     end
-    
+
     hook_manager.clear_hooks
     calls = 0
     hook_manager.hook_line(file, line + 1) do
@@ -86,7 +86,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
 
       x.report('line instrumentation') do
@@ -96,15 +96,15 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
-    
+
     if calls < 1
       raise "Line instrumentation did not work - callback was never invoked"
     end
-    
+
     if calls < 1000 && !VALIDATE_BENCHMARK_MODE
       raise "Expected at least 1000 calls to the method, got #{calls}"
     end
-    
+
     require 'datadog/di/init'
     if defined?(DITarget)
       raise "DITarget is already defined, this should not happen"
@@ -113,10 +113,10 @@ class DIInstrumentMethodBenchmark
     unless defined?(DITarget)
       raise "DITarget is not defined, this should not happen"
     end
-    
+
     m = DITarget.instance_method(:test_method_for_line_probe)
     targeted_file, targeted_line = m.source_location
-    
+
     hook_manager.clear_hooks
     calls = 0
     hook_manager.hook_line(targeted_file, targeted_line + 1) do
@@ -127,7 +127,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
 
       x.report('line instrumentation - targeted') do
@@ -137,18 +137,18 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
-    
+
     if calls < 1
       raise "Targeted line instrumentation did not work - callback was never invoked"
     end
-    
+
     if calls < 1000 && !VALIDATE_BENCHMARK_MODE
       raise "Expected at least 1000 calls to the method, got #{calls}"
     end
-    
+
     # Now, remove all installed hooks and check that the performance of
     # target code is approximately what it was prior to hook installation.
-    
+
     hook_manager.clear_hooks
     calls = 0
 
@@ -156,9 +156,9 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
-      
+
       # This benchmark should produce identical results to the
       # "no instrumentation" benchmark.
       x.report('method instrumentation - cleared') do
@@ -168,7 +168,7 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
-    
+
     if calls != 0
       raise "Method instrumentation was not cleared (#{calls} calls recorded)"
     end
@@ -177,7 +177,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
 
       # This benchmark should produce identical results to the
@@ -189,7 +189,7 @@ class DIInstrumentMethodBenchmark
       x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
-    
+
     if calls != 0
       raise "Line instrumentation was not cleared (#{calls} calls recorded)"
     end
@@ -200,6 +200,6 @@ end
 
 puts "Current pid is #{Process.pid}"
 
-DIInstrumentMethodBenchmark.new.instance_exec do
+DIInstrumentBenchmark.new.instance_exec do
   run_benchmark
 end
