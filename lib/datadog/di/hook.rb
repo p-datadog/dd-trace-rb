@@ -111,6 +111,7 @@ module Datadog
         end
       end
 
+      # TODO test that this resolves qualified names e.g. A::B
       def symbolize_class_name(cls_name)
         Object.const_get(cls_name)
       rescue NameError => exc
