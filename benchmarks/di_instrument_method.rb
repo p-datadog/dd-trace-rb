@@ -34,7 +34,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
       )
 
       # The idea of this benchmark is to test the overall cost of the Ruby VM calling these methods on every GC.
@@ -57,7 +57,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
       )
 
       x.report('method instrumentation') do
@@ -86,7 +86,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
       )
 
       x.report('line instrumentation') do
@@ -127,7 +127,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
       )
 
       x.report('line instrumentation - targeted') do
@@ -156,7 +156,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
       )
       
       # This benchmark should produce identical results to the
@@ -177,7 +177,7 @@ class DIInstrumentMethodBenchmark
       benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
       x.config(
         **benchmark_time,
-        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument_method')
       )
 
       # This benchmark should produce identical results to the
