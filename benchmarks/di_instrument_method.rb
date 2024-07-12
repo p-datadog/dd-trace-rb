@@ -106,20 +106,55 @@ class DIInstrumentMethodBenchmark
     end
     
     hook_manager.clear_hooks
+    calls = 0
+
+    Benchmark.ips do |x|
+      benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
+      x.config(
+        **benchmark_time,
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+      )
+      
+      # This benchmark should produce identical results to the
+      # "no instrumentation" benchmark.
+      x.report('method instrumentation - cleared') do
+        Target.new.test_method
+      end
+
+      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.compare!
+    end
+    
+    if calls != 0
+      raise "Method instrumentation was not cleared (#{calls} calls recorded)"
+    end
+
+    Benchmark.ips do |x|
+      benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
+      x.config(
+        **benchmark_time,
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+      )
+
+      # This benchmark should produce identical results to the
+      # "no instrumentation" benchmark.
+      x.report('line instrumentation - cleared') do
+        Target.new.test_method_for_line_probe
+      end
+
+      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.compare!
+    end
+    
+    if calls != 0
+      raise "Line instrumentation was not cleared (#{calls} calls recorded)"
+    end
 
   end
 
 end
 
 puts "Current pid is #{Process.pid}"
-
-def run_benchmark(&block)
-  # Forking to avoid monkey-patching leaking between benchmarks
-  pid = fork { block.call }
-  _, status = Process.wait2(pid)
-
-  raise "Benchmark failed with status #{status}" unless status.success?
-end
 
 DIInstrumentMethodBenchmark.new.instance_exec do
   run_benchmark
