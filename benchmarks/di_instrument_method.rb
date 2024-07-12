@@ -105,6 +105,50 @@ class DIInstrumentMethodBenchmark
       raise "Expected at least 1000 calls to the method, got #{calls}"
     end
     
+    require 'datadog/di/init'
+    if defined?(DITarget)
+      raise "DITarget is already defined, this should not happen"
+    end
+    require_relative 'di_target'
+    unless defined?(DITarget)
+      raise "DITarget is not defined, this should not happen"
+    end
+    
+    m = DITarget.instance_method(:test_method_for_line_probe)
+    targeted_file, targeted_line = m.source_location
+    
+    hook_manager.clear_hooks
+    calls = 0
+    hook_manager.hook_line(targeted_file, targeted_line + 1) do
+      calls += 1
+    end
+
+    Benchmark.ips do |x|
+      benchmark_time = VALIDATE_BENCHMARK_MODE ? { time: 0.01, warmup: 0 } : { time: 10, warmup: 2 }
+      x.config(
+        **benchmark_time,
+        suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'profiler_gc')
+      )
+
+      x.report('line instrumentation - targeted') do
+        DITarget.new.test_method_for_line_probe
+      end
+
+      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.compare!
+    end
+    
+    if calls < 1
+      raise "Targeted line instrumentation did not work - callback was never invoked"
+    end
+    
+    if calls < 1000 && !VALIDATE_BENCHMARK_MODE
+      raise "Expected at least 1000 calls to the method, got #{calls}"
+    end
+    
+    # Now, remove all installed hooks and check that the performance of
+    # target code is approximately what it was prior to hook installation.
+    
     hook_manager.clear_hooks
     calls = 0
 
