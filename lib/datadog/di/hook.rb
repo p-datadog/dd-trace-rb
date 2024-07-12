@@ -68,6 +68,9 @@ module Datadog
 
       def hook_line(file, line_no, &block)
         # TODO is file a basename, path suffix or full path?
+        # Maybe support all?
+        file = File.basename(file)
+
         INSTRUMENTED_LINES[line_no] ||= {}
         INSTRUMENTED_LINES[line_no][file] = block
 
