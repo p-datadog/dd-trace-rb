@@ -1,4 +1,4 @@
-require 'datadog/di/hook'
+require 'datadog/di/hook_manager'
 require_relative 'hook_line'
 
 class HookTestClass
