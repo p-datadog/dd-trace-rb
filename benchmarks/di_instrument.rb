@@ -37,13 +37,11 @@ class DIInstrumentBenchmark
         suite: report_to_dogstatsd_if_enabled_via_environment_variable(benchmark_name: 'di_instrument')
       )
 
-      # The idea of this benchmark is to test the overall cost of the Ruby VM calling these methods on every GC.
-      # We're going as fast as possible (not realistic), but this should give us an upper bound for expected performance.
       x.report('no instrumentation') do
         Target.new.test_method
       end
 
-      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.save! 'di-instrument-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
 
@@ -64,7 +62,7 @@ class DIInstrumentBenchmark
         Target.new.test_method
       end
 
-      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.save! 'di-instrument-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
 
@@ -93,7 +91,7 @@ class DIInstrumentBenchmark
         Target.new.test_method_for_line_probe
       end
 
-      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.save! 'di-instrument-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
 
@@ -134,7 +132,7 @@ class DIInstrumentBenchmark
         DITarget.new.test_method_for_line_probe
       end
 
-      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.save! 'di-instrument-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
 
@@ -165,7 +163,7 @@ class DIInstrumentBenchmark
         Target.new.test_method
       end
 
-      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.save! 'di-instrument-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
 
@@ -186,7 +184,7 @@ class DIInstrumentBenchmark
         Target.new.test_method_for_line_probe
       end
 
-      x.save! 'di-instrument-method-results.json' unless VALIDATE_BENCHMARK_MODE
+      x.save! 'di-instrument-results.json' unless VALIDATE_BENCHMARK_MODE
       x.compare!
     end
 
