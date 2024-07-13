@@ -7,9 +7,13 @@ module Datadog
     #
     # The loaded code is used to target line trace points when installing
     # line probes which dramatically improves efficiency of line trace points.
+    #
+    # Note that, since most files will only be loaded one time (via the
+    # "require" mechanism), the code tracker needs to be global and not be
+    # recreated when the DI component is created.
     class CodeTracker
       def initialize
-        @method_registry = Concurrent::Map.new
+        @file_registry = Concurrent::Map.new
       end
 
       def start
@@ -24,21 +28,23 @@ module Datadog
           #
           # For now just map the path to the instruction sequence.
           path = tp.instruction_sequence.path
-          method_registry[path] = tp.instruction_sequence
+          file_registry[path] = tp.instruction_sequence
 
           # TODO fix this to properly deal with paths
-          method_registry[File.basename(path)] = tp.instruction_sequence
+          file_registry[File.basename(path)] = tp.instruction_sequence
         end
         @compiled_trace_point.enable
       end
 
+      # Returns the RubVM::InstructionSequence (i.e. the compiled code)
+      # for the provided path.
       def [](path)
-        method_registry[path]
+        file_registry[path]
       end
 
       private
 
-      attr_reader :method_registry
+      attr_reader :file_registry
     end
   end
 end
