@@ -44,7 +44,9 @@ module Datadog
             # TODO move this stringification elsewhere
             if cls_name.to_s == tp.self.name
               # TODO is it OK to hook from trace point handler?
+              # TODO the class is now defined, but can hooking still fail?
               hook_method(cls_name, method_name, &block)
+              PENDING_METHODS.delete(pm)
             end
           end
         end
