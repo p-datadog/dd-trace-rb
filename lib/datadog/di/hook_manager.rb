@@ -13,6 +13,14 @@ module Datadog
     # when the original or the aliased method is called incorrerctly
     # due to conflicting aliasing happening.
     #
+    # Note that only explicitly defined methods can be hooked, e.g. if a
+    # class has a +method_missing+ method that provides further virtual
+    # methods, the hooking must be done on the +method_missing+ method
+    # and not on one of the virtual methods provided by it.
+    #
+    # TODO with module prepending virtual methods may be instrumentable
+    # anyway?
+    #
     # Line hooking is currently done with a naive line tracepoint which
     # imposes no requirements on the code being instrumented, but carries
     # a serious performance penalty for the entire running application.
