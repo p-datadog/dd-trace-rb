@@ -127,11 +127,18 @@ RSpec.describe Datadog::DI::HookManager do
           invoked = true
         end).to be false
 
+        expect(manager.send(:pending_methods)[[:HookManagerTestLateDefinition, :test_method]]).to be_a(Proc)
+        expect(manager.send(:instrumented_methods)[[:HookManagerTestLateDefinition, :test_method]]).to be nil
+
         class HookManagerTestLateDefinition
           def test_method
             42
           end
         end
+
+        # Method should now be hooked, and no longer pending
+        expect(manager.send(:pending_methods)[[:HookManagerTestLateDefinition, :test_method]]).to be nil
+        expect(manager.send(:instrumented_methods)[[:HookManagerTestLateDefinition, :test_method]]).to be_a(Integer)
 
         expect(HookManagerTestLateDefinition.new.test_method).to eq 42
 

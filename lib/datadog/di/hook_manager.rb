@@ -145,6 +145,14 @@ module Datadog
       # defined when the hook request is received.
       attr_reader :definition_trace_point
 
+      def pending_methods
+        PENDING_METHODS
+      end
+
+      def instrumented_methods
+        INSTRUMENTED_METHODS
+      end
+
       PENDING_METHODS = Concurrent::Map.new
       INSTRUMENTED_METHODS = Concurrent::Map.new
       INSTRUMENTED_LINES = Concurrent::Map.new
