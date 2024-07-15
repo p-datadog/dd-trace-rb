@@ -36,6 +36,18 @@ module Datadog
     #
     # @api private
     class HookManager
+      def initialize
+        @definition_trace_point = TracePoint.new(:end) do |tp|
+        end
+        definition_trace_point.enable
+      end
+
+      # TODO test that close is called during component teardown and
+      # the trace point is cleared
+      def close
+        definition_trace_point.disable
+      end
+
       def clear_hooks
         TRACEPOINT_MUTEX.synchronize do
           INSTRUMENTED_METHODS.clear
@@ -107,6 +119,11 @@ module Datadog
       end
 
       private
+
+      # Class/module definition trace point  (:end type).
+      # Used to install hooks when the target classes/modules aren't yet
+      # defined when the hook request is received.
+      attr_reader :definition_trace_point
 
       INSTRUMENTED_METHODS = Concurrent::Map.new
       INSTRUMENTED_LINES = Concurrent::Map.new
