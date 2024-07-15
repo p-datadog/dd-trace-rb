@@ -20,7 +20,6 @@ RSpec.describe Datadog::DI::HookManager do
 
   let(:definition_trace_point) do
     double('definition trace point').tap do |tp|
-      expect(tp).to receive(:enable)
     end
   end
 
@@ -28,7 +27,7 @@ RSpec.describe Datadog::DI::HookManager do
     RSpec::Mocks.with_temporary_scope do
       # TODO consider splitting HookManager into a class that hooks and
       # a class that maintains registry of probes
-      expect(TracePoint).to receive(:new).with(:end).and_return(definition_trace_point)
+      expect(TracePoint).to receive(:trace).with(:end).and_return(definition_trace_point)
 
       described_class.new
     end.tap do |manager|
@@ -109,10 +108,34 @@ RSpec.describe Datadog::DI::HookManager do
   end
 
   describe '.hook_method_when_defined' do
+    let(:manager) do
+      described_class.new
+    end
+
     context 'when class does not exist' do
       it 'returns false' do
         expect(manager.hook_method_when_defined(:NonExistent, :non_existent) do |payload|
         end).to be false
+      end
+    end
+
+    context 'when class is defined later' do
+      it 'returns false, then instruments after definition' do
+        invoked = false
+
+        expect(manager.hook_method_when_defined(:HookManagerTestLateDefinition, :test_method) do |tp|
+          invoked = true
+        end).to be false
+
+        class HookManagerTestLateDefinition
+          def test_method
+            42
+          end
+        end
+
+        expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+
+        expect(invoked).to be true
       end
     end
   end

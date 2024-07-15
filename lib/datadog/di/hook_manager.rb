@@ -37,9 +37,17 @@ module Datadog
     # @api private
     class HookManager
       def initialize
-        @definition_trace_point = TracePoint.new(:end) do |tp|
+        @definition_trace_point = TracePoint.trace(:end) do |tp|
+          # TODO search more efficiently than linearly
+          PENDING_METHODS.each do |pm, block|
+            cls_name, method_name = pm
+            # TODO move this stringification elsewhere
+            if cls_name.to_s == tp.self.name
+              # TODO is it OK to hook from trace point handler?
+              hook_method(cls_name, method_name, &block)
+            end
+          end
         end
-        definition_trace_point.enable
       end
 
       # TODO test that close is called during component teardown and
@@ -86,12 +94,12 @@ module Datadog
         INSTRUMENTED_METHODS[[cls_name, meth_name]] = id
       end
 
-      def hook_method_when_defined(cls_name, meth_name)
+      def hook_method_when_defined(cls_name, meth_name, &block)
         begin
           hook_method(cls_name, meth_name)
           true
         rescue Error::DITargetNotDefined
-          PENDING_METHODS[[cls_name, meth_name]] = true
+          PENDING_METHODS[[cls_name, meth_name]] = block
           false
         end
       end
