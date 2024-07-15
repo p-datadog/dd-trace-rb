@@ -98,7 +98,7 @@ RSpec.describe Datadog::DI::HookManager do
     end
 
     context 'when class does not exist' do
-      it 'raises DITargetNotDefined:' do
+      it 'raises DITargetNotDefined' do
         expect do
           manager.hook_method(:NonExistent, :non_existent) do |payload|
           end
