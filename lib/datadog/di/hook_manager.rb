@@ -26,27 +26,34 @@ module Datadog
     # a serious performance penalty for the entire running application.
     #
     # An alternative line hooking implementation is to use targeted line
-    # tracepoints. These require all code to be instrumented to have been
+    # trace points. These require all code to be instrumented to have been
     # loaded after a require tracepoint is installed to map the loaded
     # code to its files, and the tracepoint then targets the particular
     # code object where the instrumented code is defined.
-    # The targeted tracepoints rewrites VM instructions to trigger the
-    # tracepoints on the desired line and otherwise has no performance
+    # The targeted trace points rewrites VM instructions to trigger the
+    # trace points on the desired line and otherwise has no performance
     # impact on the application.
     #
     # @api private
     class HookManager
       def initialize
+        @pending_methods = Concurrent::Map.new
+        @instrumented_methods = Concurrent::Map.new
+        @instrumented_lines = Concurrent::Map.new
+        @trace_points = Concurrent::Map.new
+        @next_mutex = Mutex.new
+        @trace_point_mutex = Mutex.new
+
         @definition_trace_point = TracePoint.trace(:end) do |tp|
           # TODO search more efficiently than linearly
-          PENDING_METHODS.each do |pm, block|
+          pending_methods.each do |pm, block|
             cls_name, method_name = pm
             # TODO move this stringification elsewhere
             if cls_name.to_s == tp.self.name
               # TODO is it OK to hook from trace point handler?
               # TODO the class is now defined, but can hooking still fail?
               hook_method(cls_name, method_name, &block)
-              PENDING_METHODS.delete(pm)
+              pending_methods.delete(pm)
             end
           end
         end
@@ -59,15 +66,15 @@ module Datadog
       end
 
       def clear_hooks
-        TRACEPOINT_MUTEX.synchronize do
-          INSTRUMENTED_METHODS.clear
-          INSTRUMENTED_LINES.clear
-          TRACEPOINTS.each do |line, submap|
+        trace_point_mutex.synchronize do
+          instrumented_methods.clear
+          instrumented_lines.clear
+          trace_points.each do |line, submap|
             submap.each do |file, tracepoint|
               tracepoint.disable
             end
           end
-          TRACEPOINTS.clear
+          trace_points.clear
         end
       end
 
@@ -80,7 +87,7 @@ module Datadog
 
           remove_method(meth_name)
           define_method(meth_name) do |*args, **kwargs|
-            if INSTRUMENTED_METHODS[[cls_name, meth_name]] == id
+            if DI.component.hook_manager.instrumented_methods[[cls_name, meth_name]] == id
               rv = nil
               duration = Benchmark.realtime do
                 rv = saved.bind(self).call(*args, **kwargs)
@@ -93,7 +100,7 @@ module Datadog
           end
         end
 
-        INSTRUMENTED_METHODS[[cls_name, meth_name]] = id
+        instrumented_methods[[cls_name, meth_name]] = id
       end
 
       def hook_method_when_defined(cls_name, meth_name, &block)
@@ -101,7 +108,7 @@ module Datadog
           hook_method(cls_name, meth_name)
           true
         rescue Error::DITargetNotDefined
-          PENDING_METHODS[[cls_name, meth_name]] = block
+          pending_methods[[cls_name, meth_name]] = block
           false
         end
       end
@@ -111,16 +118,16 @@ module Datadog
         # Maybe support all?
         file = File.basename(file)
 
-        INSTRUMENTED_LINES[line_no] ||= {}
-        INSTRUMENTED_LINES[line_no][file] = block
+        instrumented_lines[line_no] ||= {}
+        instrumented_lines[line_no][file] = block
 
-        TRACEPOINT_MUTEX.synchronize do
+        trace_point_mutex.synchronize do
           # Delete previous tracepoint, if any.
           # We could have reused the previous tracepoint but there are
-          # comments elsewhere in the datadog codebase about tracepoints
+          # comments elsewhere in the datadog codebase about trace_points
           # needing to be reinstalled on occasion, therefore be safe and
           # create a new tracepoint here.
-          tp = TRACEPOINTS[line_no]&.[](file)
+          tp = trace_points[line_no]&.[](file)
           tp&.disable
 
           tp = TracePoint.new(:line) do |tp|
@@ -129,8 +136,8 @@ module Datadog
 
           # Put the tracepoint into our tracking map first to prevent
           # possible leakage if enabling it fails for any reason.
-          TRACEPOINTS[line_no] ||= {}
-          TRACEPOINTS[line_no][file] = tp
+          trace_points[line_no] ||= {}
+          trace_points[line_no][file] = tp
 
           iseq = DI.code_tracker&.[](file)
 
@@ -140,28 +147,20 @@ module Datadog
 
       private
 
+      attr_reader :pending_methods
+      attr_reader :instrumented_methods
+      attr_reader :instrumented_lines
+      attr_reader :trace_points
+      attr_reader :next_mutex
+      attr_reader :trace_point_mutex
+
       # Class/module definition trace point (:end type).
       # Used to install hooks when the target classes/modules aren't yet
       # defined when the hook request is received.
       attr_reader :definition_trace_point
 
-      def pending_methods
-        PENDING_METHODS
-      end
-
-      def instrumented_methods
-        INSTRUMENTED_METHODS
-      end
-
-      PENDING_METHODS = Concurrent::Map.new
-      INSTRUMENTED_METHODS = Concurrent::Map.new
-      INSTRUMENTED_LINES = Concurrent::Map.new
-      TRACEPOINTS = Concurrent::Map.new
-      NEXT_MUTEX = Mutex.new
-      TRACEPOINT_MUTEX = Mutex.new
-
       def next_id
-        NEXT_MUTEX.synchronize do
+        next_mutex.synchronize do
           @next_id ||= 0
           @next_id += 1
         end
@@ -175,7 +174,7 @@ module Datadog
       end
 
       def on_line_tracepoint(tp, **opts)
-        cb = INSTRUMENTED_LINES[tp.lineno]&.[](File.basename(tp.path))
+        cb = instrumented_lines[tp.lineno]&.[](File.basename(tp.path))
         cb&.call(tp, **opts)
       end
     end
