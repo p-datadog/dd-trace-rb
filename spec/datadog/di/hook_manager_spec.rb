@@ -79,6 +79,15 @@ RSpec.describe Datadog::DI::HookManager do
         expect(observed_calls.first[:duration]).to be_a(Float)
       end
     end
+
+    context 'when class does not exist' do
+      it 'raises DITargetNotDefined:' do
+        expect do
+          manager.hook_method(:NonExistent, :non_existent) do |payload|
+          end
+        end.to raise_error(Datadog::DI::Error::DITargetNotDefined)
+      end
+    end
   end
 
   describe '.hook_line' do
