@@ -18,12 +18,30 @@ end
 RSpec.describe Datadog::DI::HookManager do
   let(:observed_calls) { [] }
 
+  let(:definition_trace_point) do
+    double('definition trace point').tap do |tp|
+      expect(tp).to receive(:enable)
+    end
+  end
+
   let(:manager) do
-    described_class.new
+    RSpec::Mocks.with_temporary_scope do
+      # TODO consider splitting HookManager into a class that hooks and
+      # a class that maintains registry of probes
+      expect(TracePoint).to receive(:new).with(:end).and_return(definition_trace_point)
+
+      described_class.new
+    end.tap do |manager|
+      # Since we are skipping definition trace point setup, we also
+      # need to skip its teardown otherwise .close would try to disable
+      # the double that is no longer in scope.
+      allow(manager).to receive(:close).and_return(nil)
+    end
   end
 
   after do
     manager.clear_hooks
+    #manager.close
   end
 
   let(:call_keys) do
