@@ -86,6 +86,16 @@ module Datadog
         INSTRUMENTED_METHODS[[cls_name, meth_name]] = id
       end
 
+      def hook_method_when_defined(cls_name, meth_name)
+        begin
+          hook_method(cls_name, meth_name)
+          true
+        rescue Error::DITargetNotDefined
+          PENDING_METHODS[[cls_name, meth_name]] = true
+          false
+        end
+      end
+
       def hook_line(file, line_no, &block)
         # TODO is file a basename, path suffix or full path?
         # Maybe support all?
@@ -125,6 +135,7 @@ module Datadog
       # defined when the hook request is received.
       attr_reader :definition_trace_point
 
+      PENDING_METHODS = Concurrent::Map.new
       INSTRUMENTED_METHODS = Concurrent::Map.new
       INSTRUMENTED_LINES = Concurrent::Map.new
       TRACEPOINTS = Concurrent::Map.new

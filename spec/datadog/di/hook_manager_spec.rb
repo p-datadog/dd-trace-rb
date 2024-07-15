@@ -108,6 +108,15 @@ RSpec.describe Datadog::DI::HookManager do
     end
   end
 
+  describe '.hook_method_when_defined' do
+    context 'when class does not exist' do
+      it 'returns false' do
+        expect(manager.hook_method_when_defined(:NonExistent, :non_existent) do |payload|
+        end).to be false
+      end
+    end
+  end
+
   describe '.hook_line' do
     context 'method definition line' do
       it 'does not invoke callback' do
