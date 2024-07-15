@@ -30,7 +30,7 @@ module Datadog
               ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: caller)
             end
           elsif probe.method?
-            hook_manager.hook_method(probe.type_name, probe.method_name) do |**opts|
+            hook_manager.hook_method_when_defined(probe.type_name, probe.method_name) do |**opts|
               puts "*** method probe executed: #{opts} ***"
               ProbeNotifier.notify_emitting(probe)
               ProbeNotifier.notify_executed(probe, **opts)
