@@ -138,7 +138,7 @@ module Datadog
 
       private
 
-      # Class/module definition trace point  (:end type).
+      # Class/module definition trace point (:end type).
       # Used to install hooks when the target classes/modules aren't yet
       # defined when the hook request is received.
       attr_reader :definition_trace_point
