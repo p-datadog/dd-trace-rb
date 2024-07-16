@@ -1,13 +1,8 @@
-# Used to quickly run benchmark under RSpec as part of the usual test suite, to validate it didn't bitrot
-VALIDATE_BENCHMARK_MODE = ENV['VALIDATE_BENCHMARK'] == 'true'
+require_relative 'lib/boot'
 
-return unless __FILE__ == $PROGRAM_NAME || VALIDATE_BENCHMARK_MODE
+benchmarks(__FILE__) do
+  require 'open3'
 
-require 'benchmark/ips'
-require 'open3'
-require 'datadog'
-
-class TracingTraceBenchmark
   module NoopWriter
     def write(trace)
       # no-op
@@ -25,10 +20,7 @@ class TracingTraceBenchmark
   # @param [Integer] time in seconds. The default is 12 seconds because having over 105 samples allows the
   #   benchmarking platform to calculate helpful aggregate stats. Because benchmark-ips tries to run one iteration
   #   per 100ms, this means we'll have around 120 samples (give or take a small margin of error).
-  # @param [Integer] warmup in seconds. The default is 2 seconds.
-  def benchmark_time(time: 12, warmup: 2)
-    VALIDATE_BENCHMARK_MODE ? { time: 0.001, warmup: 0 } : { time: time, warmup: warmup }
-  end
+  default_benchmark_time 12
 
   def benchmark_no_writer
     ::Datadog::Tracing::Writer.prepend(NoopWriter)
