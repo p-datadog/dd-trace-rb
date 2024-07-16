@@ -1,7 +1,6 @@
-# Used to quickly run benchmark under RSpec as part of the usual test suite, to validate it didn't bitrot
-VALIDATE_BENCHMARK_MODE = ENV['VALIDATE_BENCHMARK'] == 'true'
+require_relative 'lib/boot'
 
-return unless __FILE__ == $PROGRAM_NAME || VALIDATE_BENCHMARK_MODE
+check_file(__FILE__)
 
 require 'benchmark/ips'
 require 'datadog'
