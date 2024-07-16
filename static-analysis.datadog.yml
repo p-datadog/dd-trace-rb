@@ -1,0 +1,9 @@
+schema-version: v1
+rulesets:
+  - ruby-code-style
+  - ruby-security
+  - ruby-best-practices:
+    rules:
+      percent-w:
+        ignore:
+          - '**'
