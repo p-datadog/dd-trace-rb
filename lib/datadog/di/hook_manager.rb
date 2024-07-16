@@ -38,6 +38,7 @@ module Datadog
     class HookManager
       def initialize
         @pending_methods = Concurrent::Map.new
+        @pending_lines = Concurrent::Map.new
         @instrumented_methods = Concurrent::Map.new
         @instrumented_lines = Concurrent::Map.new
         @trace_points = Concurrent::Map.new
@@ -105,7 +106,7 @@ module Datadog
 
       def hook_method_when_defined(cls_name, meth_name, &block)
         begin
-          hook_method(cls_name, meth_name)
+          hook_method(cls_name, meth_name, &block)
           true
         rescue Error::DITargetNotDefined
           pending_methods[[cls_name, meth_name]] = block
@@ -145,9 +146,20 @@ module Datadog
         end
       end
 
+      def hook_line_when_defined(file, line_no, &block)
+        begin
+          hook_line(file, line_no, &block)
+          true
+        rescue Error::DITargetNotDefined
+          pending_lines[[file, line_no]] = block
+          false
+        end
+      end
+
       private
 
       attr_reader :pending_methods
+      attr_reader :pending_lines
       attr_reader :instrumented_methods
       attr_reader :instrumented_lines
       attr_reader :trace_points
