@@ -154,16 +154,35 @@ RSpec.describe Datadog::DI::HookManager do
 
     context 'when file is not loaded' do
       context 'when code tracking is available' do
+        let(:code_tracker) do
+          double('code tracker').tap do |code_tracker|
+            allow(code_tracker).to receive(:[])
+          end
+        end
+
+        before do
+          expect(Datadog::DI).to receive(:code_tracking_active?).and_return(true)
+          expect(Datadog::DI).to receive(:code_tracker).and_return(code_tracker)
+        end
+
         it 'returns false' do
           expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
           end).to be false
         end
+
+        xit 'does not install instrumentation' do
+          # TODO
+        end
       end
 
       context 'when code tracking is not available' do
-        it 'returns false' do
+        it 'returns true' do
           expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
-          end).to be false
+          end).to be true
+        end
+
+        xit 'installs instrumentation' do
+          # TODO
         end
       end
     end

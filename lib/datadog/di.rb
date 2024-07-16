@@ -37,6 +37,9 @@ module Datadog
         code_tracker.start
       end
 
+      # Returns whether code tracking is available.
+      # This method should be used instead of querying #code_tracker
+      # because the latter one may be nil.
       def code_tracking_active?
         code_tracker&.active? || false
       end
