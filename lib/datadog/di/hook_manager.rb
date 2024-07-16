@@ -21,14 +21,14 @@ module Datadog
     # TODO with module prepending virtual methods may be instrumentable
     # anyway?
     #
-    # Line hooking is currently done with a naive line tracepoint which
+    # Line hooking is currently done with a naive line trace point which
     # imposes no requirements on the code being instrumented, but carries
     # a serious performance penalty for the entire running application.
     #
     # An alternative line hooking implementation is to use targeted line
     # trace points. These require all code to be instrumented to have been
-    # loaded after a require tracepoint is installed to map the loaded
-    # code to its files, and the tracepoint then targets the particular
+    # loaded after a require trace point is installed to map the loaded
+    # code to its files, and the trace point then targets the particular
     # code object where the instrumented code is defined.
     # The targeted trace points rewrites VM instructions to trigger the
     # trace points on the desired line and otherwise has no performance
@@ -71,8 +71,8 @@ module Datadog
           instrumented_methods.clear
           instrumented_lines.clear
           trace_points.each do |line, submap|
-            submap.each do |file, tracepoint|
-              tracepoint.disable
+            submap.each do |file, trace_point|
+              trace_point.disable
             end
           end
           trace_points.clear
@@ -123,19 +123,19 @@ module Datadog
         instrumented_lines[line_no][file] = block
 
         trace_point_mutex.synchronize do
-          # Delete previous tracepoint, if any.
-          # We could have reused the previous tracepoint but there are
+          # Delete previous trace point, if any.
+          # We could have reused the previous trace point but there are
           # comments elsewhere in the datadog codebase about trace_points
           # needing to be reinstalled on occasion, therefore be safe and
-          # create a new tracepoint here.
+          # create a new trace point here.
           tp = trace_points[line_no]&.[](file)
           tp&.disable
 
           tp = TracePoint.new(:line) do |tp|
-            on_line_tracepoint(tp, callers: caller, &block)
+            on_line_trace_point(tp, callers: caller, &block)
           end
 
-          # Put the tracepoint into our tracking map first to prevent
+          # Put the trace point into our tracking map first to prevent
           # possible leakage if enabling it fails for any reason.
           trace_points[line_no] ||= {}
           trace_points[line_no][file] = tp
@@ -185,7 +185,7 @@ module Datadog
         raise Error::DITargetNotDefined, "Class not defined: #{cls_name}: #{exc.class}: #{exc}"
       end
 
-      def on_line_tracepoint(tp, **opts)
+      def on_line_trace_point(tp, **opts)
         cb = instrumented_lines[tp.lineno]&.[](File.basename(tp.path))
         cb&.call(tp, **opts)
       end
