@@ -14,6 +14,7 @@ module Datadog
     class CodeTracker
       def initialize
         @file_registry = Concurrent::Map.new
+        @active = false
       end
 
       def start
@@ -34,6 +35,12 @@ module Datadog
           file_registry[File.basename(path)] = tp.instruction_sequence
         end
         @compiled_trace_point.enable
+        @active = true
+      end
+
+      def active?
+        # TODO does this need to be locked?
+        @active
       end
 
       # Returns the RubVM::InstructionSequence (i.e. the compiled code)

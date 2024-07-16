@@ -114,10 +114,28 @@ module Datadog
         end
       end
 
+      # Instruments a particluar line in a source file.
+      # Note that this method only works for physical files,
+      # not for eval'd code, unless the eval'd code is associated with
+      # a filenam and client invokes this method with the correct
+      # file name for the eval'd code.
       def hook_line(file, line_no, &block)
         # TODO is file a basename, path suffix or full path?
         # Maybe support all?
         file = File.basename(file)
+
+        iseq = nil
+        # TODO global reference
+        if DI.code_tracking_active?
+          iseq = DI.code_tracker[file]
+          unless iseq
+            # If code tracking is active, and the file requested is not
+            # in the code tracker registry, do nont install a non-targeted
+            # line probe on the file in question to avoid tanking the
+            # performance of the  application.
+            raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
+          end
+        end
 
         instrumented_lines[line_no] ||= {}
         instrumented_lines[line_no][file] = block

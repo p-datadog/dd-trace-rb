@@ -37,6 +37,10 @@ module Datadog
         code_tracker.start
       end
 
+      def code_tracking_active?
+        code_tracker&.active? || false
+      end
+
       def component
         Datadog.send(:components).dynamic_instrumentation
       end
