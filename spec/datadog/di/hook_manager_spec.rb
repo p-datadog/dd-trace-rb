@@ -147,6 +147,67 @@ RSpec.describe Datadog::DI::HookManager do
     end
   end
 
+  describe '.hook_line_when_defined' do
+    let(:manager) do
+      described_class.new
+    end
+
+    context 'when file is not loaded' do
+      it 'returns false' do
+        expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
+        end).to be false
+      end
+    end
+
+    context 'when file is loaded later' do
+      context 'when code tracking is available' do
+        it 'returns false, then instruments after definition' do
+          invoked = false
+
+          expect(manager.hook_line_when_defined('hook_line_delayed_ct.rb', 3) do |tp|
+            invoked = true
+          end).to be false
+
+          expect(manager.send(:pending_lines)[['hook_line_delayed_ct.rb', 3]]).to be_a(Proc)
+          expect(manager.send(:instrumented_lines)[['hook_line_delayed_ct.rb', 3]]).to be nil
+
+          require_relative 'hook_line_delayed'
+
+          # Method should now be hooked, and no longer pending
+          expect(manager.send(:pending_lines)[['hook_line_delayed_ct.rb', 3]]).to be nil
+          expect(manager.send(:instrumented_lines)[['hook_line_delayed_ct.rb', 3]]).to be_a(Integer)
+
+          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+
+          expect(invoked).to be true
+        end
+      end
+
+      context 'when code tracking is not available' do
+        it 'instruments immediately' do
+          invoked = false
+
+          expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
+            invoked = true
+          end).to be true
+
+          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+          expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
+
+          require_relative 'hook_line_delayed'
+
+          # Method should now be hooked, and no longer pending
+          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+          expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
+
+          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+
+          expect(invoked).to be true
+        end
+      end
+    end
+  end
+
   describe '.hook_line' do
     context 'method definition line' do
       it 'does not invoke callback' do
