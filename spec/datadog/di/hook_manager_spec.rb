@@ -153,9 +153,18 @@ RSpec.describe Datadog::DI::HookManager do
     end
 
     context 'when file is not loaded' do
-      it 'returns false' do
-        expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
-        end).to be false
+      context 'when code tracking is available' do
+        it 'returns false' do
+          expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
+          end).to be false
+        end
+      end
+
+      context 'when code tracking is not available' do
+        it 'returns false' do
+          expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
+          end).to be false
+        end
       end
     end
 
