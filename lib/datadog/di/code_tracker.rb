@@ -38,6 +38,8 @@ module Datadog
         @active = true
       end
 
+      # Returns whether this code tracker has been activated and is
+      # tracking.
       def active?
         # TODO does this need to be locked?
         @active
