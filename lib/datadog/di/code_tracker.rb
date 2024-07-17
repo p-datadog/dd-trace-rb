@@ -26,7 +26,7 @@ module Datadog
         # do nothing if the code tracker has already started.
         return if @compiled_trace_point
 
-        @compiled_trace_point = TracePoint.enable(:script_compiled) do |tp|
+        @compiled_trace_point = TracePoint.trace(:script_compiled) do |tp|
           # Useful attributes of the trace point here:
           # .instruction_sequence
           # .method_id
