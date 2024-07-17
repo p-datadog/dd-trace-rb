@@ -174,12 +174,13 @@ module Datadog
         end
       end
 
-      private
-
       attr_reader :pending_methods
       attr_reader :pending_lines
       attr_reader :instrumented_methods
       attr_reader :instrumented_lines
+
+      private
+
       attr_reader :trace_points
       attr_reader :next_mutex
       attr_reader :trace_point_mutex

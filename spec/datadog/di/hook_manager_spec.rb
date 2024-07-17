@@ -38,6 +38,21 @@ RSpec.describe Datadog::DI::HookManager do
     end
   end
 
+  shared_context 'DI component referencing hook manager under test' do
+
+    let(:component) do
+      double('DI component').tap do |component|
+        allow(component).to receive(:hook_manager).and_return(manager)
+      end
+    end
+
+    before do
+      # TODO think about how the hook manager would make it into
+      # the DI component in unit tests/partial initialization scenarios
+      allow(Datadog::DI).to receive(:component).and_return(component)
+    end
+  end
+
   after do
     manager.clear_hooks
     #manager.close
@@ -48,6 +63,8 @@ RSpec.describe Datadog::DI::HookManager do
   end
 
   describe '.hook_method' do
+    include_context 'DI component referencing hook manager under test'
+
     context 'no args' do
       it 'invokes callback' do
         manager.hook_method(:HookTestClass, :hook_test_method) do |payload|
@@ -112,6 +129,8 @@ RSpec.describe Datadog::DI::HookManager do
       described_class.new
     end
 
+    include_context 'DI component referencing hook manager under test'
+
     context 'when class does not exist' do
       it 'returns false' do
         expect(manager.hook_method_when_defined(:NonExistent, :non_existent) do |payload|
@@ -151,6 +170,8 @@ RSpec.describe Datadog::DI::HookManager do
     let(:manager) do
       described_class.new
     end
+
+    include_context 'DI component referencing hook manager under test'
 
     context 'when file is not loaded' do
       context 'when code tracking is available' do
