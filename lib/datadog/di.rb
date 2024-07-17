@@ -32,9 +32,29 @@ module Datadog
     class << self
       attr_reader :code_tracker
 
+      # Activates code tracking. Normally this method should be called
+      # when the application starts. If instrumenting third-party code,
+      # code tracking needs to be enabled before the third-party libraries
+      # are loaded. If you definitely will not be instrumenting
+      # third-party libraries, activating tracking after third-party libraries
+      # have been loaded may improve lookup performance.
+      #
+      # TODO test that activating tracker multiple times preserves
+      # existing mappings in the registry
       def activate_tracking!
         @code_tracker = CodeTracker.new
         code_tracker.start
+      end
+
+      # Deactivates code tracking. In normal usage of DI this method should
+      # never be called, however it is used by DI's test suite to reset
+      # state for individual tests.
+      #
+      # Note that deactivating tracking clears out the registry, losing
+      # the ability to look up files that have been loaded into the process
+      # already.
+      def deactivate_tracking!
+        code_tracker&.stop
       end
 
       # Returns whether code tracking is available.

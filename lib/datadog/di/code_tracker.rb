@@ -14,11 +14,19 @@ module Datadog
     class CodeTracker
       def initialize
         @file_registry = Concurrent::Map.new
-        @active = false
       end
 
       def start
-        @compiled_trace_point = TracePoint.new(:script_compiled) do |tp|
+        # If this code tracker is already running, we can do nothing or
+        # restart it (by disabling the trace point and recreating it).
+        # It is likely that some applications will attempt to activate
+        # DI more than once where the intention is to just activate DI;
+        # do not break such applications by clearing out the registry.
+        # For now, until there is a use case for recreating the trace point,
+        # do nothing if the code tracker has already started.
+        return if @compiled_trace_point
+
+        @compiled_trace_point = TracePoint.enable(:script_compiled) do |tp|
           # Useful attributes of the trace point here:
           # .instruction_sequence
           # .method_id
@@ -33,22 +41,31 @@ module Datadog
 
           # TODO fix this to properly deal with paths
           file_registry[File.basename(path)] = tp.instruction_sequence
+
+          DI.component&.hook_manager&.install_pending_line_hooks(path)
         end
-        @compiled_trace_point.enable
-        @active = true
       end
 
       # Returns whether this code tracker has been activated and is
       # tracking.
       def active?
         # TODO does this need to be locked?
-        @active
+        !!@compiled_trace_point
       end
 
       # Returns the RubVM::InstructionSequence (i.e. the compiled code)
       # for the provided path.
       def [](path)
         file_registry[path]
+      end
+
+      def stop
+        # Permit multiple stop calls.
+        @compiled_trace_point&.disable
+        # Clear the instance variable so that the trace point may be
+        # reinstated in the future.
+        @compiled_trace_point = nil
+        file_registry.clear
       end
 
       private
