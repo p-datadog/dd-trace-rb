@@ -174,6 +174,26 @@ module Datadog
         end
       end
 
+      def install_pending_line_hooks(file)
+        pending_lines.each do |spec, block|
+          spec_file, spec_line = spec
+          # TODO handle paths properly
+          if File.basename(file) == spec_file
+            begin
+              hook_line(spec_file, spec_line, &block)
+            rescue Error::DITargetNotDefined
+              # Maybe line is out of range?
+              # TODO reconsider what to do here
+              next
+            end
+
+            # TODO this is not thread-safe, all operations on
+            # pending_lines must be under a single lock
+            pending_lines.delete(spec)
+          end
+        end
+      end
+
       attr_reader :pending_methods
       attr_reader :pending_lines
       attr_reader :instrumented_methods

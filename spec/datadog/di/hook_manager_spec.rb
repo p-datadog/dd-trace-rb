@@ -210,6 +210,14 @@ RSpec.describe Datadog::DI::HookManager do
 
     context 'when file is loaded later' do
       context 'when code tracking is available' do
+        before do
+          Datadog::DI.activate_tracking!
+        end
+
+        after do
+          Datadog::DI.deactivate_tracking!
+        end
+
         it 'returns false, then instruments after definition' do
           invoked = false
 
