@@ -13,7 +13,7 @@ module Datadog
     # recreated when the DI component is created.
     class CodeTracker
       def initialize
-        @file_registry = Concurrent::Map.new
+        @registry = Concurrent::Map.new
       end
 
       def start
@@ -37,10 +37,10 @@ module Datadog
           #
           # For now just map the path to the instruction sequence.
           path = tp.instruction_sequence.path
-          file_registry[path] = tp.instruction_sequence
+          registry[path] = tp.instruction_sequence
 
           # TODO fix this to properly deal with paths
-          file_registry[File.basename(path)] = tp.instruction_sequence
+          registry[File.basename(path)] = tp.instruction_sequence
 
           DI.component&.hook_manager&.install_pending_line_hooks(path)
         end
@@ -56,7 +56,7 @@ module Datadog
       # Returns the RubVM::InstructionSequence (i.e. the compiled code)
       # for the provided path.
       def [](path)
-        file_registry[path]
+        registry[path]
       end
 
       def stop
@@ -65,12 +65,14 @@ module Datadog
         # Clear the instance variable so that the trace point may be
         # reinstated in the future.
         @compiled_trace_point = nil
-        file_registry.clear
+        registry.clear
       end
 
       private
 
-      attr_reader :file_registry
+      # Mapping from paths of loaded files to RubyVM::InstructionSequence
+      # objects representing compiled code of those files.
+      attr_reader :registry
     end
   end
 end
