@@ -218,6 +218,10 @@ RSpec.describe Datadog::DI::HookManager do
           Datadog::DI.deactivate_tracking!
         end
 
+        before do
+          expect(Datadog::DI.component.hook_manager).to be manager
+        end
+
         it 'returns false, then instruments after definition' do
           invoked = false
 
@@ -226,15 +230,15 @@ RSpec.describe Datadog::DI::HookManager do
           end).to be false
 
           expect(manager.send(:pending_lines)[['hook_line_delayed_ct.rb', 3]]).to be_a(Proc)
-          expect(manager.send(:instrumented_lines)[['hook_line_delayed_ct.rb', 3]]).to be nil
+          expect(manager.send(:instrumented_lines)[3]).to be nil
 
-          require_relative 'hook_line_delayed'
+          require_relative 'hook_line_delayed_ct'
 
           # Method should now be hooked, and no longer pending
           expect(manager.send(:pending_lines)[['hook_line_delayed_ct.rb', 3]]).to be nil
-          expect(manager.send(:instrumented_lines)[['hook_line_delayed_ct.rb', 3]]).to be_a(Integer)
+          expect(manager.send(:instrumented_lines)[3]['hook_line_delayed_ct.rb']).to be_a(Proc)
 
-          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+          expect(HookLineDelayedCtTestClass.new.test_method).to eq 42
 
           expect(invoked).to be true
         end
