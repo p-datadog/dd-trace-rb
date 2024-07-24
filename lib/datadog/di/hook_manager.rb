@@ -188,7 +188,7 @@ module Datadog
           iseq = DI.code_tracker&.[](file)
 
           # TODO internal check - remove or use a proper exception
-          if !seq && !settings.internal_dynamic_instrumentation.untargeted_trace_points
+          if !iseq && !settings.internal_dynamic_instrumentation.untargeted_trace_points
             raise "Trying to use an untargeted trace point when user did not permit it"
           end
 
