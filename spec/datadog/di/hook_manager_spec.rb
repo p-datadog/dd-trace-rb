@@ -32,6 +32,7 @@ RSpec.describe Datadog::DI::HookManager do
   let(:di_settings) do
     double('di settings').tap do |settings|
       allow(settings).to receive(:enabled).and_return(true)
+      allow(settings).to receive(:untargeted_trace_points).and_return(false)
     end
   end
 
