@@ -196,6 +196,9 @@ RSpec.describe Datadog::DI::HookManager do
         before do
           expect(Datadog::DI).to receive(:code_tracking_active?).and_return(true)
           expect(Datadog::DI).to receive(:code_tracker).and_return(code_tracker)
+          # TODO test with untargeted trace points enabled?
+          # behavior is the same.
+          expect(di_settings).to receive(:untargeted_trace_points).and_return(false)
         end
 
         it 'returns false' do
@@ -232,6 +235,9 @@ RSpec.describe Datadog::DI::HookManager do
 
         before do
           expect(Datadog::DI.component.hook_manager).to be manager
+          # TODO test with untargeted trace points enabled?
+          # behavior is the same.
+          expect(di_settings).to receive(:untargeted_trace_points).and_return(false)
         end
 
         it 'returns false, then instruments after definition' do
