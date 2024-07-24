@@ -280,15 +280,15 @@ RSpec.describe Datadog::DI::HookManager do
               invoked = true
             end).to be false
 
-            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be_a(Proc)
             expect(manager.send(:instrumented_lines)[3]).to be nil
 
             require_relative 'hook_line_delayed'
 
-            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be_a(Proc)
             expect(manager.send(:instrumented_lines)[3]).to be nil
 
-            expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+            expect(HookLineDelayedTestClass.new.test_method).to eq 42
 
             expect(invoked).to be false
 
@@ -298,7 +298,7 @@ RSpec.describe Datadog::DI::HookManager do
               invoked = true
             end).to be true
 
-            expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+            expect(HookLineDelayedTestClass.new.test_method).to eq 42
 
             expect(invoked).to be true
           end
