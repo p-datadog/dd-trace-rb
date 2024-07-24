@@ -269,6 +269,7 @@ RSpec.describe Datadog::DI::HookManager do
             double('di settings').tap do |settings|
               allow(settings).to receive(:enabled).and_return(true)
               allow(settings).to receive(:propagate_all_exceptions).and_return(false)
+              allow(settings).to receive(:untargeted_trace_points).and_return(false)
             end
           end
 
@@ -304,6 +305,14 @@ RSpec.describe Datadog::DI::HookManager do
         end
 
         context 'untargeted trace points enabled' do
+          let(:di_settings) do
+            double('di settings').tap do |settings|
+              allow(settings).to receive(:enabled).and_return(true)
+              allow(settings).to receive(:propagate_all_exceptions).and_return(false)
+              allow(settings).to receive(:untargeted_trace_points).and_return(true)
+            end
+          end
+
           it 'instruments immediately' do
             invoked = false
 
@@ -312,15 +321,15 @@ RSpec.describe Datadog::DI::HookManager do
             end).to be true
 
             expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
-            expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
+            expect(manager.send(:instrumented_lines)[3]['hook_line_delayed.rb']).to be_a(Proc)
 
             require_relative 'hook_line_delayed'
 
-            # Method should now be hooked, and no longer pending
+            # No change in state
             expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
-            expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
+            expect(manager.send(:instrumented_lines)[3]['hook_line_delayed.rb']).to be_a(Proc)
 
-            expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+            expect(HookLineDelayedTestClass.new.test_method).to eq 42
 
             expect(invoked).to be true
           end
