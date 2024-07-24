@@ -152,6 +152,11 @@ module Datadog
               raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
             end
           end
+        elsif !settings.internal_dynamic_instrumentation.untargeted_trace_points
+          # Same as previous comment, if untargeted trace points are not
+          # explicitly defined, and we do not have code tracking, do not
+          # instrument the method.
+          raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
         end
 
         instrumented_lines[line_no] ||= {}
@@ -181,6 +186,11 @@ module Datadog
           trace_points[line_no][file] = tp
 
           iseq = DI.code_tracker&.[](file)
+
+          # TODO internal check - remove or use a proper exception
+          if !seq && !settings.internal_dynamic_instrumentation.untargeted_trace_points
+            raise "Trying to use an untargeted trace point when user did not permit it"
+          end
 
           tp.enable(target: iseq)
         end
