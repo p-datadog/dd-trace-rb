@@ -133,16 +133,34 @@ module Datadog
         if DI.code_tracking_active?
           iseq = DI.code_tracker[file]
           unless iseq
-            # If code tracking is active, and the file requested is not
-            # in the code tracker registry, do nont install a non-targeted
-            # line probe on the file in question to avoid tanking the
-            # performance of the  application.
-            raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
+            if settings.internal_dynamic_instrumentation.untargeted_trace_points
+              # Continue withoout targeting the trace point.
+              # This is going to cause a serious performance penalty for
+              # the entire file containing the line to be instrumented.
+            else
+              # Do not use untargeted trace points unless they have been
+              # explicitly requested by the user, since they cause a
+              # serious performance penalty.
+              #
+              # If the requested file is not in code tracker's registry,
+              # or the code tracker does not exist at all,
+              # do not attempt to instrumnet now.
+              # The caller should add the line to the list of pending lines
+              # to instrument and install the hook when the file in
+              # question is loaded (and hopefully, by then code tracking
+              # is active, otherwise the line will never be instrumented.)
+              raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
+            end
           end
         end
 
         instrumented_lines[line_no] ||= {}
         instrumented_lines[line_no][file] = block
+
+        # TODO if trace point is not targeted, we only need one
+        # trace point per file, not one per line.
+        # Trace point per line should still function but the performance
+        # penalty will be taken for each trace point defined in the file.
 
         trace_point_mutex.synchronize do
           # Delete previous trace point, if any.
