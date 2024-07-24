@@ -28,6 +28,37 @@ module Datadog
                 o.default false
               end
 
+              # This option instructs dynamic instrumentation to use
+              # untargeted trace points when installing line probes and
+              # code tracking is not active.
+              # WARNING: untargeted trace points carry a massive performance
+              # penalty for the entire file in which a line probe is placed.
+              #
+              # If this option is set to false, which is the default,
+              # dynamic instrumentation will add probes that reference
+              # unknown files to the list of pending probes, and when
+              # the respective files are loaded, the line probes will be
+              # installed using targeted trace points. If the file in
+              # question is already loaded when the probe is received
+              # (for example, it is in a third-party library loaded during
+              # application boot), and code tracking was not active when
+              # the file was loaded, such files will not be instrumentable
+              # via line probes.
+              #
+              # If this option is set to true
+              #
+              # activated, DI will in
+              # activated or because the files being targeted have beenIf true and code tracking is not enabled, dynamic instrumentation
+              # will use untargeted trace points.
+              # If false and code tracking is not enabled, dynamic
+              # instrumentation will not instrument any files loaded
+              # WARNING: these trace points will greatly degrade performance
+              # of all code in the instrumented files.
+              option :untargeted_trace_points do |o|
+                o.type :bool
+                o.default false
+              end
+
               # If true, all of the catch-all rescue blocks in DI
               # will propagate the exceptions onward.
               # WARNING: for internal Datadog use only - this will break
