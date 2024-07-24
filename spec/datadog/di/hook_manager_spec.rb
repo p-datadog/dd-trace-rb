@@ -23,13 +23,25 @@ RSpec.describe Datadog::DI::HookManager do
     end
   end
 
+  let(:settings) do
+    double('settings').tap do |settings|
+      allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
+    end
+  end
+
+  let(:di_settings) do
+    double('di settings').tap do |settings|
+      allow(settings).to receive(:enabled).and_return(true)
+    end
+  end
+
   let(:manager) do
     RSpec::Mocks.with_temporary_scope do
       # TODO consider splitting HookManager into a class that hooks and
       # a class that maintains registry of probes
       expect(TracePoint).to receive(:trace).with(:end).and_return(definition_trace_point)
 
-      described_class.new
+      described_class.new(settings)
     end.tap do |manager|
       # Since we are skipping definition trace point setup, we also
       # need to skip its teardown otherwise .close would try to disable
@@ -126,7 +138,7 @@ RSpec.describe Datadog::DI::HookManager do
 
   describe '.hook_method_when_defined' do
     let(:manager) do
-      described_class.new
+      described_class.new(settings)
     end
 
     include_context 'DI component referencing hook manager under test'
@@ -168,7 +180,7 @@ RSpec.describe Datadog::DI::HookManager do
 
   describe '.hook_line_when_defined' do
     let(:manager) do
-      described_class.new
+      described_class.new(settings)
     end
 
     include_context 'DI component referencing hook manager under test'
@@ -246,55 +258,66 @@ RSpec.describe Datadog::DI::HookManager do
 
       context 'when code tracking is not available' do
 
-        it 'does not instrument' do
-          invoked = false
+        context 'untargeted trace points disabled' do
+          let(:di_settings) do
+            double('di settings').tap do |settings|
+              allow(settings).to receive(:enabled).and_return(true)
+              allow(settings).to receive(:propagate_all_exceptions).and_return(false)
+            end
+          end
 
-          expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
-            invoked = true
-          end).to be false
+          it 'does not instrument' do
+            invoked = false
 
-          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
-          expect(manager.send(:instrumented_lines)[3]).to be nil
+            expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
+              invoked = true
+            end).to be false
 
-          require_relative 'hook_line_delayed'
+            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+            expect(manager.send(:instrumented_lines)[3]).to be nil
 
-          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
-          expect(manager.send(:instrumented_lines)[3]).to be nil
+            require_relative 'hook_line_delayed'
 
-          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+            expect(manager.send(:instrumented_lines)[3]).to be nil
 
-          expect(invoked).to be false
+            expect(HookManagerTestLateDefinition.new.test_method).to eq 42
 
-          # Repeat hook call to verify that the test is written correctly.
+            expect(invoked).to be false
 
-          expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
-            invoked = true
-          end).to be true
+            # Repeat hook call to verify that the test is written correctly.
 
-          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+            expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
+              invoked = true
+            end).to be true
 
-          expect(invoked).to be true
+            expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+
+            expect(invoked).to be true
+          end
         end
 
-        xit 'instruments immediately' do
-          invoked = false
+        context 'untargeted trace points enabled' do
+          it 'instruments immediately' do
+            invoked = false
 
-          expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
-            invoked = true
-          end).to be true
+            expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
+              invoked = true
+            end).to be true
 
-          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
-          expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
+            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+            expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
 
-          require_relative 'hook_line_delayed'
+            require_relative 'hook_line_delayed'
 
-          # Method should now be hooked, and no longer pending
-          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
-          expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
+            # Method should now be hooked, and no longer pending
+            expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+            expect(manager.send(:instrumented_lines)[['hook_line_delayed.rb', 3]]).to be_a(Integer)
 
-          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+            expect(HookManagerTestLateDefinition.new.test_method).to eq 42
 
-          expect(invoked).to be true
+            expect(invoked).to be true
+          end
         end
       end
     end
@@ -355,12 +378,12 @@ RSpec.describe Datadog::DI::HookManager do
         require_relative 'hook_line_targeted'
 
         # TODO the path key could be different in the future
-        expect(Datadog::DI.code_tracker.send(:file_registry)['hook_line_targeted.rb']).to be_a(RubyVM::InstructionSequence)
+        expect(Datadog::DI.code_tracker.send(:registry)['hook_line_targeted.rb']).to be_a(RubyVM::InstructionSequence)
       end
 
       it 'targets the trace point' do
         # TODO the path key could be different in the future
-        target = Datadog::DI.code_tracker.send(:file_registry)['hook_line_targeted.rb']
+        target = Datadog::DI.code_tracker.send(:registry)['hook_line_targeted.rb']
         expect(target).to be_a(RubyVM::InstructionSequence)
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(target: target).and_call_original

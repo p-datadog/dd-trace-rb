@@ -36,7 +36,9 @@ module Datadog
     #
     # @api private
     class HookManager
-      def initialize
+      def initialize(settings)
+        @settings = settings
+
         @pending_methods = Concurrent::Map.new
         @pending_lines = Concurrent::Map.new
         @instrumented_methods = Concurrent::Map.new
@@ -59,6 +61,8 @@ module Datadog
           end
         end
       end
+
+      attr_reader :settings
 
       # TODO test that close is called during component teardown and
       # the trace point is cleared
