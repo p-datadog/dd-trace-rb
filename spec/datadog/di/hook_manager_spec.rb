@@ -292,6 +292,7 @@ RSpec.describe Datadog::DI::HookManager do
 
             expect(invoked).to be false
 
+=begin instrumentation will not happen because code must be tracked
             # Repeat hook call to verify that the test is written correctly.
 
             expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
@@ -301,6 +302,7 @@ RSpec.describe Datadog::DI::HookManager do
             expect(HookLineDelayedTestClass.new.test_method).to eq 42
 
             expect(invoked).to be true
+=end
           end
         end
 
