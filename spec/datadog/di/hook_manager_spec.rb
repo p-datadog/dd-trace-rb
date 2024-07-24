@@ -245,7 +245,38 @@ RSpec.describe Datadog::DI::HookManager do
       end
 
       context 'when code tracking is not available' do
-        it 'instruments immediately' do
+
+        it 'does not instrument' do
+          invoked = false
+
+          expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
+            invoked = true
+          end).to be false
+
+          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+          expect(manager.send(:instrumented_lines)[3]).to be nil
+
+          require_relative 'hook_line_delayed'
+
+          expect(manager.send(:pending_lines)[['hook_line_delayed.rb', 3]]).to be nil
+          expect(manager.send(:instrumented_lines)[3]).to be nil
+
+          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+
+          expect(invoked).to be false
+
+          # Repeat hook call to verify that the test is written correctly.
+
+          expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
+            invoked = true
+          end).to be true
+
+          expect(HookManagerTestLateDefinition.new.test_method).to eq 42
+
+          expect(invoked).to be true
+        end
+
+        xit 'instruments immediately' do
           invoked = false
 
           expect(manager.hook_line_when_defined('hook_line_delayed.rb', 3) do |tp|
