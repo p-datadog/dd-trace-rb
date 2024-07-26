@@ -186,44 +186,12 @@ RSpec.describe Datadog::DI::HookManager do
 
     include_context 'DI component referencing hook manager under test'
 
-    context 'when file is not loaded' do
-      context 'when code tracking is available' do
-        let(:code_tracker) do
-          double('code tracker').tap do |code_tracker|
-            allow(code_tracker).to receive(:[])
-          end
-        end
-
-        before do
-          expect(Datadog::DI).to receive(:code_tracking_active?).and_return(true)
-          expect(Datadog::DI).to receive(:code_tracker).and_return(code_tracker)
-          # TODO test with untargeted trace points enabled?
-          # behavior is the same.
-          expect(di_settings).to receive(:untargeted_trace_points).and_return(false)
-        end
-
-        it 'returns false' do
-          expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
-          end).to be false
-        end
-
-        xit 'does not install instrumentation' do
-          # TODO
-        end
-      end
-
-      context 'when code tracking is not available' do
-        it 'returns true' do
-          expect(manager.hook_line_when_defined('nonexistent', 1) do |payload|
-          end).to be true
-        end
-
-        xit 'installs instrumentation' do
-          # TODO
-        end
-      end
-    end
-
+    # There is no test for when a file is not loaded,
+    # because the case of the file being loaded later incorporates the
+    # assertions for the file not being loaded initially.
+    # These tests are fairly long and copy-pasting half of them
+    # to have a separate test for the "not loaded" case doesn't make
+    # much sense.
     context 'when file is loaded later' do
       context 'when code tracking is available' do
         before do
