@@ -125,7 +125,7 @@ module Datadog
       # not for eval'd code, unless the eval'd code is associated with
       # a filenam and client invokes this method with the correct
       # file name for the eval'd code.
-      def hook_line(file, line_no, &block)
+      def hook_line_now(file, line_no, &block)
         # TODO is file a basename, path suffix or full path?
         # Maybe support all?
         file = File.basename(file)
@@ -200,12 +200,16 @@ module Datadog
 
       def hook_line_when_defined(file, line_no, &block)
         begin
-          hook_line(file, line_no, &block)
+          hook_line_now(file, line_no, &block)
           true
         rescue Error::DITargetNotDefined
           pending_lines[[file, line_no]] = block
           false
         end
+      end
+
+      def hook_line(file, line_no, &block)
+        hook_line_when_defined(file, line_no, &block)
       end
 
       def install_pending_line_hooks(file)
@@ -214,7 +218,7 @@ module Datadog
           # TODO handle paths properly
           if File.basename(file) == spec_file
             begin
-              hook_line(spec_file, spec_line, &block)
+              hook_line_now(spec_file, spec_line, &block)
             rescue Error::DITargetNotDefined
               # Maybe line is out of range?
               # TODO reconsider what to do here

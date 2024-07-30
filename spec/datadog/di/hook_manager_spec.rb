@@ -301,13 +301,13 @@ RSpec.describe Datadog::DI::HookManager do
     end
   end
 
-  describe '.hook_line' do
+  describe '.hook_line_now' do
     context 'method definition line' do
       it 'does not invoke callback' do
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(target: nil).and_call_original
 
-        manager.hook_line('hook_line.rb', 2) do |payload|
+        manager.hook_line_now('hook_line.rb', 2) do |payload|
           observed_calls << payload
         end
 
@@ -322,7 +322,7 @@ RSpec.describe Datadog::DI::HookManager do
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(target: nil).and_call_original
 
-        manager.hook_line('hook_line.rb', 3) do |payload|
+        manager.hook_line_now('hook_line.rb', 3) do |payload|
           observed_calls << payload
         end
 
@@ -335,11 +335,11 @@ RSpec.describe Datadog::DI::HookManager do
 
     context 'when hooked twice' do
       xit 'invokes callback only once' do
-        manager.hook_line('hook_line.rb', 3) do |payload|
+        manager.hook_line_now('hook_line.rb', 3) do |payload|
           observed_calls << payload
         end
 
-        manager.hook_line('hook_line.rb', 3) do |payload|
+        manager.hook_line_now('hook_line.rb', 3) do |payload|
           observed_calls << payload
         end
 
@@ -366,7 +366,7 @@ RSpec.describe Datadog::DI::HookManager do
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(target: target).and_call_original
 
-        manager.hook_line('hook_line_targeted.rb', 3) do |payload|
+        manager.hook_line_now('hook_line_targeted.rb', 3) do |payload|
           observed_calls << payload
         end
 
