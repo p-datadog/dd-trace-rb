@@ -24,7 +24,7 @@ module Datadog
       def initialize(settings, agent_settings)
         @settings = settings
         @agent_settings = agent_settings
-        @hook_manager = HookManager.new
+        @hook_manager = HookManager.new(settings)
         @defined_probes = Concurrent::Map.new
         @installed_probes = Concurrent::Map.new
         @probe_notifier_worker = ProbeNotifierWorker.new(settings, agent_settings)
