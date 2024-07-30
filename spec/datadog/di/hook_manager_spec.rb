@@ -37,7 +37,7 @@ RSpec.describe Datadog::DI::HookManager do
   end
 
   let(:manager) do
-    RSpec::Mocks.with_temporary_scope do
+    begin
       # TODO consider splitting HookManager into a class that hooks and
       # a class that maintains registry of probes
       expect(TracePoint).to receive(:trace).with(:end).and_return(definition_trace_point)
