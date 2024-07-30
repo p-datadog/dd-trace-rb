@@ -72,6 +72,8 @@ module Datadog
 
       def clear_hooks
         trace_point_mutex.synchronize do
+          pending_methods.clear
+          pending_lines.clear
           instrumented_methods.clear
           instrumented_lines.clear
           trace_points.each do |line, submap|
