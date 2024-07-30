@@ -200,6 +200,12 @@ module Datadog
             raise "Trying to use an untargeted trace point when user did not permit it"
           end
 
+          if iseq
+            puts '------- targeted ------------'
+          else
+            puts '/////////// untargeted /////////////'
+          end
+
           tp.enable(target: iseq)
         end
       end
