@@ -130,12 +130,20 @@ module Datadog
         # Maybe support all?
         file = File.basename(file)
 
+        # Memoize the value to ensure this method always uses the same
+        # value for the setting.
+        # Normally none of the settings should change, but in the test suite
+        # we use mock objects and the methods may be mocked with
+        # individual invocations, yielding different return values on
+        # different calls to the same method.
+        permit_untargeted_trace_points = settings.internal_dynamic_instrumentation.untargeted_trace_points
+
         iseq = nil
         # TODO global reference
         if DI.code_tracking_active?
           iseq = DI.code_tracker[file]
           unless iseq
-            if settings.internal_dynamic_instrumentation.untargeted_trace_points
+            if permit_untargeted_trace_points
               # Continue withoout targeting the trace point.
               # This is going to cause a serious performance penalty for
               # the entire file containing the line to be instrumented.
@@ -154,7 +162,7 @@ module Datadog
               raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
             end
           end
-        elsif !settings.internal_dynamic_instrumentation.untargeted_trace_points
+        elsif !permit_untargeted_trace_points
           # Same as previous comment, if untargeted trace points are not
           # explicitly defined, and we do not have code tracking, do not
           # instrument the method.
@@ -187,10 +195,8 @@ module Datadog
           trace_points[line_no] ||= {}
           trace_points[line_no][file] = tp
 
-          iseq = DI.code_tracker&.[](file)
-
           # TODO internal check - remove or use a proper exception
-          if !iseq && !settings.internal_dynamic_instrumentation.untargeted_trace_points
+          if !iseq && !permit_untargeted_trace_points
             raise "Trying to use an untargeted trace point when user did not permit it"
           end
 
