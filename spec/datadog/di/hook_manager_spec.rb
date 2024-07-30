@@ -303,6 +303,12 @@ RSpec.describe Datadog::DI::HookManager do
 
   describe '.hook_line_now' do
     context 'method definition line' do
+      before do
+        # We need untargeted trace points for this test since the line
+        # being instrumented has already been loaded.
+        expect(di_settings).to receive(:untargeted_trace_points).and_return(true)
+      end
+
       it 'does not invoke callback' do
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(target: nil).and_call_original
@@ -318,6 +324,12 @@ RSpec.describe Datadog::DI::HookManager do
     end
 
     context 'line inside of method' do
+      before do
+        # We need untargeted trace points for this test since the line
+        # being instrumented has already been loaded.
+        expect(di_settings).to receive(:untargeted_trace_points).and_return(true)
+      end
+
       it 'invokes callback' do
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(target: nil).and_call_original
