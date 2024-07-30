@@ -24,7 +24,7 @@ module Datadog
 
         begin
           if probe.line?
-            hook_manager.hook_line(probe.file, probe.line_nos.first) do |tp|
+            hook_manager.hook_line_now(probe.file, probe.line_nos.first) do |tp|
               puts '*** line probe executed ***'
               ProbeNotifier.notify_emitting(probe)
               ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: caller)

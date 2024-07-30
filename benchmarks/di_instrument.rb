@@ -76,7 +76,7 @@ class DIInstrumentBenchmark
 
     hook_manager.clear_hooks
     calls = 0
-    hook_manager.hook_line(file, line + 1) do
+    hook_manager.hook_line_now(file, line + 1) do
       calls += 1
     end
 
@@ -117,7 +117,7 @@ class DIInstrumentBenchmark
 
     hook_manager.clear_hooks
     calls = 0
-    hook_manager.hook_line(targeted_file, targeted_line + 1) do
+    hook_manager.hook_line_now(targeted_file, targeted_line + 1) do
       calls += 1
     end
 
