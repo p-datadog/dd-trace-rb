@@ -4,6 +4,8 @@
 # enable dynamic instrumentation for third-party libraries used by the
 # application.
 
+require_relative '../tracing'
+require_relative '../tracing/contrib'
 require_relative '../di'
 
 Datadog::DI.activate_tracking!
