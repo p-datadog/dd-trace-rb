@@ -1,12 +1,21 @@
 #include <ruby.h>
-#include <datadog/common.h>
-#include <libdatadog_helpers.h>
+#include <datadog/profiling.h>
+
+#include "datadog_ruby_common.h"
 
 static VALUE _native_start_or_update_on_fork(int argc, VALUE *argv, DDTRACE_UNUSED VALUE _self);
 static VALUE _native_stop(DDTRACE_UNUSED VALUE _self);
+static void crashtracker_init(VALUE profiling_module);
 
 // Used to report Ruby VM crashes.
 // Once initialized, segfaults will be reported automatically using libdatadog.
+
+void DDTRACE_EXPORT Init_libdatadog_api(void) {
+  VALUE datadog_module = rb_define_module("Datadog");
+  VALUE profiling_module = rb_define_module_under(datadog_module, "Profiling");
+
+  crashtracker_init(profiling_module);
+}
 
 void crashtracker_init(VALUE profiling_module) {
   VALUE crashtracker_class = rb_define_class_under(profiling_module, "Crashtracker", rb_cObject);
@@ -38,7 +47,7 @@ static VALUE _native_start_or_update_on_fork(int argc, VALUE *argv, DDTRACE_UNUS
 
   if (action != start_action && action != update_on_fork_action) rb_raise(rb_eArgError, "Unexpected action: %+"PRIsVALUE, action);
 
-  VALUE version = ddtrace_version();
+  VALUE version = datadog_gem_version();
   ddog_prof_Endpoint endpoint = endpoint_from(exporter_configuration);
 
   // Tags are heap-allocated, so after here we can't raise exceptions otherwise we'll leak this memory
@@ -59,6 +68,9 @@ static VALUE _native_start_or_update_on_fork(int argc, VALUE *argv, DDTRACE_UNUS
     .endpoint = endpoint,
     .resolve_frames = DDOG_PROF_STACKTRACE_COLLECTION_ENABLED_WITH_SYMBOLS_IN_RECEIVER,
     .timeout_secs = FIX2INT(upload_timeout_seconds),
+    // Waits for crash tracker to finish reporting the issue before letting the Ruby process die; see
+    // https://github.com/DataDog/libdatadog/pull/477 for details
+    .wait_for_receiver = true,
   };
 
   ddog_prof_CrashtrackerMetadata metadata = {
@@ -83,7 +95,7 @@ static VALUE _native_start_or_update_on_fork(int argc, VALUE *argv, DDTRACE_UNUS
 
   ddog_prof_CrashtrackerResult result =
     action == start_action ?
-      ddog_prof_Crashtracker_init(config, receiver_config, metadata) :
+      ddog_prof_Crashtracker_init_with_receiver(config, receiver_config, metadata) :
       ddog_prof_Crashtracker_update_on_fork(config, receiver_config, metadata);
 
   // Clean up before potentially raising any exceptions
