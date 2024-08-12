@@ -159,14 +159,14 @@ module Datadog
               # to instrument and install the hook when the file in
               # question is loaded (and hopefully, by then code tracking
               # is active, otherwise the line will never be instrumented.)
-              raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
+              raise Error::DITargetNotDefined, "File not in code tracker registry: #{file}"
             end
           end
         elsif !permit_untargeted_trace_points
           # Same as previous comment, if untargeted trace points are not
           # explicitly defined, and we do not have code tracking, do not
           # instrument the method.
-          raise Error::DITargetNotDefined, "File #{file} not in code tracker registry"
+          raise Error::DITargetNotDefined, "File not in code tracker registry: #{file}"
         end
 
         instrumented_lines[line_no] ||= {}
