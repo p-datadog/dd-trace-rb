@@ -69,7 +69,7 @@ module Datadog
           rescue Error::AgentCommunicationError => exc
             raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
             # TODO
-            puts "failed to send probe statuses"
+            puts "failed to send probe statuses: #{exc.class}: #{exc}"
           end
         end
         statuses.any?
@@ -91,7 +91,7 @@ module Datadog
           rescue Error::AgentCommunicationError => exc
             raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
             # TODO
-            puts "failed to send probe snapshots"
+            puts "failed to send probe snapshots: #{exc.class}: #{exc}"
           end
         end
         snapshots.any?
