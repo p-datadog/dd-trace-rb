@@ -27,11 +27,15 @@ module Datadog
         return if defined?(@thread)
         @thread = Thread.new do
           loop do
-            if maybe_send
-              # Run next iteration immediately in case more work is
-              # in the queue
-            else
-              sleep 1
+            begin
+              if maybe_send
+                # Run next iteration immediately in case more work is
+                # in the queue
+              else
+                sleep 1
+              end
+            rescue => exc
+              warn "Error in probe notifier worker: #{exc.class}: #{exc}"
             end
           end
         end
