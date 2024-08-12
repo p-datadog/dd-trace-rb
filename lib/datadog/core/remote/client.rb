@@ -27,8 +27,8 @@ module Datadog
         # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/MethodLength,Metrics/CyclomaticComplexity
         def sync
           # TODO: Skip sync if no capabilities are registered
-          p 'remote: sending payload:'
-          pp payload
+          #p 'remote: sending payload:'
+          #pp payload
           response = transport.send_config(payload)
 
           if response.ok?
