@@ -19,12 +19,13 @@ module Datadog
       # config is one probe info
       def process(config)
         probe = ProbeBuilder.build_from_remote_config(config)
+        puts "Received probe from RC: #{probe.type} #{probe.location}"
         defined_probes[probe.id] = probe
         ProbeNotifier.notify_received(probe)
 
         begin
           if probe.line?
-            hook_manager.hook_line_now(probe.file, probe.line_nos.first) do |tp|
+            hook_manager.hook_line(probe.file, probe.line_nos.first) do |tp|
               puts '*** line probe executed ***'
               ProbeNotifier.notify_emitting(probe)
               ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: caller)

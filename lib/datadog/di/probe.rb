@@ -41,6 +41,24 @@ module Datadog
       def method?
         !!(type_name && method_name)
       end
+
+      def line_no
+        if line_nos.length == 1
+          line_nos.first
+        else
+          raise ArgumentError, "Multiple or missing line numbers: #{line_nos}"
+        end
+      end
+
+      def location
+        if method?
+          "#{type_name}.#{method_name}"
+        elsif line?
+          "#{file}:#{line_no}"
+        else
+          raise NotImplemented, 'Unhandled probe type'
+        end
+      end
     end
   end
 end
