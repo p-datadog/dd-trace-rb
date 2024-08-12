@@ -206,7 +206,7 @@ module Datadog
             puts '/////////// untargeted /////////////'
           end
 
-          tp.enable(target: iseq)
+          tp.enable(target: iseq, target_line: line_no)
         end
       end
 
@@ -275,8 +275,11 @@ module Datadog
       end
 
       def on_line_trace_point(tp, **opts)
-        cb = instrumented_lines[tp.lineno]&.[](File.basename(tp.path))
-        cb&.call(tp, **opts)
+        time = Benchmark.realtime do
+          cb = instrumented_lines[tp.lineno]&.[](File.basename(tp.path))
+          cb&.call(tp, **opts)
+        end
+        puts "-- invocation time: #{time} #{tp.path}:#{tp.lineno}"
       end
     end
   end
