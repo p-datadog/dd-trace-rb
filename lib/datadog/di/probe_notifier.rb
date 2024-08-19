@@ -47,6 +47,36 @@ module Datadog
         # Component can be nil in unit tests.
         return unless component
 
+        captures = if probe.method?
+          {
+            entry: {
+              arguments: {},
+              locals: snapshot || {},
+              throwable: nil,
+            },
+            return: {
+              arguments: {},
+              locals: {
+                '@return': {
+                  value: rv.to_s,
+                  type: rv.class.name,
+                },
+              },
+              throwable: nil,
+            },
+          }
+        elsif probe.line?
+          {
+            lines: {
+              probe.line_no => {locals: snapshot},
+            },
+          }
+        end
+
+        actual_file = callers.detect do |caller|
+          File.basename(caller.sub(/:.*/, '')) == File.basename(probe.file)
+        end.sub(/:.*/, '')
+
         timestamp = timestamp_now
         payload = {
           service: Datadog.configuration.service,
@@ -58,8 +88,8 @@ module Datadog
               id: probe.id,
               version: 0,
               location: {
-                file: probe.file,
-                lines: probe.line_nos,
+                file: actual_file,
+                lines: probe.line_nos,#.map(&:to_s),
                 method: probe.method_name,
                 type: probe.type_name,
               },
@@ -67,24 +97,8 @@ module Datadog
             language: 'ruby',
             #language: 'python',
             # TODO add test coverage for callers being nil
-            stack: callers && format_callers(callers),
-            captures: {
-              entry: {
-                arguments: {},
-                locals: snapshot || {},
-                throwable: nil,
-              },
-              return: {
-                arguments: {},
-                locals: {
-                  '@return': {
-                    value: rv.to_s,
-                    type: rv.class.name,
-                  },
-                },
-                throwable: nil,
-              },
-            },
+            stack: [{fileName:actual_file,lineNumber:probe.line_no},{fileName:actual_file,lineNumber:probe.line_no}]+(callers && format_callers(callers)),
+            captures: captures,
           },
           # In python tracer duration is under debugger.snapshot,
           # but UI appears to expect it here at top level.
