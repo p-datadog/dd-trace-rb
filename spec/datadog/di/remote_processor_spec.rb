@@ -53,7 +53,7 @@ RSpec.describe Datadog::DI::RemoteProcessor do
           "version"=>0,
           "type"=>"LOG_PROBE",
           "language"=>"ruby",
-          "where"=>{"sourceFile"=>"aaa", "lines"=>[nil]},
+          "where"=>{"sourceFile"=>"aaa", "lines"=>[2]},
           "tags"=>[],
           "template"=>"In aaa, line 1",
           "segments"=>[{"str"=>"In aaa, line 1"}],
@@ -64,10 +64,37 @@ RSpec.describe Datadog::DI::RemoteProcessor do
       end
 
       it 'parses the probe and adds it to the defined probe list' do
+        expect(hook_manager).to receive(:hook_line).with('aaa', 2)
+
         processor.process(config)
 
-        expect(defined_probes.length).to be 1
+        expect(defined_probes.length).to eq 1
         expect(defined_probes["3ecfd456-2d7c-4359-a51f-d4cc44141ffe"]).to be_a(Datadog::DI::Probe)
+      end
+
+      context 'lines is array of nil' do
+        let(:config) do
+           {"id"=>"3ecfd456-2d7c-4359-a51f-d4cc44141ffe",
+            "version"=>0,
+            "type"=>"LOG_PROBE",
+            "language"=>"ruby",
+            "where"=>{"sourceFile"=>"aaa", "lines"=>[nil]},
+            "tags"=>[],
+            "template"=>"In aaa, line 1",
+            "segments"=>[{"str"=>"In aaa, line 1"}],
+            "captureSnapshot"=>false,
+            "capture"=>{"maxReferenceDepth"=>3},
+            "sampling"=>{"snapshotsPerSecond"=>5000},
+            "evaluateAt"=>"EXIT"}
+        end
+
+        it 'parses the probe and adds it to the defined probe list' do
+          expect(hook_manager).not_to receive(:hook_line)
+
+          processor.process(config)
+
+          expect(defined_probes.length).to eq 0
+        end
       end
     end
   end

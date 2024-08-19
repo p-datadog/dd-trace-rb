@@ -311,7 +311,7 @@ RSpec.describe Datadog::DI::HookManager do
 
       it 'does not invoke callback' do
 
-        expect_any_instance_of(TracePoint).to receive(:enable).with(target: nil).and_call_original
+        expect_any_instance_of(TracePoint).to receive(:enable).with(no_args).and_call_original
 
         manager.hook_line_now('hook_line.rb', 2) do |payload|
           observed_calls << payload
@@ -332,7 +332,7 @@ RSpec.describe Datadog::DI::HookManager do
 
       it 'invokes callback' do
 
-        expect_any_instance_of(TracePoint).to receive(:enable).with(target: nil).and_call_original
+        expect_any_instance_of(TracePoint).to receive(:enable).with(no_args).and_call_original
 
         manager.hook_line_now('hook_line.rb', 3) do |payload|
           observed_calls << payload
@@ -376,7 +376,7 @@ RSpec.describe Datadog::DI::HookManager do
         target = Datadog::DI.code_tracker.send(:registry)['hook_line_targeted.rb']
         expect(target).to be_a(RubyVM::InstructionSequence)
 
-        expect_any_instance_of(TracePoint).to receive(:enable).with(target: target).and_call_original
+        expect_any_instance_of(TracePoint).to receive(:enable).with(target: target, target_line: 3).and_call_original
 
         manager.hook_line_now('hook_line_targeted.rb', 3) do |payload|
           observed_calls << payload
