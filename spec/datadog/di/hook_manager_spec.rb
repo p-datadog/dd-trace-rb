@@ -72,7 +72,7 @@ RSpec.describe Datadog::DI::HookManager do
   end
 
   let(:call_keys) do
-    [:callers, :duration, :rv]
+    [:args, :callers, :duration, :kwargs, :rv]
   end
 
   describe '.hook_method' do

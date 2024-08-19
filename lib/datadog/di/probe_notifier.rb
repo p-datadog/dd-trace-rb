@@ -25,7 +25,8 @@ module Datadog
       end
 
       module_function def notify_executed(probe,
-        tracepoint: nil, rv: nil, duration: nil, callers: nil
+        tracepoint: nil, rv: nil, duration: nil, callers: nil,
+        args: nil, kwargs: nil
       )
         snapshot = if probe.line? && probe.capture_snapshot?
           if tracepoint.nil?
@@ -37,7 +38,7 @@ module Datadog
           callers = callers[0..9]
         end
         notify_snapshot(probe, rv: rv, snapshot: snapshot,
-          duration: duration, callers: callers)
+          duration: duration, callers: callers, args: args, kwargs: kwargs)
       end
 
       module_function def notify_snapshot(probe, rv: nil, snapshot: nil,
@@ -50,7 +51,8 @@ module Datadog
         captures = if probe.method?
           {
             entry: {
-              arguments: {},
+              arguments: {
+              },
               throwable: nil,
             },
             return: {

@@ -99,7 +99,7 @@ module Datadog
               duration = Benchmark.realtime do
                 rv = saved.bind(self).call(*args, **kwargs)
               end
-              yield rv: rv, duration: duration, callers: caller
+              yield rv: rv, duration: duration, callers: caller, args: args, kwargs: kwargs
               rv
             else
               saved.bind(self).call(*args, **kwargs)
