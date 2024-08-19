@@ -52,7 +52,7 @@ RSpec.describe Datadog::DI::RemoteProcessor do
          {"id"=>"3ecfd456-2d7c-4359-a51f-d4cc44141ffe",
           "version"=>0,
           "type"=>"LOG_PROBE",
-          "language"=>"python",
+          "language"=>"ruby",
           "where"=>{"sourceFile"=>"aaa", "lines"=>[nil]},
           "tags"=>[],
           "template"=>"In aaa, line 1",
