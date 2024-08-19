@@ -27,10 +27,19 @@ module Datadog
       module_function def notify_executed(probe,
         tracepoint: nil, rv: nil, duration: nil, callers: nil
       )
-        notify_snapshot(probe, rv: rv, duration: duration, callers: callers)
+        snapshot = if probe.capture_snapshot?
+          if tracepoint.nil?
+            raise "Cannot create snapshot because there is no trace point"
+          end
+          get_local_variables(tracepoint)
+        end
+        notify_snapshot(probe, rv: rv, snapshot: snapshot,
+          duration: duration, callers: callers)
       end
 
-      module_function def notify_snapshot(probe, rv: nil, duration: nil, callers: nil)
+      module_function def notify_snapshot(probe, rv: nil, snapshot: nil,
+        duration: nil, callers: nil
+      )
         component = DI.component
         # Component can be nil in unit tests.
         return unless component
@@ -59,7 +68,7 @@ module Datadog
             captures: {
               entry: {
                 arguments: {},
-                locals: {},
+                locals: snapshot || {},
                 throwable: nil,
               },
               return: {
@@ -92,6 +101,7 @@ module Datadog
             duration: duration ? duration * 1000 : nil),
           timestamp: timestamp,
         }
+        pp payload
 
         component.probe_notifier_worker.add_snapshot(payload)
       end
@@ -155,6 +165,13 @@ module Datadog
 
       module_function def timestamp_now
         (Time.now.to_f * 1000).to_i
+      end
+
+      module_function def get_local_variables(trace_point)
+        trace_point.local_variables.inject({}) do |map, name|
+          map[name] = trace_point.binding.local_variable_get(name)
+          map
+        end
       end
     end
   end
