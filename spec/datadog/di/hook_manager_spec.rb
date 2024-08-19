@@ -232,6 +232,9 @@ RSpec.describe Datadog::DI::HookManager do
       end
 
       context 'when code tracking is not available' do
+        before do
+          Datadog::DI.deactivate_tracking!
+        end
 
         context 'untargeted trace points disabled' do
           before do
