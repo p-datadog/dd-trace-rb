@@ -42,7 +42,7 @@ module Datadog
       end
 
       module_function def notify_snapshot(probe, rv: nil, snapshot: nil,
-        duration: nil, callers: nil
+        duration: nil, callers: nil, args: nil, kwargs: nil
       )
         component = DI.component
         # Component can be nil in unit tests.
@@ -51,8 +51,7 @@ module Datadog
         captures = if probe.method?
           {
             entry: {
-              arguments: {
-              },
+              arguments: serialize_args(args, kwargs),
               throwable: nil,
             },
             return: {
@@ -208,6 +207,24 @@ module Datadog
           }
           map
         end
+      end
+
+      module_function def serialize_args(args, kwargs)
+        counter = 0
+        combined = args.inject({}) do |c, value|
+          counter += 1
+          # Conversion to symbol is needed here to put args ahead of
+          # kwargs when they are merged below.
+          c[:"arg#{counter}"] = value
+          c
+        end.update(kwargs)
+        serialize_vars(combined)
+      end
+
+      module_function def serialize_vars(vars)
+        Hash[vars.map do |k, v|
+          [k, {type: v.class.name, value: v}]
+        end]
       end
     end
   end
