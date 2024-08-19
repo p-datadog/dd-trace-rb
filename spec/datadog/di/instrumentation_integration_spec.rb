@@ -49,6 +49,10 @@ RSpec.describe 'Instrumentation integration' do
 
       it 'invokes probe' do
         remote_processor.process(probe_rc_spec)
+        expect(Datadog::DI::ProbeNotifier).to receive(:notify_executed) do |_probe, **opts|
+          p _probe
+          p opts[:tracepoint]
+        end
         expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
       end
     end
