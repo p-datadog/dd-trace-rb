@@ -206,7 +206,11 @@ module Datadog
             puts '/////////// untargeted /////////////'
           end
 
-          tp.enable(target: iseq, target_line: line_no)
+          if iseq
+            tp.enable(target: iseq, target_line: line_no)
+          else
+            tp.enable
+          end
         end
       end
 
