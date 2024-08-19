@@ -33,6 +33,9 @@ module Datadog
           end
           get_local_variables(tracepoint)
         end
+        if callers
+          callers = callers[0..9]
+        end
         notify_snapshot(probe, rv: rv, snapshot: snapshot,
           duration: duration, callers: callers)
       end
@@ -89,13 +92,13 @@ module Datadog
           host: nil,
           logger: {
             name: probe.file,
-            method: probe.method_name,
+            method: probe.method_name || 'no_method',
             thread_name: Thread.current.name,
             thread_id: Thread.current.native_thread_id,
             version: 2,
           },
-          'dd.trace_id': 423.to_s,
-          'dd.span_id': 4234.to_s,
+          'dd.trace_id': 136035165280417366521542318182735500431,
+          'dd.span_id': 17576285113343575026,
           ddsource: 'dd_debugger',
           message: evaluate_template(probe.template,
             duration: duration ? duration * 1000 : nil),
@@ -168,8 +171,12 @@ module Datadog
       end
 
       module_function def get_local_variables(trace_point)
-        trace_point.local_variables.inject({}) do |map, name|
-          map[name] = trace_point.binding.local_variable_get(name)
+        trace_point.binding.local_variables.inject({}) do |map, name|
+          value = trace_point.binding.local_variable_get(name)
+          map[name] = {
+            value: value,
+            type: value.class.name,
+          }
           map
         end
       end
