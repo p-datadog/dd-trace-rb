@@ -27,7 +27,7 @@ module Datadog
       module_function def notify_executed(probe,
         tracepoint: nil, rv: nil, duration: nil, callers: nil
       )
-        snapshot = if probe.capture_snapshot?
+        snapshot = if probe.line? && probe.capture_snapshot?
           if tracepoint.nil?
             raise "Cannot create snapshot because there is no trace point"
           end
@@ -51,12 +51,10 @@ module Datadog
           {
             entry: {
               arguments: {},
-              locals: snapshot || {},
               throwable: nil,
             },
             return: {
-              arguments: {},
-              locals: {
+              arguments: {
                 '@return': {
                   value: rv.to_s,
                   type: rv.class.name,
@@ -73,9 +71,29 @@ module Datadog
           }
         end
 
-        actual_file = callers.detect do |caller|
-          File.basename(caller.sub(/:.*/, '')) == File.basename(probe.file)
-        end.sub(/:.*/, '')
+        location = if probe.line?
+          actual_file = if probe.file
+            callers.detect do |caller|
+              File.basename(caller.sub(/:.*/, '')) == File.basename(probe.file)
+            end.sub(/:.*/, '')
+          end
+          {
+            file: actual_file,
+            lines: probe.line_nos,
+          }
+        elsif probe.method?
+          {
+            method: probe.method_name,
+            type: probe.type_name,
+          }
+        end
+
+        stack = if callers
+          format_callers(callers)
+        end
+        if probe.line?
+          stack = [{fileName:actual_file,lineNumber:probe.line_no},{fileName:actual_file,lineNumber:probe.line_no}]+stack
+        end
 
         timestamp = timestamp_now
         payload = {
@@ -87,17 +105,12 @@ module Datadog
             probe: {
               id: probe.id,
               version: 0,
-              location: {
-                file: actual_file,
-                lines: probe.line_nos,#.map(&:to_s),
-                method: probe.method_name,
-                type: probe.type_name,
-              },
+              location: location,
             },
             language: 'ruby',
             #language: 'python',
             # TODO add test coverage for callers being nil
-            stack: [{fileName:actual_file,lineNumber:probe.line_no},{fileName:actual_file,lineNumber:probe.line_no}]+(callers && format_callers(callers)),
+            stack: stack,
             captures: captures,
           },
           # In python tracer duration is under debugger.snapshot,
