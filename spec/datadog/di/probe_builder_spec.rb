@@ -63,5 +63,47 @@ RSpec.describe Datadog::DI::ProbeBuilder do
         end
       end
     end
+
+    context 'RC payload with capture snapshot' do
+      let(:rc_probe_spec) do
+         {"id"=>"3ecfd456-2d7c-4359-a51f-d4cc44141ffe",
+          "version"=>0,
+          "type"=>"LOG_PROBE",
+          "language"=>"python",
+          "where"=>{"sourceFile"=>"aaa", "lines"=>[nil]},
+          "tags"=>[],
+          "template"=>"In aaa, line 1",
+          "segments"=>[{"str"=>"In aaa, line 1"}],
+          "captureSnapshot"=>true,
+          "capture"=>{"maxReferenceDepth"=>3},
+          "sampling"=>{"snapshotsPerSecond"=>5000},
+          "evaluateAt"=>"EXIT"}
+      end
+
+      it 'capture_snapshot? is true' do
+        expect(probe.capture_snapshot?).to be true
+      end
+    end
+
+    context 'RC payload without capture snapshot' do
+      let(:rc_probe_spec) do
+         {"id"=>"3ecfd456-2d7c-4359-a51f-d4cc44141ffe",
+          "version"=>0,
+          "type"=>"LOG_PROBE",
+          "language"=>"python",
+          "where"=>{"sourceFile"=>"aaa", "lines"=>[nil]},
+          "tags"=>[],
+          "template"=>"In aaa, line 1",
+          "segments"=>[{"str"=>"In aaa, line 1"}],
+          "captureSnapshot"=>false,
+          "capture"=>{"maxReferenceDepth"=>3},
+          "sampling"=>{"snapshotsPerSecond"=>5000},
+          "evaluateAt"=>"EXIT"}
+      end
+
+      it 'capture_snapshot? is false' do
+        expect(probe.capture_snapshot?).to be false
+      end
+    end
   end
 end
