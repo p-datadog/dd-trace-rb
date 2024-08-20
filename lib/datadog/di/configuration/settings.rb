@@ -70,6 +70,16 @@ module Datadog
                 o.default false
               end
 
+              option :redacted_identifiers do |o|
+                o.type :array
+                o.default []
+              end
+
+              option :redacted_types do |o|
+                o.type :array
+                o.default []
+              end
+
             end
           end
         end
