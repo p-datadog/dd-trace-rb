@@ -88,7 +88,7 @@ RSpec.describe Datadog::DI::RemoteProcessor do
             "evaluateAt"=>"EXIT"}
         end
 
-        it 'parses the probe and adds it to the defined probe list' do
+        it 'fails to parse the probe and does not add it to the defined probe list' do
           expect(hook_manager).not_to receive(:hook_line)
 
           processor.process(config)
