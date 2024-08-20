@@ -8,6 +8,9 @@ module Datadog
 
       class DITargetNotDefined < Error
       end
+
+      class UnknownProbeType < Error
+      end
     end
   end
 end

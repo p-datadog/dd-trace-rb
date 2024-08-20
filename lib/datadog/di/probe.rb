@@ -56,7 +56,7 @@ module Datadog
         elsif line?
           "#{file}:#{line_no}"
         else
-          raise NotImplementedError, 'Unhandled probe type'
+          raise Error::UnknownProbeType, 'Unhandled probe type: neither method nor line probe'
         end
       end
     end
