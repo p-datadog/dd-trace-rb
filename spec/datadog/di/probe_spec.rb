@@ -33,6 +33,16 @@ RSpec.describe Datadog::DI::Probe do
         expect(probe.line?).to be false
       end
     end
+
+    context 'method probe with file name' do
+      let(:probe) do
+        described_class.new(id: '42', type: 'foo', type_name: 'FooClass', method_name: "bar", file: 'quux.rb')
+      end
+
+      it 'is false' do
+        expect(probe.line?).to be false
+      end
+    end
   end
 
   describe '#method?' do
@@ -49,6 +59,16 @@ RSpec.describe Datadog::DI::Probe do
     context 'method probe' do
       let(:probe) do
         described_class.new(id: '42', type: 'foo', type_name: 'FooClass', method_name: "bar")
+      end
+
+      it 'is true' do
+        expect(probe.method?).to be true
+      end
+    end
+
+    context 'method probe with file name' do
+      let(:probe) do
+        described_class.new(id: '42', type: 'foo', type_name: 'FooClass', method_name: "bar", file: 'quux.rb')
       end
 
       it 'is true' do

@@ -35,7 +35,7 @@ module Datadog
       end
 
       def line?
-        !!(line_nos && !line_nos.empty?)
+        !!(line_nos && !line_nos.empty?) && !method?
       end
 
       def method?
