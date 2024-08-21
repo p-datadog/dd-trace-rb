@@ -1,3 +1,5 @@
+require_relative 'redactor'
+
 module Datadog
   module DI
     #
@@ -9,7 +11,11 @@ module Datadog
 
       attr_reader :redactor
 
-      def serialize_value(value)
+      def serialize_value(name, value)
+        if redactor.redact_identifier?(name)
+          return {type: class_name(value.class), notCapturedReason: 'redactedIdent'}
+        end
+
         serialized = case value
         when Integer, Float, TrueClass, FalseClass, NilClass
           value.to_s
@@ -35,7 +41,7 @@ module Datadog
 
       def serialize_vars(vars)
         Hash[vars.map do |k, v|
-          [k, serialize_value(v)]
+          [k, serialize_value(k, v)]
         end]
       end
 

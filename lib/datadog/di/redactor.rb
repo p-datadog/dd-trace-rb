@@ -17,7 +17,7 @@ module Datadog
           names.map! do |name|
             normalize(name)
           end
-          Set.new(*names)
+          Set.new(names)
         end
       end
 
@@ -151,8 +151,9 @@ module Datadog
         "xsrftoken",
       ]
 
+      # Input can be a string or a symbol.
       def normalize(str)
-        str.strip.downcase.gsub('_', '')
+        str.to_s.strip.downcase.gsub('_', '')
       end
     end
   end

@@ -1,8 +1,23 @@
 require 'datadog/di/serializer'
 
 RSpec.describe Datadog::DI::Serializer do
+  let(:settings) do
+    double('settings').tap do |settings|
+      allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
+    end
+  end
+
+  let(:di_settings) do
+    double('di settings').tap do |settings|
+      allow(settings).to receive(:enabled).and_return(true)
+      allow(settings).to receive(:propagate_all_exceptions).and_return(false)
+      allow(settings).to receive(:redacted_identifiers).and_return([])
+    end
+  end
+
   let(:redactor) do
-    double('redactor')
+    #double('redactor')
+    Datadog::DI::Redactor.new(settings)
   end
 
   let(:serializer) do
@@ -18,6 +33,7 @@ RSpec.describe Datadog::DI::Serializer do
       ['int value', {a: 42}, {a: {type: 'Integer', value: 42}}],
       ['redacted value in predefined list', {password: '123'},
         {password: {type: 'String', notCapturedReason: 'redactedIdent'}}],
+      # TODO add redacted type
     ]
 
     CASES.each do |(name, value_, expected_)|
