@@ -10,6 +10,14 @@ module Datadog
       attr_reader :redactor
 
       def serialize_value(value)
+        serialized = case value
+        when Integer, Float, TrueClass, FalseClass, NilClass
+          value.to_s
+        when String
+          value
+        else
+          '[object]'
+        end
         {type: class_name(value.class), value: value}
       end
 
