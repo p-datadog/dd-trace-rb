@@ -51,15 +51,12 @@ module Datadog
         captures = if probe.method?
           {
             entry: {
-              arguments: serialize_args(args, kwargs),
+              arguments: serializer.serialize_args(args, kwargs),
               throwable: nil,
             },
             return: {
               arguments: {
-                '@return': {
-                  value: rv.to_s,
-                  type: rv.class.name,
-                },
+                '@return': serializer.serialize_value(rv),
               },
               throwable: nil,
             },
@@ -209,23 +206,6 @@ module Datadog
         end
       end
 
-      module_function def serialize_args(args, kwargs)
-        counter = 0
-        combined = args.inject({}) do |c, value|
-          counter += 1
-          # Conversion to symbol is needed here to put args ahead of
-          # kwargs when they are merged below.
-          c[:"arg#{counter}"] = value
-          c
-        end.update(kwargs)
-        serialize_vars(combined)
-      end
-
-      module_function def serialize_vars(vars)
-        Hash[vars.map do |k, v|
-          [k, {type: v.class.name, value: v}]
-        end]
-      end
     end
   end
 end
