@@ -10,7 +10,7 @@ module Datadog
       attr_reader :redactor
 
       def serialize_value(value)
-        {type: value.class.name, value: value}
+        {type: class_name(value.class), value: value}
       end
 
       def serialize_args(args, kwargs)
@@ -29,6 +29,15 @@ module Datadog
         Hash[vars.map do |k, v|
           [k, serialize_value(v)]
         end]
+      end
+
+      private
+
+      def class_name(cls)
+        # We could call `cls.to_s` to get the "standard" Ruby inspection of
+        # the class, but it is likely that user code can override #to_s
+        # and we don't want to invoke user code.
+        cls.name || '[Unnamed class]'
       end
     end
   end
