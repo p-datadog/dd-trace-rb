@@ -4,23 +4,33 @@ RSpec.describe Datadog::DI::Serializer do
   let(:redactor) do
     double('redactor')
   end
-  
+
   let(:serializer) do
     described_class.new(redactor)
   end
-  
+
   describe '.serialize_vars' do
     let(:serialized) do
       serializer.serialize_vars(vars)
     end
 
-    context 'int value' do
-      let(:vars) do
-        {a: 42}
-      end
+    CASES = [
+      ['int value', {a: 42}, {a: {type: 'Integer', value: 42}}],
+      ['redacted value in predefined list', {password: '123'},
+        {password: {type: 'String', notCapturedReason: 'redactedIdent'}}],
+    ]
 
-      it 'serializes as expected' do
-        expect(serialized).to eq(a: {type: 'Integer', value: 42})
+    CASES.each do |(name, value_, expected_)|
+      value = value_
+      expected = expected_
+
+      context name do
+
+        let(:vars) { value }
+
+        it 'serializes as expected' do
+          expect(serialized).to eq(expected)
+        end
       end
     end
   end
