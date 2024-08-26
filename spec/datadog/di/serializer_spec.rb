@@ -41,6 +41,8 @@ RSpec.describe Datadog::DI::Serializer do
         {value: {type: 'SensitiveType', notCapturedReason: 'redactedType'}}],
       ['empty array', {arr: []},
         {arr: {type: 'Array', value: []}}],
+      ['array of primitives', {arr: [42, 'hello', nil, true]},
+        {arr: {type: 'Array', value: []}}],
     ]
 
     CASES.each do |(name, value_, expected_)|

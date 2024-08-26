@@ -28,7 +28,7 @@ module Datadog
         else
           '[object]'
         end
-        {type: class_name(value.class), value: value}
+        {type: class_name(value.class), value: serialized}
       end
 
       def serialize_args(args, kwargs)
