@@ -39,6 +39,8 @@ RSpec.describe Datadog::DI::Serializer do
         {password: {type: 'String', notCapturedReason: 'redactedIdent'}}],
       ['redacted type', {value: SensitiveType.new},
         {value: {type: 'SensitiveType', notCapturedReason: 'redactedType'}}],
+      ['empty array', {arr: []},
+        {arr: {type: 'Array', value: []}}],
     ]
 
     CASES.each do |(name, value_, expected_)|
