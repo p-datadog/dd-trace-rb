@@ -39,4 +39,32 @@ RSpec.describe Datadog::DI::Redactor do
       end
     end
   end
+
+  describe '#redact_type?' do
+    class SensitiveType; end
+
+    let(:redacted_types) { [SensitiveType] }
+
+    before do
+      expect(di_settings).to receive(:redacted_types).and_return(redacted_types)
+    end
+
+    CASES = [
+      ['redacted', SensitiveType.new, true],
+      ['not redacted', /123/, false],
+      ['primitive type', nil, false],
+    ]
+
+    CASES.each do |(label, value_, redact_)|
+      value, redact = value_, redact_
+
+      context label do
+        let(:value) { value }
+
+        it do
+          expect(redactor.redact_type?(value)).to be redact
+        end
+      end
+    end
+  end
 end
