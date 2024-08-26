@@ -12,6 +12,10 @@ module Datadog
       attr_reader :redactor
 
       def serialize_value(name, value)
+        if redactor.redact_type?(value)
+          return {type: class_name(value.class), notCapturedReason: 'redactedType'}
+        end
+
         if redactor.redact_identifier?(name)
           return {type: class_name(value.class), notCapturedReason: 'redactedIdent'}
         end

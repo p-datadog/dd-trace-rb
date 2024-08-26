@@ -1,6 +1,9 @@
 require 'datadog/di/serializer'
 
 RSpec.describe Datadog::DI::Serializer do
+  class SensitiveType
+  end
+
   let(:settings) do
     double('settings').tap do |settings|
       allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
@@ -12,6 +15,7 @@ RSpec.describe Datadog::DI::Serializer do
       allow(settings).to receive(:enabled).and_return(true)
       allow(settings).to receive(:propagate_all_exceptions).and_return(false)
       allow(settings).to receive(:redacted_identifiers).and_return([])
+      allow(settings).to receive(:redacted_types).and_return([SensitiveType])
     end
   end
 
@@ -33,7 +37,8 @@ RSpec.describe Datadog::DI::Serializer do
       ['int value', {a: 42}, {a: {type: 'Integer', value: 42}}],
       ['redacted value in predefined list', {password: '123'},
         {password: {type: 'String', notCapturedReason: 'redactedIdent'}}],
-      # TODO add redacted type
+      ['redacted type', {value: SensitiveType.new},
+        {value: {type: 'SensitiveType', notCapturedReason: 'redactedType'}}],
     ]
 
     CASES.each do |(name, value_, expected_)|

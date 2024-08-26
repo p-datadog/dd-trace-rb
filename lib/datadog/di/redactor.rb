@@ -37,8 +37,8 @@ module Datadog
         end
       end
 
-      def redact_type?(name)
-        redacted_types.include?(name)
+      def redact_type?(value)
+        redacted_types.include?(value.class)
       end
 
       def maybe_redact_type(name)
