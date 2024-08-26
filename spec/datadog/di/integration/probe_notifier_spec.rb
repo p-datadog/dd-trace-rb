@@ -3,7 +3,7 @@ require 'datadog/di'
 RSpec.describe Datadog::DI::ProbeNotifier do
   describe 'log probe' do
     let(:probe) do
-      Datadog::DI::Probe.new(id: '123', type: 'LOG_PROBE')
+      Datadog::DI::Probe.new(id: '123', type: 'LOG_PROBE', type_name: 'X', method_name: 'y')
     end
 
     before do
@@ -51,8 +51,14 @@ RSpec.describe Datadog::DI::ProbeNotifier do
       expect(Datadog::DI).to receive(:component).and_return(component)
     end
 
-    it 'notifies' do
-      described_class.notify_snapshot(probe)
+    context 'with snapshot' do
+      let(:vars) do
+        {hello: 42, hash: {hello: 42, password: 'redacted'}, array: [true]}
+      end
+
+      it 'notifies' do
+        described_class.notify_snapshot(probe, snapshot: vars)
+      end
     end
   end
 end

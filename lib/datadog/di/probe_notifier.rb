@@ -53,12 +53,12 @@ module Datadog
         captures = if probe.method?
           {
             entry: {
-              arguments: serializer.serialize_args(args, kwargs),
+              arguments: (args || kwargs) && serializer.serialize_args(args, kwargs),
               throwable: nil,
             },
             return: {
               arguments: {
-                '@return': serializer.serialize_value(rv),
+                '@return': serializer.serialize_value(nil, rv),
               },
               throwable: nil,
             },
