@@ -24,9 +24,16 @@ module Datadog
         case value
         when Integer, Float, TrueClass, FalseClass, NilClass, String
           serialized.update(value: value)
+        when Symbol
+          serialized.update(value: value.to_s)
         when Array
           entries = value.map do |elt|
             serialize_value(nil, elt)
+          end
+          serialized.update(entries: entries)
+        when Hash
+          entries = value.map do |k, v|
+            [serialize_value(k, k), serialize_value(k, v)]
           end
           serialized.update(entries: entries)
         else

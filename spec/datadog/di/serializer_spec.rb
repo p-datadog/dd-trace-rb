@@ -57,6 +57,10 @@ RSpec.describe Datadog::DI::Serializer do
           {type: 'Integer', value: 1},
           {type: 'SensitiveType', notCapturedReason: 'redactedType'},
         ]}}],
+      ['empty hash', {h: {}}, {h: {type: 'Hash', entries: []}}],
+      ['hash with symbol key', {h: {hello: 42}}, {h: {type: 'Hash', entries: [
+        [{type: 'Symbol', value: 'hello'}, {type: 'Integer', value: 42}],
+        ]}}],
     ]
 
     CASES.each do |(name, value_, expected_)|
