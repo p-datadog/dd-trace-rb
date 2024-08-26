@@ -106,6 +106,11 @@ RSpec.describe 'Instrumentation integration' do
         let(:expected_captures) do
           {lines: {10 => {locals: {
             a: {type: 'Integer', value: 21},
+            password: {type: 'String', notCapturedReason: 'redactedIdent'},
+            redacted: {type: 'Hash', entries: [
+              [{type: 'Symbol', value: 'b'}, {type: 'Integer', value: 33}],
+              [{type: 'Symbol', value: 'session'}, {type: 'String', notCapturedReason: 'redactedIdent'}],
+            ]},
           }}}}
         end
 

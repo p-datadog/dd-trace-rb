@@ -1,8 +1,8 @@
 class InstrumentationIntegrationTestClass
   def test_method
     a = 21
-    # padding
-    # padding
+    password = 'password'
+    redacted = {b: 33, session: 'blah'}
     # padding
     # padding
     # padding
