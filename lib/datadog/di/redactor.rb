@@ -38,7 +38,12 @@ module Datadog
       end
 
       def redact_type?(value)
-        redacted_types.include?(value.class)
+        # Classses can be nameless, do not attempt to redact in that case.
+        if cls_name = value.class.name
+          redacted_type_names_regexp.match?(cls_name)
+        else
+          false
+        end
       end
 
       def maybe_redact_type(name)
@@ -53,8 +58,20 @@ module Datadog
         end
       end
 
-      def redacted_types
-        @redacted_types ||= settings.internal_dynamic_instrumentation.redacted_types
+      def redacted_type_names_regexp
+        @redacted_type_names_regexp ||= begin
+          names = settings.internal_dynamic_instrumentation.redacted_type_names
+          names = names.map do |name|
+            if name.end_with?('*')
+              name = name[..-2]
+              suffix = '.*'
+            else
+              suffix = ''
+            end
+            Regexp.escape(name) + suffix
+          end.join('|')
+          Regexp.new("\\A(?:#{names})\\z")
+        end
       end
 
       private

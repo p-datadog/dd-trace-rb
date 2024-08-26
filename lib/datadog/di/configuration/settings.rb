@@ -75,7 +75,12 @@ module Datadog
                 o.default []
               end
 
-              option :redacted_types do |o|
+              # An array of class names, values of which will be redacted from
+              # dynamic instrumentation snapshots. Example: FooClass.
+              # If a name is suffixed by '*', it becomes a wildcard and
+              # instances of any class whose name begins with the specified
+              # prefix will be redacted (example: Foo*).
+              option :redacted_type_names do |o|
                 o.type :array
                 o.default []
               end

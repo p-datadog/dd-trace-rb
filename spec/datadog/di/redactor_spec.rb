@@ -43,10 +43,10 @@ RSpec.describe Datadog::DI::Redactor do
   describe '#redact_type?' do
     class SensitiveType; end
 
-    let(:redacted_types) { [SensitiveType] }
+    let(:redacted_type_names) { %w[SensitiveType] }
 
     before do
-      expect(di_settings).to receive(:redacted_types).and_return(redacted_types)
+      expect(di_settings).to receive(:redacted_type_names).and_return(redacted_type_names)
     end
 
     CASES = [
