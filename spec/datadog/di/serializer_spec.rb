@@ -90,21 +90,36 @@ RSpec.describe Datadog::DI::Serializer do
       serializer.serialize_args(args, kwargs)
     end
 
-    context 'both args and kwards' do
-      let(:args) do
-        [1, 'x']
-      end
-
-      let(:kwargs) do
-        {a: 42}
-      end
-
-      it 'serializes as expected' do
-        expect(serialized).to eq(
+    CASES = [
+      ['both args and kwargs',
+        [1, 'x'],
+        {a: 42},
           arg1: {type: 'Integer', value: 1},
           arg2: {type: 'String', value: 'x'},
           a: {type: 'Integer', value: 42},
-        )
+      ],
+      ['kwargs contains redacted identifier',
+        [1, 'x'],
+        {password: 42},
+          arg1: {type: 'Integer', value: 1},
+          arg2: {type: 'String', value: 'x'},
+          password: {type: 'Integer', notCapturedReason: 'redactedIdent'},
+      ],
+    ]
+
+    CASES.each do |(name, args_, kwargs_, expected_)|
+      args = args_
+      kwargs = kwargs_
+      expected = expected_
+
+      context name do
+
+        let(:args) { args }
+        let(:kwargs) { kwargs }
+
+        it 'serializes as expected' do
+          expect(serialized).to eq(expected)
+        end
       end
     end
   end
