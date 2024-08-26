@@ -67,6 +67,7 @@ RSpec.describe Datadog::DI::Serializer do
       ['hash with redacted identifier', {h: {'session-key' => 42}}, {h: {type: 'Hash', entries: [
         [{type: 'String', value: 'session-key'}, {type: 'Integer', notCapturedReason: 'redactedIdent'}],
         ]}}],
+      # TODO hash with a complex object as key?
     ]
 
     CASES.each do |(name, value_, expected_)|
