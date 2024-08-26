@@ -52,6 +52,11 @@ RSpec.describe Datadog::DI::Serializer do
           {type: 'NilClass', value: nil},
           {type: 'TrueClass', value: true},
         ]}}],
+      ['array with value of redacted type', {arr: [1, SensitiveType.new]},
+        {arr: {type: 'Array', entries: [
+          {type: 'Integer', value: 1},
+          {type: 'SensitiveType', notCapturedReason: 'redactedType'},
+        ]}}],
     ]
 
     CASES.each do |(name, value_, expected_)|
