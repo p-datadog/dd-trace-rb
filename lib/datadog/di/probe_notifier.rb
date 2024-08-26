@@ -203,10 +203,7 @@ module Datadog
       module_function def get_local_variables(trace_point)
         trace_point.binding.local_variables.inject({}) do |map, name|
           value = trace_point.binding.local_variable_get(name)
-          map[name] = {
-            value: value,
-            type: value.class.name,
-          }
+          map[name] = value
           map
         end
       end

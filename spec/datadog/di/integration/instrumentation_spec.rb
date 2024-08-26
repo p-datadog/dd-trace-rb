@@ -105,7 +105,7 @@ RSpec.describe 'Instrumentation integration' do
 
         let(:expected_captures) do
           {lines: {10 => {locals: {
-            a: {},
+            a: {type: 'Integer', value: 21},
           }}}}
         end
 
