@@ -33,7 +33,7 @@ module Datadog
           serialized.update(entries: entries)
         when Hash
           entries = value.map do |k, v|
-            [serialize_value(k, k), serialize_value(k, v)]
+            [serialize_value(nil, k), serialize_value(k, v)]
           end
           serialized.update(entries: entries)
         else
