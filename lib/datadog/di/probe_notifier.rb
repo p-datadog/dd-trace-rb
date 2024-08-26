@@ -66,16 +66,18 @@ module Datadog
         elsif probe.line?
           {
             lines: {
-              probe.line_no => {locals: snapshot},
+              probe.line_no => {locals: serializer.serialize_vars(snapshot)},
             },
           }
         end
 
         location = if probe.line?
           actual_file = if probe.file
-            callers.detect do |caller|
+            # Normally callers should always be filled for a line probe
+            # but in the test suite we don't always provide all arguments.
+            callers&.detect do |caller|
               File.basename(caller.sub(/:.*/, '')) == File.basename(probe.file)
-            end.sub(/:.*/, '')
+            end&.sub(/:.*/, '') || probe.file
           end
           {
             file: actual_file,
@@ -90,9 +92,6 @@ module Datadog
 
         stack = if callers
           format_callers(callers)
-        end
-        if probe.line?
-          stack = [{fileName:actual_file,lineNumber:probe.line_no},{fileName:actual_file,lineNumber:probe.line_no}]+stack
         end
 
         timestamp = timestamp_now
