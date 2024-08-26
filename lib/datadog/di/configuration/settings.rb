@@ -71,6 +71,13 @@ module Datadog
               end
 
               option :redacted_identifiers do |o|
+                o.env 'DD_INTERNAL_DYNAMIC_INSTRUMENTATION_REDACTED_IDENTIFIERS'
+                o.env_parser do |value|
+                  if value
+                    value.split(',').map(&:strip)
+                  end
+                end
+
                 o.type :array
                 o.default []
               end
@@ -81,6 +88,13 @@ module Datadog
               # instances of any class whose name begins with the specified
               # prefix will be redacted (example: Foo*).
               option :redacted_type_names do |o|
+                o.env 'DD_INTERNAL_DYNAMIC_INSTRUMENTATION_REDACTED_TYPES'
+                o.env_parser do |value|
+                  if value
+                    value.split(',').map(&:strip)
+                  end
+                end
+
                 o.type :array
                 o.default []
               end
