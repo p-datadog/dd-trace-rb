@@ -65,7 +65,7 @@ module Datadog
           }
         elsif probe.line?
           {
-            lines: {
+            lines: snapshot && {
               probe.line_no => {locals: serializer.serialize_vars(snapshot)},
             },
           }

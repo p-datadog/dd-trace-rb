@@ -43,7 +43,7 @@ module Datadog
 
       def stop(timeout = 1)
         wake.signal
-        wake.join(timeout)
+        thread.join(timeout)
       end
 
       private
@@ -53,6 +53,7 @@ module Datadog
       attr_reader :status_client
       attr_reader :snapshot_client
       attr_reader :wake
+      attr_reader :thread
 
       DIAGNOSTICS_PATH = '/debugger/v1/diagnostics'
       INPUT_PATH = '/debugger/v1/input'

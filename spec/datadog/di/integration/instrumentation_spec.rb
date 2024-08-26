@@ -6,6 +6,10 @@ RSpec.describe 'Instrumentation integration' do
     require_relative 'instrumentation_integration_test_class'
   end
 
+  after do
+    component.shutdown!
+  end
+
   let(:settings) do
     settings = Datadog::Core::Configuration::Settings.new
     settings.internal_dynamic_instrumentation.enabled = true
@@ -14,7 +18,7 @@ RSpec.describe 'Instrumentation integration' do
   end
 
   let(:hook_manager) do
-    Datadog::DI::HookManager.new(settings)
+    component.hook_manager
   end
 
   let(:defined_probes) do
@@ -26,8 +30,7 @@ RSpec.describe 'Instrumentation integration' do
   end
 
   let(:remote_processor) do
-    Datadog::DI::RemoteProcessor.new(
-      settings, hook_manager, defined_probes, installed_probes)
+    component.remote_processor
   end
 
   let(:agent_settings) do
@@ -66,6 +69,7 @@ RSpec.describe 'Instrumentation integration' do
 
       it 'invokes probe' do
         remote_processor.process(probe_rc_spec)
+        expect(Datadog::DI.component.probe_notifier_worker).to receive(:add_snapshot).once.and_call_original
         expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
       end
 
