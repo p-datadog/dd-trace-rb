@@ -66,17 +66,17 @@ RSpec.describe 'Instrumentation integration' do
 
       it 'invokes probe' do
         remote_processor.process(probe_rc_spec)
-=begin
-        expect(Datadog::DI::ProbeNotifier).to receive(:notify_executed).and_call_original do |_probe, **opts|
-          p _probe
-          p opts[:tracepoint].binding.local_variables
-        end
-        expect(Datadog::DI::ProbeNotifier).to receive(:notify_snapshot).and_call_original do |_probe, **opts|
-          p _probe
-          p opts[:tracepoint].binding.local_variables
-        end
-=end
         expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
+      end
+
+      it 'assembles expected notification payload' do
+        remote_processor.process(probe_rc_spec)
+        payload = nil
+        expect(Datadog::DI.component.probe_notifier_worker).to receive(:add_snapshot) do |_payload|
+          payload = _payload
+        end
+        expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
+        expect(payload).to be_a(Hash)
       end
     end
   end
