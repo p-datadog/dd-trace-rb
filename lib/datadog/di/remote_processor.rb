@@ -25,12 +25,14 @@ module Datadog
 
         begin
           if probe.line?
-            hook_manager.hook_line(probe.file, probe.line_nos.first) do |tp|
+            # TODO Test that stack trace is correct with user code being top entry
+            hook_manager.hook_line(probe.file, probe.line_nos.first) do |tp, callers:|
               puts '*** line probe executed ***'
               ProbeNotifier.notify_emitting(probe)
-              ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: caller)
+              ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: callers)
             end
           elsif probe.method?
+            # TODO Test that stack trace is correct with user code being top entry
             hook_manager.hook_method_when_defined(probe.type_name, probe.method_name) do |**opts|
               puts "*** method probe executed: #{opts} ***"
               ProbeNotifier.notify_emitting(probe)
