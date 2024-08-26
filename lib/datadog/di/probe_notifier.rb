@@ -50,25 +50,29 @@ module Datadog
 
         serializer = component.serializer
 
-        captures = if probe.method?
-          {
-            entry: {
-              arguments: (args || kwargs) && serializer.serialize_args(args, kwargs),
-              throwable: nil,
-            },
-            return: {
-              arguments: {
-                '@return': serializer.serialize_value(nil, rv),
+        # TODO also verify that non-capturing probe does not pass
+        # snapshot or vars/args into this method
+        captures = if probe.capture_snapshot?
+          if probe.method?
+            {
+              entry: {
+                arguments: (args || kwargs) && serializer.serialize_args(args, kwargs),
+                throwable: nil,
               },
-              throwable: nil,
-            },
-          }
-        elsif probe.line?
-          {
-            lines: snapshot && {
-              probe.line_no => {locals: serializer.serialize_vars(snapshot)},
-            },
-          }
+              return: {
+                arguments: {
+                  '@return': serializer.serialize_value(nil, rv),
+                },
+                throwable: nil,
+              },
+            }
+          elsif probe.line?
+            {
+              lines: snapshot && {
+                probe.line_no => {locals: serializer.serialize_vars(snapshot)},
+              },
+            }
+          end
         end
 
         location = if probe.line?

@@ -83,8 +83,7 @@ RSpec.describe 'Instrumentation integration' do
           expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
           expect(payload).to be_a(Hash)
           snapshot = payload.fetch(:'debugger.snapshot')
-          expect(snapshot).not_to have_key(:captures)
-          expect(snapshot).not_to have_key('captures')
+          expect(snapshot.fetch(:captures)).to be nil
         end
       end
 
