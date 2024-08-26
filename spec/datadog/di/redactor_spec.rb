@@ -24,7 +24,7 @@ RSpec.describe Datadog::DI::Redactor do
       ['lowercase', 'password', true],
       ['uppercase', 'PASSWORD', true],
       ['with removed punctiation', 'pass_word', true],
-      ['with non-removed punctuation', 'pass-word', false],
+      ['with non-removed punctuation', 'pass/word', false],
     ]
 
     CASES.each do |(label, identifier_, redact_)|

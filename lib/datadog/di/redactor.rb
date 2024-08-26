@@ -153,7 +153,7 @@ module Datadog
 
       # Input can be a string or a symbol.
       def normalize(str)
-        str.to_s.strip.downcase.gsub('_', '')
+        str.to_s.strip.downcase.gsub(/[-_$@]/, '')
       end
     end
   end
