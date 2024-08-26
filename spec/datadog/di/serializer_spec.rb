@@ -24,7 +24,7 @@ RSpec.describe Datadog::DI::Serializer do
     described_class.new(redactor)
   end
 
-  describe '.serialize_vars' do
+  describe '#serialize_vars' do
     let(:serialized) do
       serializer.serialize_vars(vars)
     end
@@ -51,7 +51,7 @@ RSpec.describe Datadog::DI::Serializer do
     end
   end
 
-  describe '.serialize_args' do
+  describe '#serialize_args' do
     let(:serialized) do
       serializer.serialize_args(args, kwargs)
     end
