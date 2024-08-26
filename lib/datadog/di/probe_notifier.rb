@@ -48,6 +48,8 @@ module Datadog
         # Component can be nil in unit tests.
         return unless component
 
+        serializer = component.serializer
+
         captures = if probe.method?
           {
             entry: {
@@ -125,7 +127,7 @@ module Datadog
           'dd.trace_id': 136035165280417366521542318182735500431,
           'dd.span_id': 17576285113343575026,
           ddsource: 'dd_debugger',
-          message: evaluate_template(probe.template,
+          message: probe.template && evaluate_template(probe.template,
             duration: duration ? duration * 1000 : nil),
           timestamp: timestamp,
         }

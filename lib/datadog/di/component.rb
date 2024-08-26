@@ -30,6 +30,8 @@ module Datadog
         @probe_notifier_worker = ProbeNotifierWorker.new(settings, agent_settings)
         probe_notifier_worker.start
         @remote_processor = RemoteProcessor.new(settings, hook_manager, defined_probes, installed_probes)
+        @redactor = Redactor.new(settings)
+        @serializer = Serializer.new(redactor)
       end
 
       attr_reader :settings
@@ -39,6 +41,8 @@ module Datadog
       attr_reader :installed_probes
       attr_reader :probe_notifier_worker
       attr_reader :remote_processor
+      attr_reader :redactor
+      attr_reader :serializer
 
       # Shuts down dynamic instrumentation.
       #
