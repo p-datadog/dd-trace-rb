@@ -43,7 +43,9 @@ RSpec.describe Datadog::DI::Redactor do
   describe '#redact_type?' do
     class SensitiveType; end
 
-    let(:redacted_type_names) { %w[SensitiveType] }
+    let(:redacted_type_names) { %w[SensitiveType WildCard*] }
+
+    class WildCardClass; end
 
     before do
       expect(di_settings).to receive(:redacted_type_names).and_return(redacted_type_names)
@@ -53,6 +55,7 @@ RSpec.describe Datadog::DI::Redactor do
       ['redacted', SensitiveType.new, true],
       ['not redacted', /123/, false],
       ['primitive type', nil, false],
+      ['wild card type', WildCardClass.new, true],
     ]
 
     CASES.each do |(label, value_, redact_)|
