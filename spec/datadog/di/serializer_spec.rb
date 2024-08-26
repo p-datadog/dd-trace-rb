@@ -40,9 +40,14 @@ RSpec.describe Datadog::DI::Serializer do
       ['redacted type', {value: SensitiveType.new},
         {value: {type: 'SensitiveType', notCapturedReason: 'redactedType'}}],
       ['empty array', {arr: []},
-        {arr: {type: 'Array', value: []}}],
+        {arr: {type: 'Array', entries: []}}],
       ['array of primitives', {arr: [42, 'hello', nil, true]},
-        {arr: {type: 'Array', value: []}}],
+        {arr: {type: 'Array', entries: [
+          {type: 'Integer', value: 42},
+          {type: 'String', value: 'hello'},
+          {type: 'NilClass', value: nil},
+          {type: 'TrueClass', value: true},
+        ]}}],
     ]
 
     CASES.each do |(name, value_, expected_)|

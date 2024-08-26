@@ -16,19 +16,23 @@ module Datadog
           return {type: class_name(value.class), notCapturedReason: 'redactedType'}
         end
 
-        if redactor.redact_identifier?(name)
+        if name && redactor.redact_identifier?(name)
           return {type: class_name(value.class), notCapturedReason: 'redactedIdent'}
         end
 
-        serialized = case value
-        when Integer, Float, TrueClass, FalseClass, NilClass
-          value.to_s
-        when String
-          value
+        serialized = {type: class_name(value.class)}
+        case value
+        when Integer, Float, TrueClass, FalseClass, NilClass, String
+          serialized.update(value: value)
+        when Array
+          entries = value.map do |elt|
+            serialize_value(nil, elt)
+          end
+          serialized.update(entries: entries)
         else
           '[object]'
         end
-        {type: class_name(value.class), value: serialized}
+        serialized
       end
 
       def serialize_args(args, kwargs)
