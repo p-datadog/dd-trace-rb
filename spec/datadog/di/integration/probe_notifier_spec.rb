@@ -50,7 +50,7 @@ RSpec.describe Datadog::DI::ProbeNotifier do
 
     context 'line probe' do
       let(:probe) do
-        Datadog::DI::Probe.new(id: '123', type: 'LOG_PROBE', file: 'X', line_nos: [1])
+        Datadog::DI::Probe.new(id: '123', type: 'LOG_PROBE', file: 'X', line_nos: [1], capture_snapshot: true)
       end
 
       context 'with snapshot' do
@@ -87,7 +87,7 @@ RSpec.describe Datadog::DI::ProbeNotifier do
 
     context 'method probe' do
       let(:probe) do
-        Datadog::DI::Probe.new(id: '123', type: 'LOG_PROBE', type_name: 'X', method_name: 'y')
+        Datadog::DI::Probe.new(id: '123', type: 'LOG_PROBE', type_name: 'X', method_name: 'y', capture_snapshot: true)
       end
 
       context 'with snapshot' do
