@@ -91,20 +91,40 @@ RSpec.describe Datadog::DI::ProbeNotifier do
       end
 
       context 'with snapshot' do
-        let(:vars) do
-          {hello: 42, hash: {hello: 42, password: 'redacted'}, array: [true]}
+        let(:args) do
+          [1, 'hello']
+        end
+
+        let(:kwargs) do
+          {foo: 42}
+        end
+
+        let(:expected_captures) do
+          {entry: {
+            arguments: {
+              arg1: {type: 'Integer', value: 1},
+              arg2: {type: 'String', value: 'hello'},
+              foo: {type: 'Integer', value: 42},
+            }, throwable: nil,
+          }, return: {
+            arguments: {
+              :@return => {
+                type: 'NilClass',
+                value: nil,
+              },
+            }, throwable: nil,
+          }}
         end
 
         it 'notifies' do
-          pending
-
           payload = nil
           expect(component.probe_notifier_worker).to receive(:add_snapshot) do |payload_|
             payload = payload_
           end
-          described_class.notify_snapshot(probe, snapshot: vars)
+          described_class.notify_snapshot(probe, args: args, kwargs: kwargs)
           expect(payload).to be_a(Hash)
-          expect(payload.fetch(:'debugger.snapshot')).to eq({})
+          captures = payload.fetch(:'debugger.snapshot').fetch(:captures)
+          expect(captures).to eq(expected_captures)
         end
       end
     end
