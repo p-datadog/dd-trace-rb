@@ -55,6 +55,7 @@ module Datadog
             if cls_name.to_s == tp.self.name
               # TODO is it OK to hook from trace point handler?
               # TODO the class is now defined, but can hooking still fail?
+              # TODO pass rate_limiter here, need to get it from somewhere
               hook_method(cls_name, method_name, &block)
               pending_methods.delete(pm)
             end
@@ -85,7 +86,7 @@ module Datadog
         end
       end
 
-      def hook_method(cls_name, meth_name)
+      def hook_method(cls_name, meth_name, rate_limiter: nil)
         cls = symbolize_class_name(cls_name)
         id = next_id
 
@@ -95,12 +96,16 @@ module Datadog
           remove_method(meth_name)
           define_method(meth_name) do |*args, **kwargs|
             if DI.component.hook_manager.instrumented_methods[[cls_name, meth_name]] == id
-              rv = nil
-              duration = Benchmark.realtime do
-                rv = saved.bind(self).call(*args, **kwargs)
+              if rate_limiter.nil? || rate_limiter.allow?
+                rv = nil
+                duration = Benchmark.realtime do
+                  rv = saved.bind(self).call(*args, **kwargs)
+                end
+                yield rv: rv, duration: duration, callers: caller, args: args, kwargs: kwargs
+                rv
+              else
+                saved.bind(self).call(*args, **kwargs)
               end
-              yield rv: rv, duration: duration, callers: caller, args: args, kwargs: kwargs
-              rv
             else
               saved.bind(self).call(*args, **kwargs)
             end
@@ -110,9 +115,9 @@ module Datadog
         instrumented_methods[[cls_name, meth_name]] = id
       end
 
-      def hook_method_when_defined(cls_name, meth_name, &block)
+      def hook_method_when_defined(cls_name, meth_name, rate_limiter: nil, &block)
         begin
-          hook_method(cls_name, meth_name, &block)
+          hook_method(cls_name, meth_name, rate_limiter: rate_limiter, &block)
           true
         rescue Error::DITargetNotDefined
           pending_methods[[cls_name, meth_name]] = block
@@ -125,7 +130,7 @@ module Datadog
       # not for eval'd code, unless the eval'd code is associated with
       # a filenam and client invokes this method with the correct
       # file name for the eval'd code.
-      def hook_line_now(file, line_no, &block)
+      def hook_line_now(file, line_no, rate_limiter: nil, &block)
         # TODO is file a basename, path suffix or full path?
         # Maybe support all?
         file = File.basename(file)
@@ -187,7 +192,9 @@ module Datadog
           tp&.disable
 
           tp = TracePoint.new(:line) do |tp|
-            on_line_trace_point(tp, callers: caller, &block)
+            if rate_limiter.nil? || rate_limiter.allow?
+              on_line_trace_point(tp, callers: caller, &block)
+            end
           end
 
           # Put the trace point into our tracking map first to prevent
@@ -214,18 +221,19 @@ module Datadog
         end
       end
 
-      def hook_line_when_defined(file, line_no, &block)
+      def hook_line_when_defined(file, line_no, rate_limiter: nil, &block)
         begin
-          hook_line_now(file, line_no, &block)
+          hook_line_now(file, line_no, rate_limiter: rate_limiter, &block)
           true
         rescue Error::DITargetNotDefined
+          # TODO store rate limiter
           pending_lines[[file, line_no]] = block
           false
         end
       end
 
-      def hook_line(file, line_no, &block)
-        hook_line_when_defined(file, line_no, &block)
+      def hook_line(file, line_no, rate_limiter: nil, &block)
+        hook_line_when_defined(file, line_no, rate_limiter: rate_limiter, &block)
       end
 
       def install_pending_line_hooks(file)

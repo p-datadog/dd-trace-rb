@@ -64,7 +64,7 @@ RSpec.describe Datadog::DI::RemoteProcessor do
       end
 
       it 'parses the probe and adds it to the defined probe list' do
-        expect(hook_manager).to receive(:hook_line).with('aaa', 2)
+        expect(hook_manager).to receive(:hook_line).with('aaa', 2, rate_limiter: nil)
 
         processor.process(config)
 

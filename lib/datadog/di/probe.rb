@@ -20,6 +20,10 @@ module Datadog
         @method_name = method_name
         @template = template
         @capture_snapshot = capture_snapshot
+
+        if capture_snapshot
+          @rate_limiter = Datadog::Tracing::Sampling::TokenBucket.new(1)
+        end
       end
 
       attr_reader :id
@@ -29,6 +33,9 @@ module Datadog
       attr_reader :type_name
       attr_reader :method_name
       attr_reader :template
+
+      # For internal DI use only
+      attr_reader :rate_limiter
 
       def capture_snapshot?
         @capture_snapshot
@@ -58,6 +65,14 @@ module Datadog
         else
           raise Error::UnknownProbeType, 'Unhandled probe type: neither method nor line probe'
         end
+      end
+
+      # Returns whether this probe is currently under its rate limit.
+      # If the probe is not rate limited, always returns true.
+      # Calling this method records the invocation in the rate limiter.
+      # TODO remove
+      def under_rate_limit?
+        rate_limiter.nil? || rate_limiter.allow?(1)
       end
     end
   end
