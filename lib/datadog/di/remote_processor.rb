@@ -27,13 +27,9 @@ module Datadog
           if probe.line?
             # TODO Test that stack trace is correct with user code being top entry
             hook_manager.hook_line(probe.file, probe.line_nos.first, rate_limiter: probe.rate_limiter) do |tp, callers:|
-              if probe.under_rate_limit?
-                puts '*** line probe executed ***'
-                ProbeNotifier.notify_emitting(probe)
-                ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: callers)
-              else
-                puts '*** line probe rate limited ***'
-              end
+              puts '*** line probe executed ***'
+              ProbeNotifier.notify_emitting(probe)
+              ProbeNotifier.notify_executed(probe, tracepoint: tp, callers: callers)
             end
           elsif probe.method?
             # TODO Test that stack trace is correct with user code being top entry
