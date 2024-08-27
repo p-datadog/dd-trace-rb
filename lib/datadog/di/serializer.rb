@@ -29,11 +29,14 @@ module Datadog
         when Integer, Float, TrueClass, FalseClass, String
           serialized.update(value: value)
         when Array
+          # TODO array length limit
           entries = value.map do |elt|
             serialize_value(nil, elt)
           end
           serialized.update(entries: entries)
         else
+          # TODO hash, object with fields
+          # item count limit; traversal limit
           '[object]'
         end
         serialized
