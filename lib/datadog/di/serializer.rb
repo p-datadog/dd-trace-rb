@@ -37,15 +37,18 @@ module Datadog
           end
           serialized.update(entries: entries)
         when Hash
-          # TODO array length limit
+          # TODO hash length limit
           entries = value.map do |k, v|
             [serialize_value(nil, k), serialize_value(k, v)]
           end
           serialized.update(entries: entries)
         else
-          # TODO hash, object with fields
-          # item count limit; traversal limit
-          '[object]'
+          fields = {}
+          value.instance_variables.each do |ivar|
+            fields[ivar] = serialize_value(ivar, value.instance_variable_get(ivar))
+          end
+          serialized.update(fields: fields)
+          # TODO item count limit; traversal limit
         end
         serialized
       end

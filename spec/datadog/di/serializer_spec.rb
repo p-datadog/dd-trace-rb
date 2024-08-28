@@ -6,6 +6,18 @@ RSpec.describe Datadog::DI::Serializer do
 
   class WildCardClass; end
 
+  class InstanceVariable
+    def initialize(value)
+      @ivar = value
+    end
+  end
+
+  class RedactedInstanceVariable
+    def initialize(value)
+      @session = value
+    end
+  end
+
   let(:settings) do
     double('settings').tap do |settings|
       allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
@@ -67,7 +79,15 @@ RSpec.describe Datadog::DI::Serializer do
       ['hash with redacted identifier', {h: {'session-key' => 42}}, {h: {type: 'Hash', entries: [
         [{type: 'String', value: 'session-key'}, {type: 'Integer', notCapturedReason: 'redactedIdent'}],
         ]}}],
-      ['empty object', {x: Object.new}, {x: {type: 'Object'}}],
+      ['empty object', {x: Object.new}, {x: {type: 'Object', fields: {}}}],
+      ['object with instance variable', {x: InstanceVariable.new(42)},
+        {x: {type: 'InstanceVariable', fields: {
+          :@ivar => {type: 'Integer', value: 42},
+        }}}],
+      ['object with redacted instance variable', {x: RedactedInstanceVariable.new(42)},
+        {x: {type: 'RedactedInstanceVariable', fields: {
+          :@session => {type: 'Integer', notCapturedReason: 'redactedIdent'},
+        }}}],
       # TODO hash with a complex object as key?
     ]
 
