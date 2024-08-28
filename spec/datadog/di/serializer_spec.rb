@@ -49,7 +49,7 @@ RSpec.describe Datadog::DI::Serializer do
         {arr: {type: 'Array', entries: [
           {type: 'Integer', value: 42},
           {type: 'String', value: 'hello'},
-          {type: 'NilClass', value: nil},
+          {type: 'NilClass', isNull: true},
           {type: 'TrueClass', value: true},
         ]}}],
       ['array with value of redacted type', {arr: [1, SensitiveType.new]},

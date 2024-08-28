@@ -28,10 +28,18 @@ module Datadog
           serialized.update(isNull: true)
         when Integer, Float, TrueClass, FalseClass, String
           serialized.update(value: value)
+        when Symbol
+          serialized.update(value: value.to_s)
         when Array
           # TODO array length limit
           entries = value.map do |elt|
             serialize_value(nil, elt)
+          end
+          serialized.update(entries: entries)
+        when Hash
+          # TODO array length limit
+          entries = value.map do |k, v|
+            [serialize_value(nil, k), serialize_value(k, v)]
           end
           serialized.update(entries: entries)
         else
