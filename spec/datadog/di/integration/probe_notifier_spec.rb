@@ -110,7 +110,7 @@ RSpec.describe Datadog::DI::ProbeNotifier do
             arguments: {
               :@return => {
                 type: 'NilClass',
-                value: nil,
+                isNull: true,
               },
             }, throwable: nil,
           }}
