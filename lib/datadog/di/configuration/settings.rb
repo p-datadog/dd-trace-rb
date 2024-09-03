@@ -100,22 +100,22 @@ module Datadog
               end
 
               option :max_capture_depth do |o|
-                o.type :integer
+                o.type :int
                 o.default 2
               end
 
               option :max_capture_collection_size do |o|
-                o.type :integer
+                o.type :int
                 o.default 100
               end
 
               option :max_capture_serialized_length do |o|
-                o.type :integer
+                o.type :int
                 o.default 255
               end
 
               option :max_capture_attribute_count do |o|
-                o.type :integer
+                o.type :int
                 o.default 20
               end
 

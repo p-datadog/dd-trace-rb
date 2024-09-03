@@ -22,7 +22,7 @@ module Datadog
         @capture_snapshot = capture_snapshot
 
         if capture_snapshot
-          @rate_limiter = Datadog::Tracing::Sampling::TokenBucket.new(1)
+          @rate_limiter = Datadog::Core::TokenBucket.new(1)
         end
       end
 
