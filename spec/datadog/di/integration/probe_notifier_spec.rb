@@ -66,7 +66,7 @@ RSpec.describe Datadog::DI::ProbeNotifier do
                 [{type: 'Symbol', value: 'hello'}, {type: 'Integer', value: 42}],
                 [{type: 'Symbol', value: 'password'}, {type: 'String', notCapturedReason: 'redactedIdent'}],
               ]},
-              array: {type: 'Array', entries: [
+              array: {type: 'Array', elements: [
                 {type: 'TrueClass', value: true},
               ]},
             },
