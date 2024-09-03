@@ -104,7 +104,7 @@ module Datadog
                 o.default 2
               end
 
-              option :max_capture_container_size do |o|
+              option :max_capture_collection_size do |o|
                 o.type :integer
                 o.default 100
               end

@@ -31,7 +31,7 @@ module Datadog
         probe_notifier_worker.start
         @remote_processor = RemoteProcessor.new(settings, hook_manager, defined_probes, installed_probes)
         @redactor = Redactor.new(settings)
-        @serializer = Serializer.new(redactor)
+        @serializer = Serializer.new(settings, redactor)
       end
 
       attr_reader :settings

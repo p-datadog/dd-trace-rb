@@ -30,6 +30,7 @@ RSpec.describe Datadog::DI::Serializer do
       allow(settings).to receive(:propagate_all_exceptions).and_return(false)
       allow(settings).to receive(:redacted_identifiers).and_return([])
       allow(settings).to receive(:redacted_type_names).and_return(%w[SensitiveType WildCard*])
+      allow(settings).to receive(:max_capture_collection_size).and_return(10)
     end
   end
 
@@ -39,12 +40,28 @@ RSpec.describe Datadog::DI::Serializer do
   end
 
   let(:serializer) do
-    described_class.new(redactor)
+    described_class.new(settings, redactor)
   end
 
   describe '#serialize_vars' do
     let(:serialized) do
       serializer.serialize_vars(vars)
+    end
+
+    def self.define_cases(cases)
+      cases.each do |(name, value_, expected_)|
+        value = value_
+        expected = expected_
+
+        context name do
+
+          let(:vars) { value }
+
+          it 'serializes as expected' do
+            expect(serialized).to eq(expected)
+          end
+        end
+      end
     end
 
     CASES = [
@@ -56,16 +73,16 @@ RSpec.describe Datadog::DI::Serializer do
       ['redacted wild card type', {value: WildCardClass.new},
         {value: {type: 'WildCardClass', notCapturedReason: 'redactedType'}}],
       ['empty array', {arr: []},
-        {arr: {type: 'Array', entries: []}}],
+        {arr: {type: 'Array', elements: []}}],
       ['array of primitives', {arr: [42, 'hello', nil, true]},
-        {arr: {type: 'Array', entries: [
+        {arr: {type: 'Array', elements: [
           {type: 'Integer', value: 42},
           {type: 'String', value: 'hello'},
           {type: 'NilClass', isNull: true},
           {type: 'TrueClass', value: true},
         ]}}],
       ['array with value of redacted type', {arr: [1, SensitiveType.new]},
-        {arr: {type: 'Array', entries: [
+        {arr: {type: 'Array', elements: [
           {type: 'Integer', value: 1},
           {type: 'SensitiveType', notCapturedReason: 'redactedType'},
         ]}}],
@@ -91,18 +108,23 @@ RSpec.describe Datadog::DI::Serializer do
       # TODO hash with a complex object as key?
     ]
 
-    CASES.each do |(name, value_, expected_)|
-      value = value_
-      expected = expected_
+    define_cases(CASES)
 
-      context name do
-
-        let(:vars) { value }
-
-        it 'serializes as expected' do
-          expect(serialized).to eq(expected)
-        end
+    context 'when data exceeds limits' do
+      before do
+        allow(di_settings).to receive(:max_capture_collection_size).and_return(3)
       end
+
+      LIMITED_CASES = [
+        ['array too long', {a: [10] * 1000}, {a: {type: 'Array',
+          elements: [
+            {type: 'Integer', value: 10},
+            {type: 'Integer', value: 10},
+            {type: 'Integer', value: 10},
+          ], notCapturedReason: 'collectionSize', size: 1000}}],
+      ]
+
+      define_cases(LIMITED_CASES)
     end
   end
 

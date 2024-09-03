@@ -5,10 +5,12 @@ module Datadog
     #
     # @api private
     class Serializer
-      def initialize(redactor)
+      def initialize(settings, redactor)
+        @settings = settings
         @redactor = redactor
       end
 
+      attr_reader :settings
       attr_reader :redactor
 
       def serialize_value(name, value)
@@ -32,10 +34,14 @@ module Datadog
           serialized.update(value: value.to_s)
         when Array
           # TODO array length limit
+          if value.length > (max = settings.internal_dynamic_instrumentation.max_capture_collection_size)
+            serialized.update(notCapturedReason: 'collectionSize', size: value.length)
+            value = value[0...max]
+          end
           entries = value.map do |elt|
             serialize_value(nil, elt)
           end
-          serialized.update(entries: entries)
+          serialized.update(elements: entries)
         when Hash
           # TODO hash length limit
           entries = value.map do |k, v|
