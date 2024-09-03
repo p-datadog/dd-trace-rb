@@ -182,7 +182,7 @@ static VALUE _native_initialize(
 static VALUE _native_sample(VALUE self, VALUE collector_instance, VALUE profiler_overhead_stack_thread);
 static VALUE _native_on_gc_start(VALUE self, VALUE collector_instance);
 static VALUE _native_on_gc_finish(VALUE self, VALUE collector_instance);
-static VALUE _native_sample_after_gc(DDTRACE_UNUSED VALUE self, VALUE collector_instance);
+static VALUE _native_sample_after_gc(DDTRACE_UNUSED VALUE self, VALUE collector_instance, VALUE reset_monotonic_to_system_state);
 void update_metrics_and_sample(
   struct thread_context_collector_state *state,
   VALUE thread_being_sampled,
@@ -261,7 +261,7 @@ void collectors_thread_context_init(VALUE profiling_module) {
   rb_define_singleton_method(testing_module, "_native_sample_allocation", _native_sample_allocation, 3);
   rb_define_singleton_method(testing_module, "_native_on_gc_start", _native_on_gc_start, 1);
   rb_define_singleton_method(testing_module, "_native_on_gc_finish", _native_on_gc_finish, 1);
-  rb_define_singleton_method(testing_module, "_native_sample_after_gc", _native_sample_after_gc, 1);
+  rb_define_singleton_method(testing_module, "_native_sample_after_gc", _native_sample_after_gc, 2);
   rb_define_singleton_method(testing_module, "_native_thread_list", _native_thread_list, 0);
   rb_define_singleton_method(testing_module, "_native_per_thread_context", _native_per_thread_context, 1);
   rb_define_singleton_method(testing_module, "_native_stats", _native_stats, 1);
@@ -439,7 +439,16 @@ static VALUE _native_on_gc_finish(DDTRACE_UNUSED VALUE self, VALUE collector_ins
 
 // This method exists only to enable testing Datadog::Profiling::Collectors::ThreadContext behavior using RSpec.
 // It SHOULD NOT be used for other purposes.
-static VALUE _native_sample_after_gc(DDTRACE_UNUSED VALUE self, VALUE collector_instance) {
+static VALUE _native_sample_after_gc(DDTRACE_UNUSED VALUE self, VALUE collector_instance, VALUE reset_monotonic_to_system_state) {
+  ENFORCE_BOOLEAN(reset_monotonic_to_system_state);
+
+  struct thread_context_collector_state *state;
+  TypedData_Get_Struct(collector_instance, struct thread_context_collector_state, &thread_context_collector_typed_data, state);
+
+  if (reset_monotonic_to_system_state == Qtrue) {
+    state->time_converter_state = (monotonic_to_system_epoch_state) MONOTONIC_TO_SYSTEM_EPOCH_INITIALIZER;
+  }
+
   thread_context_collector_sample_after_gc(collector_instance);
   return Qtrue;
 }
@@ -887,9 +896,9 @@ static struct per_thread_context *get_context_for(VALUE thread, struct thread_co
 // to either run Ruby code during sampling (not great), or otherwise use some of the VM private APIs to detect this.
 //
 static bool is_logging_gem_monkey_patch(VALUE invoke_file_location) {
-  int logging_gem_path_len = strlen(LOGGING_GEM_PATH);
+  unsigned long logging_gem_path_len = strlen(LOGGING_GEM_PATH);
   char *invoke_file = StringValueCStr(invoke_file_location);
-  int invoke_file_len = strlen(invoke_file);
+  unsigned long invoke_file_len = strlen(invoke_file);
 
   if (invoke_file_len < logging_gem_path_len) return false;
 
@@ -1200,7 +1209,7 @@ static bool should_collect_resource(VALUE root_span) {
   if (root_span_type == Qnil) return false;
   ENFORCE_TYPE(root_span_type, T_STRING);
 
-  int root_span_type_length = RSTRING_LEN(root_span_type);
+  long root_span_type_length = RSTRING_LEN(root_span_type);
   const char *root_span_type_value = StringValuePtr(root_span_type);
 
   bool is_web_request =
@@ -1222,6 +1231,9 @@ static bool should_collect_resource(VALUE root_span) {
 static VALUE _native_reset_after_fork(DDTRACE_UNUSED VALUE self, VALUE collector_instance) {
   struct thread_context_collector_state *state;
   TypedData_Get_Struct(collector_instance, struct thread_context_collector_state, &thread_context_collector_typed_data, state);
+
+  // Release all context memory before clearing the existing context
+  st_foreach(state->hash_map_per_thread_context, hash_map_per_thread_context_free_values, 0 /* unused */);
 
   st_clear(state->hash_map_per_thread_context);
 
