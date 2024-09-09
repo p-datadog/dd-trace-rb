@@ -132,6 +132,33 @@ RSpec.describe Datadog::DI::Serializer do
 
       define_cases(LIMITED_CASES)
     end
+
+    context 'when limits are zero' do
+      before do
+        allow(di_settings).to receive(:max_capture_collection_size).and_return(0)
+      end
+
+      LIMITED_CASES = [
+        ['array', {a: [10] * 5}, {a: {type: 'Array',
+          elements: [
+            {type: 'Integer', value: 10},
+            {type: 'Integer', value: 10},
+            {type: 'Integer', value: 10},
+            {type: 'Integer', value: 10},
+            {type: 'Integer', value: 10},
+          ]}}],
+        ['hash', {v: {a: 1, b: 2, c: 3, d: 4, e: 5}}, {v: {type: 'Hash',
+          entries: [
+            [{type: 'Symbol', value: 'a'}, {type: 'Integer', value: 1}],
+            [{type: 'Symbol', value: 'b'}, {type: 'Integer', value: 2}],
+            [{type: 'Symbol', value: 'c'}, {type: 'Integer', value: 3}],
+            [{type: 'Symbol', value: 'd'}, {type: 'Integer', value: 4}],
+            [{type: 'Symbol', value: 'e'}, {type: 'Integer', value: 5}],
+          ]}}],
+      ]
+
+      define_cases(LIMITED_CASES)
+    end
   end
 
   describe '#serialize_args' do

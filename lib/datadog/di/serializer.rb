@@ -33,7 +33,8 @@ module Datadog
         when Symbol
           serialized.update(value: value.to_s)
         when Array
-          if value.length > (max = settings.internal_dynamic_instrumentation.max_capture_collection_size)
+          max = settings.internal_dynamic_instrumentation.max_capture_collection_size
+          if max != 0 && value.length > max
             serialized.update(notCapturedReason: 'collectionSize', size: value.length)
             value = value[0...max]
           end
