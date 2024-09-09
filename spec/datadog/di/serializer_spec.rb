@@ -115,6 +115,14 @@ RSpec.describe Datadog::DI::Serializer do
         {x: {type: 'RedactedInstanceVariable', fields: {
           :@session => {type: 'Integer', notCapturedReason: 'redactedIdent'},
         }}}],
+      ['depth exceeded', {v: {a: {b: {c: []}}}},
+        {v: {type: 'Hash', entries: [
+          [{type: 'Symbol', value: 'a'}, {type: 'Hash', entries: [
+            [{type: 'Symbol', value: 'b'}, {type: 'Hash', entries: [
+              [{type: 'Symbol', value: 'c'}, {type: 'Array', notCapturedReason: 'depth'}],
+            ]}],
+          ]}],
+        ]}}],
       # TODO hash with a complex object as key?
     ]
 

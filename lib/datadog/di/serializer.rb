@@ -33,7 +33,7 @@ module Datadog
         when Symbol
           serialized.update(value: value.to_s)
         when Array
-          if depth == 0
+          if depth < 0
             serialized.update(notCapturedReason: 'depth')
           else
             max = settings.internal_dynamic_instrumentation.max_capture_collection_size
@@ -47,7 +47,7 @@ module Datadog
             serialized.update(elements: entries)
           end
         when Hash
-          if depth == 0
+          if depth < 0
             serialized.update(notCapturedReason: 'depth')
           else
             max = settings.internal_dynamic_instrumentation.max_capture_collection_size
@@ -64,7 +64,7 @@ module Datadog
             serialized.update(entries: entries)
           end
         else
-          if depth == 0
+          if depth < 0
             serialized.update(notCapturedReason: 'depth')
           else
             fields = {}
