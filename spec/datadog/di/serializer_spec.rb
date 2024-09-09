@@ -115,11 +115,27 @@ RSpec.describe Datadog::DI::Serializer do
         {x: {type: 'RedactedInstanceVariable', fields: {
           :@session => {type: 'Integer', notCapturedReason: 'redactedIdent'},
         }}}],
-      ['depth exceeded', {v: {a: {b: {c: []}}}},
+      ['depth exceeded: array', {v: {a: {b: {c: []}}}},
         {v: {type: 'Hash', entries: [
           [{type: 'Symbol', value: 'a'}, {type: 'Hash', entries: [
             [{type: 'Symbol', value: 'b'}, {type: 'Hash', entries: [
               [{type: 'Symbol', value: 'c'}, {type: 'Array', notCapturedReason: 'depth'}],
+            ]}],
+          ]}],
+        ]}}],
+      ['depth exceeded: hash', {v: {a: {b: {c: {}}}}},
+        {v: {type: 'Hash', entries: [
+          [{type: 'Symbol', value: 'a'}, {type: 'Hash', entries: [
+            [{type: 'Symbol', value: 'b'}, {type: 'Hash', entries: [
+              [{type: 'Symbol', value: 'c'}, {type: 'Hash', notCapturedReason: 'depth'}],
+            ]}],
+          ]}],
+        ]}}],
+      ['depth exceeded: object', {v: {a: {b: {c: Object.new}}}},
+        {v: {type: 'Hash', entries: [
+          [{type: 'Symbol', value: 'a'}, {type: 'Hash', entries: [
+            [{type: 'Symbol', value: 'b'}, {type: 'Hash', entries: [
+              [{type: 'Symbol', value: 'c'}, {type: 'Object', notCapturedReason: 'depth'}],
             ]}],
           ]}],
         ]}}],
