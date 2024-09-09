@@ -40,6 +40,7 @@ RSpec.describe Datadog::DI::Serializer do
       allow(settings).to receive(:redacted_type_names).and_return(%w[SensitiveType WildCard*])
       allow(settings).to receive(:max_capture_collection_size).and_return(10)
       allow(settings).to receive(:max_capture_attribute_count).and_return(10)
+      allow(settings).to receive(:max_capture_depth).and_return(2)
     end
   end
 

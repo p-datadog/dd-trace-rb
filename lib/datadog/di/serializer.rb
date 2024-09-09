@@ -13,7 +13,7 @@ module Datadog
       attr_reader :settings
       attr_reader :redactor
 
-      def serialize_value(name, value)
+      def serialize_value(name, value, depth: settings.internal_dynamic_instrumentation.max_capture_depth)
         if redactor.redact_type?(value)
           return {type: class_name(value.class), notCapturedReason: 'redactedType'}
         end
@@ -33,43 +33,54 @@ module Datadog
         when Symbol
           serialized.update(value: value.to_s)
         when Array
-          max = settings.internal_dynamic_instrumentation.max_capture_collection_size
-          if max != 0 && value.length > max
-            serialized.update(notCapturedReason: 'collectionSize', size: value.length)
-            value = value[0...max]
-          end
-          entries = value.map do |elt|
-            serialize_value(nil, elt)
-          end
-          serialized.update(elements: entries)
-        when Hash
-          max = settings.internal_dynamic_instrumentation.max_capture_collection_size
-          cur = 0
-          entries = []
-          value.each do |k, v|
-            if max != 0 && cur >= max
+          if depth == 0
+            serialized.update(notCapturedReason: 'depth')
+          else
+            max = settings.internal_dynamic_instrumentation.max_capture_collection_size
+            if max != 0 && value.length > max
               serialized.update(notCapturedReason: 'collectionSize', size: value.length)
-              break
+              value = value[0...max]
             end
-            cur += 1
-            entries << [serialize_value(nil, k), serialize_value(k, v)]
+            entries = value.map do |elt|
+              serialize_value(nil, elt, depth: depth - 1)
+            end
+            serialized.update(elements: entries)
           end
-          serialized.update(entries: entries)
+        when Hash
+          if depth == 0
+            serialized.update(notCapturedReason: 'depth')
+          else
+            max = settings.internal_dynamic_instrumentation.max_capture_collection_size
+            cur = 0
+            entries = []
+            value.each do |k, v|
+              if max != 0 && cur >= max
+                serialized.update(notCapturedReason: 'collectionSize', size: value.length)
+                break
+              end
+              cur += 1
+              entries << [serialize_value(nil, k, depth: depth - 1), serialize_value(k, v, depth: depth - 1)]
+            end
+            serialized.update(entries: entries)
+          end
         else
-          fields = {}
-          max = settings.internal_dynamic_instrumentation.max_capture_attribute_count
-          cur = 0
-          value.instance_variables.each do |ivar|
-            if cur >= max
-              serialized.update(notCapturedReason: 'fieldCount', fields: fields)
-              break
+          if depth == 0
+            serialized.update(notCapturedReason: 'depth')
+          else
+            fields = {}
+            max = settings.internal_dynamic_instrumentation.max_capture_attribute_count
+            cur = 0
+            value.instance_variables.each do |ivar|
+              if cur >= max
+                serialized.update(notCapturedReason: 'fieldCount', fields: fields)
+                break
+              end
+              cur += 1
+              # TODO @ prefix for instance variable serialization conflicts with expression language
+              fields[ivar] = serialize_value(ivar, value.instance_variable_get(ivar), depth: depth - 1)
             end
-            cur += 1
-            # TODO @ prefix for instance variable serialization conflicts with expression language
-            fields[ivar] = serialize_value(ivar, value.instance_variable_get(ivar))
+            serialized.update(fields: fields)
           end
-          serialized.update(fields: fields)
-          # TODO item count limit; traversal limit
         end
         serialized
       end
