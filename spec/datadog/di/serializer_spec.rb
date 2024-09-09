@@ -18,6 +18,14 @@ RSpec.describe Datadog::DI::Serializer do
     end
   end
 
+  class ManyInstanceVariables
+    def initialize
+      1.upto(100) do |i|
+        instance_variable_set("@v#{i}", i)
+      end
+    end
+  end
+
   let(:settings) do
     double('settings').tap do |settings|
       allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
@@ -31,6 +39,7 @@ RSpec.describe Datadog::DI::Serializer do
       allow(settings).to receive(:redacted_identifiers).and_return([])
       allow(settings).to receive(:redacted_type_names).and_return(%w[SensitiveType WildCard*])
       allow(settings).to receive(:max_capture_collection_size).and_return(10)
+      allow(settings).to receive(:max_capture_attribute_count).and_return(10)
     end
   end
 
@@ -110,7 +119,7 @@ RSpec.describe Datadog::DI::Serializer do
 
     define_cases(CASES)
 
-    context 'when data exceeds limits' do
+    context 'when data exceeds collection limits' do
       before do
         allow(di_settings).to receive(:max_capture_collection_size).and_return(3)
       end
@@ -128,6 +137,23 @@ RSpec.describe Datadog::DI::Serializer do
             [{type: 'Symbol', value: 'b'}, {type: 'Integer', value: 2}],
             [{type: 'Symbol', value: 'c'}, {type: 'Integer', value: 3}],
           ], notCapturedReason: 'collectionSize', size: 5}}],
+      ]
+
+      define_cases(LIMITED_CASES)
+    end
+
+    context 'when data exceeds attribute limits' do
+      before do
+        allow(di_settings).to receive(:max_capture_attribute_count).and_return(3)
+      end
+
+      LIMITED_CASES = [
+        ['too many attributes', {a: ManyInstanceVariables.new}, {a: {type: 'ManyInstanceVariables',
+          fields: {
+            '@v1': {type: 'Integer', value: 1},
+            '@v2': {type: 'Integer', value: 2},
+            '@v3': {type: 'Integer', value: 3},
+          }, notCapturedReason: 'fieldCount'}}],
       ]
 
       define_cases(LIMITED_CASES)

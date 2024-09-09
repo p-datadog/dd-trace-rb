@@ -57,7 +57,15 @@ module Datadog
           serialized.update(entries: entries)
         else
           fields = {}
+          max = settings.internal_dynamic_instrumentation.max_capture_attribute_count
+          cur = 0
           value.instance_variables.each do |ivar|
+            if cur >= max
+              serialized.update(notCapturedReason: 'fieldCount', fields: fields)
+              break
+            end
+            cur += 1
+            # TODO @ prefix for instance variable serialization conflicts with expression language
             fields[ivar] = serialize_value(ivar, value.instance_variable_get(ivar))
           end
           serialized.update(fields: fields)
