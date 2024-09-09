@@ -172,7 +172,7 @@ RSpec.describe Datadog::DI::Serializer do
         allow(di_settings).to receive(:max_capture_attribute_count).and_return(3)
       end
 
-      LIMITED_CASES = [
+      ATTR_LIMITED_CASES = [
         ['too many attributes', {a: ManyInstanceVariables.new}, {a: {type: 'ManyInstanceVariables',
           fields: {
             '@v1': {type: 'Integer', value: 1},
@@ -181,7 +181,7 @@ RSpec.describe Datadog::DI::Serializer do
           }, notCapturedReason: 'fieldCount'}}],
       ]
 
-      define_cases(LIMITED_CASES)
+      define_cases(ATTR_LIMITED_CASES)
     end
 
     context 'when limits are zero' do
@@ -189,7 +189,7 @@ RSpec.describe Datadog::DI::Serializer do
         allow(di_settings).to receive(:max_capture_collection_size).and_return(0)
       end
 
-      LIMITED_CASES = [
+      ZERO_LIMITED_CASES = [
         ['array', {a: [10] * 5}, {a: {type: 'Array',
           elements: [
             {type: 'Integer', value: 10},
@@ -208,7 +208,7 @@ RSpec.describe Datadog::DI::Serializer do
           ]}}],
       ]
 
-      define_cases(LIMITED_CASES)
+      define_cases(ZERO_LIMITED_CASES)
     end
   end
 
@@ -217,7 +217,7 @@ RSpec.describe Datadog::DI::Serializer do
       serializer.serialize_args(args, kwargs)
     end
 
-    CASES = [
+    ARGS_CASES = [
       ['both args and kwargs',
         [1, 'x'],
         {a: 42},
@@ -234,7 +234,7 @@ RSpec.describe Datadog::DI::Serializer do
       ],
     ]
 
-    CASES.each do |(name, args_, kwargs_, expected_)|
+    ARGS_CASES.each do |(name, args_, kwargs_, expected_)|
       args = args_
       kwargs = kwargs_
       expected = expected_
