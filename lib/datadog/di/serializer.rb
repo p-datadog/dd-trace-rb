@@ -42,9 +42,16 @@ module Datadog
           end
           serialized.update(elements: entries)
         when Hash
-          # TODO hash length limit
-          entries = value.map do |k, v|
-            [serialize_value(nil, k), serialize_value(k, v)]
+          max = settings.internal_dynamic_instrumentation.max_capture_collection_size
+          cur = 0
+          entries = []
+          value.each do |k, v|
+            if max != 0 && cur >= max
+              serialized.update(notCapturedReason: 'collectionSize', size: value.length)
+              break
+            end
+            cur += 1
+            entries << [serialize_value(nil, k), serialize_value(k, v)]
           end
           serialized.update(entries: entries)
         else

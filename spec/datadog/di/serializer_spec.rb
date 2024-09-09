@@ -122,6 +122,12 @@ RSpec.describe Datadog::DI::Serializer do
             {type: 'Integer', value: 10},
             {type: 'Integer', value: 10},
           ], notCapturedReason: 'collectionSize', size: 1000}}],
+        ['hash too long', {v: {a: 1, b: 2, c: 3, d: 4, e: 5}}, {v: {type: 'Hash',
+          entries: [
+            [{type: 'Symbol', value: 'a'}, {type: 'Integer', value: 1}],
+            [{type: 'Symbol', value: 'b'}, {type: 'Integer', value: 2}],
+            [{type: 'Symbol', value: 'c'}, {type: 'Integer', value: 3}],
+          ], notCapturedReason: 'collectionSize', size: 5}}],
       ]
 
       define_cases(LIMITED_CASES)
