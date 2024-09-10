@@ -25,36 +25,12 @@ module Datadog
         redacted_identifiers.include?(normalize(name))
       end
 
-      def maybe_redact_identifier(name)
-        if redact_identifier?(name)
-          PLACEHOLDER
-        else
-          if block_given?
-            yield name
-          else
-            name
-          end
-        end
-      end
-
       def redact_type?(value)
         # Classses can be nameless, do not attempt to redact in that case.
         if cls_name = value.class.name
           redacted_type_names_regexp.match?(cls_name)
         else
           false
-        end
-      end
-
-      def maybe_redact_type(name)
-        if redact_type?(name)
-          PLACEHOLDER
-        else
-          if block_given?
-            yield name
-          else
-            name
-          end
         end
       end
 
