@@ -51,6 +51,8 @@ RSpec.describe Datadog::DI::Redactor do
 
     class WildCa; end
 
+    class PrefixWildCard; end
+
     before do
       expect(di_settings).to receive(:redacted_type_names).and_return(redacted_type_names)
     end
@@ -61,7 +63,11 @@ RSpec.describe Datadog::DI::Redactor do
       ["primitive type", nil, false],
       ["wild card type whose name is the same as prefix", WildCard.new, true],
       ["wild card type", WildCardClass.new, true],
+      ['wild card does not match from beginning', PrefixWildCard.new, false],
       ["partial wild card prefix match", WildCa.new, false],
+      ['instance of anonymous class', Class.new.new, false],
+      ['class object', String, false],
+      ['anonymous class object', Class.new, false],
     ]
 
     CASES.each do |(label, value_, redact_)|
