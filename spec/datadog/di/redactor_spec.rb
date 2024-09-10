@@ -1,16 +1,5 @@
 require "datadog/di/redactor"
 
-module DIRedactorSpec
-    class SensitiveType; end
-
-    class WildCard; end
-
-    class WildCardClass; end
-
-    class WildCa; end
-
-end
-
 RSpec.describe Datadog::DI::Redactor do
   let(:settings) do
     double("settings").tap do |settings|
@@ -52,7 +41,15 @@ RSpec.describe Datadog::DI::Redactor do
   end
 
   describe "#redact_type?" do
+    class SensitiveType; end
+
     let(:redacted_type_names) { %w[SensitiveType WildCard*] }
+
+    class WildCard; end
+
+    class WildCardClass; end
+
+    class WildCa; end
 
     before do
       expect(di_settings).to receive(:redacted_type_names).and_return(redacted_type_names)
