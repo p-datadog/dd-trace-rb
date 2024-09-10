@@ -11,16 +11,6 @@ module Datadog
 
       attr_reader :settings
 
-      def redacted_identifiers
-        @redacted_identifiers ||= begin
-          names = DEFAULT_REDACTED_IDENTIFIERS + settings.dynamic_instrumentation.redacted_identifiers
-          names.map! do |name|
-            normalize(name)
-          end
-          Set.new(names)
-        end
-      end
-
       def redact_identifier?(name)
         redacted_identifiers.include?(normalize(name))
       end
@@ -31,6 +21,18 @@ module Datadog
           redacted_type_names_regexp.match?(cls_name)
         else
           false
+        end
+      end
+
+      private
+
+      def redacted_identifiers
+        @redacted_identifiers ||= begin
+          names = DEFAULT_REDACTED_IDENTIFIERS + settings.dynamic_instrumentation.redacted_identifiers
+          names.map! do |name|
+            normalize(name)
+          end
+          Set.new(names)
         end
       end
 
@@ -49,10 +51,6 @@ module Datadog
           Regexp.new("\\A(?:#{names})\\z")
         end
       end
-
-      private
-
-      PLACEHOLDER = '[redacted]'
 
       # Copied from dd-trace-py
       DEFAULT_REDACTED_IDENTIFIERS = [
