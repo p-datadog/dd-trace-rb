@@ -1,9 +1,9 @@
 RSpec.describe Datadog::DI::Configuration::Settings do
   subject(:settings) { Datadog::Core::Configuration::Settings.new }
 
-  describe 'internal_dynamic_instrumentation' do
+  describe 'dynamic_instrumentation' do
     describe '#enabled' do
-      subject(:enabled) { settings.internal_dynamic_instrumentation.enabled }
+      subject(:enabled) { settings.dynamic_instrumentation.enabled }
 
       context 'when DD_DYNAMIC_INSTRUMENTATION_ENABLED' do
         around do |example|
@@ -50,7 +50,7 @@ RSpec.describe Datadog::DI::Configuration::Settings do
     end
 
     describe '#enabled=' do
-      subject(:set_dynamic_instrumentation_enabled) { settings.internal_dynamic_instrumentation.enabled = dynamic_instrumentation_enabled }
+      subject(:set_dynamic_instrumentation_enabled) { settings.dynamic_instrumentation.enabled = dynamic_instrumentation_enabled }
 
       [true, false].each do |value|
         context "when given #{value}" do
@@ -58,7 +58,7 @@ RSpec.describe Datadog::DI::Configuration::Settings do
 
           before { set_dynamic_instrumentation_enabled }
 
-          it { expect(settings.internal_dynamic_instrumentation.enabled).to eq(value) }
+          it { expect(settings.dynamic_instrumentation.enabled).to eq(value) }
         end
       end
     end

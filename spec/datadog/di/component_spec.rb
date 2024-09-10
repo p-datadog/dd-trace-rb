@@ -4,7 +4,7 @@ RSpec.describe Datadog::DI::Component do
   describe '.build' do
     let(:settings) do
       settings = Datadog::Core::Configuration::Settings.new
-      settings.internal_dynamic_instrumentation.enabled = dynamic_instrumentation_enabled
+      settings.dynamic_instrumentation.enabled = dynamic_instrumentation_enabled
       settings
     end
 

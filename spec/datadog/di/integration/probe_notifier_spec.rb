@@ -14,8 +14,8 @@ RSpec.describe Datadog::DI::ProbeNotifier do
 
     let(:settings) do
       settings = Datadog::Core::Configuration::Settings.new
-      settings.internal_dynamic_instrumentation.enabled = true
-      settings.internal_dynamic_instrumentation.propagate_all_exceptions = true
+      settings.dynamic_instrumentation.enabled = true
+      settings.dynamic_instrumentation.propagate_all_exceptions = true
       settings
     end
 

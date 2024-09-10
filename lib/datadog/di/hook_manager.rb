@@ -141,7 +141,7 @@ module Datadog
         # we use mock objects and the methods may be mocked with
         # individual invocations, yielding different return values on
         # different calls to the same method.
-        permit_untargeted_trace_points = settings.internal_dynamic_instrumentation.untargeted_trace_points
+        permit_untargeted_trace_points = settings.dynamic_instrumentation.untargeted_trace_points
 
         iseq = nil
         # TODO global reference

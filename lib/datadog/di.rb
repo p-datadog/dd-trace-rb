@@ -24,7 +24,7 @@ module Datadog
   module DI
     class << self
       def enabled?
-        Datadog.configuration.internal_dynamic_instrumentation.enabled
+        Datadog.configuration.dynamic_instrumentation.enabled
       end
     end
 

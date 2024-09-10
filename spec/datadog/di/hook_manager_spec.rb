@@ -25,7 +25,7 @@ RSpec.describe Datadog::DI::HookManager do
 
   let(:settings) do
     double('settings').tap do |settings|
-      allow(settings).to receive(:internal_dynamic_instrumentation).and_return(di_settings)
+      allow(settings).to receive(:dynamic_instrumentation).and_return(di_settings)
     end
   end
 

@@ -13,7 +13,7 @@ module Datadog
       attr_reader :settings
       attr_reader :redactor
 
-      def serialize_value(name, value, depth: settings.internal_dynamic_instrumentation.max_capture_depth)
+      def serialize_value(name, value, depth: settings.dynamic_instrumentation.max_capture_depth)
         if redactor.redact_type?(value)
           return {type: class_name(value.class), notCapturedReason: 'redactedType'}
         end
@@ -36,7 +36,7 @@ module Datadog
           if depth < 0
             serialized.update(notCapturedReason: 'depth')
           else
-            max = settings.internal_dynamic_instrumentation.max_capture_collection_size
+            max = settings.dynamic_instrumentation.max_capture_collection_size
             if max != 0 && value.length > max
               serialized.update(notCapturedReason: 'collectionSize', size: value.length)
               value = value[0...max]
@@ -50,7 +50,7 @@ module Datadog
           if depth < 0
             serialized.update(notCapturedReason: 'depth')
           else
-            max = settings.internal_dynamic_instrumentation.max_capture_collection_size
+            max = settings.dynamic_instrumentation.max_capture_collection_size
             cur = 0
             entries = []
             value.each do |k, v|
@@ -68,7 +68,7 @@ module Datadog
             serialized.update(notCapturedReason: 'depth')
           else
             fields = {}
-            max = settings.internal_dynamic_instrumentation.max_capture_attribute_count
+            max = settings.dynamic_instrumentation.max_capture_attribute_count
             cur = 0
             value.instance_variables.each do |ivar|
               if cur >= max

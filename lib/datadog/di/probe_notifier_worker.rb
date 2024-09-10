@@ -72,7 +72,7 @@ module Datadog
           begin
             status_client.dispatch(DIAGNOSTICS_PATH, statuses)
           rescue Error::AgentCommunicationError => exc
-            raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
+            raise if settings.dynamic_instrumentation.propagate_all_exceptions
             # TODO
             puts "failed to send probe statuses: #{exc.class}: #{exc}"
           end
@@ -94,7 +94,7 @@ module Datadog
           begin
             snapshot_client.dispatch(INPUT_PATH, snapshots)
           rescue Error::AgentCommunicationError => exc
-            raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
+            raise if settings.dynamic_instrumentation.propagate_all_exceptions
             # TODO
             puts "failed to send probe snapshots: #{exc.class}: #{exc}"
           end

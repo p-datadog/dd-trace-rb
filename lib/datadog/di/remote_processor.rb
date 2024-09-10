@@ -50,7 +50,7 @@ module Datadog
           raise
         end
       rescue => exc
-        raise if settings.internal_dynamic_instrumentation.propagate_all_exceptions
+        raise if settings.dynamic_instrumentation.propagate_all_exceptions
         # Silence all exceptions?
         warn "Error processing probe configuration: #{exc.class}: #{exc}"
       end

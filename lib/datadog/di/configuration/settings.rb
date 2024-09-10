@@ -16,7 +16,7 @@ module Datadog
           base.class_eval do
             # The setting has "internal" prefix to prevent it from being
             # prematurely turned on by customers.
-            settings :internal_dynamic_instrumentation do
+            settings :dynamic_instrumentation do
               option :enabled do |o|
                 o.type :bool
                 # The environment variable has an "internal" prefix so that

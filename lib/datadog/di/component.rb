@@ -15,7 +15,7 @@ module Datadog
     class Component
       class << self
         def build(settings, agent_settings)
-          return unless settings.respond_to?(:internal_dynamic_instrumentation) && settings.internal_dynamic_instrumentation.enabled
+          return unless settings.respond_to?(:dynamic_instrumentation) && settings.dynamic_instrumentation.enabled
 
           new(settings, agent_settings)
         end

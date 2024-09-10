@@ -13,7 +13,7 @@ module Datadog
 
       def redacted_identifiers
         @redacted_identifiers ||= begin
-          names = DEFAULT_REDACTED_IDENTIFIERS + settings.internal_dynamic_instrumentation.redacted_identifiers
+          names = DEFAULT_REDACTED_IDENTIFIERS + settings.dynamic_instrumentation.redacted_identifiers
           names.map! do |name|
             normalize(name)
           end
@@ -60,7 +60,7 @@ module Datadog
 
       def redacted_type_names_regexp
         @redacted_type_names_regexp ||= begin
-          names = settings.internal_dynamic_instrumentation.redacted_type_names
+          names = settings.dynamic_instrumentation.redacted_type_names
           names = names.map do |name|
             if name.end_with?('*')
               name = name[..-2]
