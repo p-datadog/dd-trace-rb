@@ -40,14 +40,14 @@ module Datadog
         @redacted_type_names_regexp ||= begin
           names = settings.dynamic_instrumentation.redacted_type_names
           names = names.map do |name|
-            if name.end_with?('*')
+            if name.end_with?("*")
               name = name[0..-2]
-              suffix = '.*'
+              suffix = ".*"
             else
-              suffix = ''
+              suffix = ""
             end
             Regexp.escape(name) + suffix
-          end.join('|')
+          end.join("|")
           Regexp.new("\\A(?:#{names})\\z")
         end
       end
@@ -144,7 +144,7 @@ module Datadog
 
       # Input can be a string or a symbol.
       def normalize(str)
-        str.to_s.strip.downcase.gsub(/[-_$@]/, '')
+        str.to_s.strip.downcase.gsub(/[-_$@]/, "")
       end
     end
   end

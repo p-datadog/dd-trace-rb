@@ -1,14 +1,14 @@
-require 'datadog/di/redactor'
+require "datadog/di/redactor"
 
 RSpec.describe Datadog::DI::Redactor do
   let(:settings) do
-    double('settings').tap do |settings|
+    double("settings").tap do |settings|
       allow(settings).to receive(:dynamic_instrumentation).and_return(di_settings)
     end
   end
 
   let(:di_settings) do
-    double('di settings').tap do |settings|
+    double("di settings").tap do |settings|
       allow(settings).to receive(:enabled).and_return(true)
       allow(settings).to receive(:propagate_all_exceptions).and_return(false)
       allow(settings).to receive(:redacted_identifiers).and_return([])
@@ -19,12 +19,12 @@ RSpec.describe Datadog::DI::Redactor do
     Datadog::DI::Redactor.new(settings)
   end
 
-  describe '#redact_identifier?' do
+  describe "#redact_identifier?" do
     CASES = [
-      ['lowercase', 'password', true],
-      ['uppercase', 'PASSWORD', true],
-      ['with removed punctiation', 'pass_word', true],
-      ['with non-removed punctuation', 'pass/word', false],
+      ["lowercase", "password", true],
+      ["uppercase", "PASSWORD", true],
+      ["with removed punctiation", "pass_word", true],
+      ["with non-removed punctuation", "pass/word", false],
     ]
 
     CASES.each do |(label, identifier_, redact_)|
@@ -40,13 +40,15 @@ RSpec.describe Datadog::DI::Redactor do
     end
   end
 
-  describe '#redact_type?' do
+  describe "#redact_type?" do
     class SensitiveType; end
 
     let(:redacted_type_names) { %w[SensitiveType WildCard*] }
 
     class WildCard; end
+
     class WildCardClass; end
+
     class WildCa; end
 
     before do
@@ -54,12 +56,12 @@ RSpec.describe Datadog::DI::Redactor do
     end
 
     CASES = [
-      ['redacted', SensitiveType.new, true],
-      ['not redacted', /123/, false],
-      ['primitive type', nil, false],
-      ['wild card type whose name is the same as prefix', WildCard.new, true],
-      ['wild card type', WildCardClass.new, true],
-      ['partial wild card prefix match', WildCa.new, false],
+      ["redacted", SensitiveType.new, true],
+      ["not redacted", /123/, false],
+      ["primitive type", nil, false],
+      ["wild card type whose name is the same as prefix", WildCard.new, true],
+      ["wild card type", WildCardClass.new, true],
+      ["partial wild card prefix match", WildCa.new, false],
     ]
 
     CASES.each do |(label, value_, redact_)|
