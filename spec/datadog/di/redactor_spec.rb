@@ -53,33 +53,52 @@ RSpec.describe Datadog::DI::Redactor do
 
     class PrefixWildCard; end
 
-    before do
-      expect(di_settings).to receive(:redacted_type_names).and_return(redacted_type_names)
-    end
+    def self.define_cases(cases)
+      cases.each do |(label, value_, redact_)|
+        value, redact = value_, redact_
 
-    CASES = [
-      ["redacted", SensitiveType.new, true],
-      ["not redacted", /123/, false],
-      ["primitive type", nil, false],
-      ["wild card type whose name is the same as prefix", WildCard.new, true],
-      ["wild card type", WildCardClass.new, true],
-      ['wild card does not match from beginning', PrefixWildCard.new, false],
-      ["partial wild card prefix match", WildCa.new, false],
-      ['instance of anonymous class', Class.new.new, false],
-      ['class object', String, false],
-      ['anonymous class object', Class.new, false],
-    ]
+        context label do
+          let(:value) { value }
 
-    CASES.each do |(label, value_, redact_)|
-      value, redact = value_, redact_
-
-      context label do
-        let(:value) { value }
-
-        it do
-          expect(redactor.redact_type?(value)).to be redact
+          it do
+            expect(redactor.redact_type?(value)).to be redact
+          end
         end
       end
+    end
+
+    context 'redacted type list is checked' do
+
+      before do
+        expect(di_settings).to receive(:redacted_type_names).and_return(redacted_type_names)
+      end
+
+      cases = [
+        ["redacted", SensitiveType.new, true],
+        ["not redacted", /123/, false],
+        ["primitive type", nil, false],
+        ["wild card type whose name is the same as prefix", WildCard.new, true],
+        ["wild card type", WildCardClass.new, true],
+        ['wild card does not match from beginning', PrefixWildCard.new, false],
+        ["partial wild card prefix match", WildCa.new, false],
+        ['class object', String, false],
+        ['anonymous class object', Class.new, false],
+      ]
+
+      define_cases(cases)
+    end
+
+    context 'redacted type list is not checked' do
+
+      before do
+        expect(di_settings).not_to receive(:redacted_type_names)
+      end
+
+      cases = [
+        ['instance of anonymous class', Class.new.new, false],
+      ]
+
+      define_cases(cases)
     end
   end
 end
