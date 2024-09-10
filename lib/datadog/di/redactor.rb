@@ -12,11 +12,11 @@ module Datadog
     # There is a built-in list of identifier names which will be subject to
     # redaction. Additional names can be provided by the user via the
     # settings.dynamic_instrumentation.redacted_identifiers setting or
-    # the DD_INTERNAL_DYNAMIC_INSTRUMENTATION_REDACTED_IDENTIFIERS environment
+    # the DD_DYNAMIC_INSTRUMENTATION_REDACTED_IDENTIFIERS environment
     # variable. Currently no class names are subject to redaction by default;
     # class names can be provided via the
     # settings.dynamic_instrumentation.redacted_type_names setting or
-    # DD_INTERNAL_DYNAMIC_INSTRUMENTATION_REDACTED_TYPES environment variable.
+    # DD_DYNAMIC_INSTRUMENTATION_REDACTED_TYPES environment variable.
     #
     # Redacted identifiers must match exactly to an attribute name, a key
     # in a hash or a variable name. Redacted types can either be matched
