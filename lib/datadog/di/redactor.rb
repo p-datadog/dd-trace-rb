@@ -41,7 +41,7 @@ module Datadog
           names = settings.dynamic_instrumentation.redacted_type_names
           names = names.map do |name|
             if name.end_with?('*')
-              name = name[..-2]
+              name = name[0..-2]
               suffix = '.*'
             else
               suffix = ''
