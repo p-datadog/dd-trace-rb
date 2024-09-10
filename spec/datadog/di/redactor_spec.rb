@@ -1,4 +1,4 @@
-require 'datadog/di/serializer'
+require 'datadog/di/redactor'
 
 RSpec.describe Datadog::DI::Redactor do
   let(:settings) do
