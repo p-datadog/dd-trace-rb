@@ -83,10 +83,10 @@ RSpec.describe Datadog::DI::Redactor do
         ["user-defined identifier is not ascii, target identifier is in another case", "ПАРОЛь", true],
         ["user-defined identifier is not ascii and uses mixed case in definition", "ключ", true],
         ["user-defined identifier is not ascii and uses mixed case in definition and is not exact match", "ключ1", false],
-        ['@ in definition', 'var', true],
-        ['@ in definition but name does not match', 'var1', false],
-        ['@ in target identifier', '@foo', true],
-        ['@ in target identifier but name does not match', '@foo1', false],
+        ["@ in definition", "var", true],
+        ["@ in definition but name does not match", "var1", false],
+        ["@ in target identifier", "@foo", true],
+        ["@ in target identifier but name does not match", "@foo1", false],
       ]
 
       define_cases(cases)
