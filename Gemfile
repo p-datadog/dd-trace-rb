@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 
+if RUBY_PLATFORM != 'java'
 gem 'byebug'
+end
 gem 'rfc'
 
 gemspec
