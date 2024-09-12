@@ -12,14 +12,6 @@ require 'climate_control'
 # Needed for calling JRuby.reference below
 require 'jruby' if RUBY_ENGINE == 'jruby'
 
-if (ENV['SKIP_SIMPLECOV'] != '1') && !RSpec.configuration.files_to_run.all? { |path| path.include?('/benchmark/') }
-  # +SimpleCov.start+ must be invoked before any application code is loaded
-  require 'simplecov'
-  SimpleCov.start do
-    formatter SimpleCov::Formatter::SimpleFormatter
-  end
-end
-
 require 'datadog/core/encoding'
 require 'datadog/tracing/tracer'
 require 'datadog/tracing/span'
