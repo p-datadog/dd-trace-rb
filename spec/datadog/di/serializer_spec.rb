@@ -1,3 +1,4 @@
+require "datadog/di/spec_helper"
 require "datadog/di/serializer"
 
 class DISerializerSpecSensitiveType
@@ -29,6 +30,8 @@ end
 class DISerializerSpecTestClass; end
 
 RSpec.describe Datadog::DI::Serializer do
+  di_test
+
   let(:settings) do
     double("settings").tap do |settings|
       allow(settings).to receive(:dynamic_instrumentation).and_return(di_settings)
@@ -210,9 +213,9 @@ RSpec.describe Datadog::DI::Serializer do
 
       cases = [
         {name: "string too long", input: {a: "abcde"},
-         expected: {a: {type: "String", value: "abc...", size: 5, notCapturedReason: "length"}}},
+         expected: {a: {type: "String", value: "abc", size: 5, truncated: true}}},
         {name: "symbol too long", input: {a: :abcde},
-         expected: {a: {type: "Symbol", value: "abc...", size: 5, notCapturedReason: "length"}}},
+         expected: {a: {type: "Symbol", value: "abc", size: 5, truncated: true}}},
       ]
 
       define_cases(cases)
