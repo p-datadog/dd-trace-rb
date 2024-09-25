@@ -1,6 +1,8 @@
 require "datadog/di/code_tracker"
 
 RSpec.describe Datadog::DI::CodeTracker do
+  di_test
+
   let(:tracker) do
     described_class.new
   end
@@ -25,9 +27,9 @@ RSpec.describe Datadog::DI::CodeTracker do
       # Should still be empty here.
       expect(tracker.send(:registry)).to be_empty
       load File.join(File.dirname(__FILE__), "code_tracker_test_class_1.rb")
-      expect(tracker.send(:registry).each.to_a.length).to eq(1)
+      expect(tracker.send(:registry).length).to eq(1)
 
-      path = tracker.send(:registry).each.to_a.first.first
+      path = tracker.send(:registry).to_a.dig(0, 0)
       # The path in the registry should be absolute.
       expect(path[0]).to eq "/"
       # The full path is dependent on the environment/system
