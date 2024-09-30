@@ -15,7 +15,7 @@ module Datadog
 
         def self.extended: (untyped base) -> untyped
 
-        def self.add_settings!: (untyped base) -> untyped
+        def self.add_settings!: (singleton(Datadog::Core::Configuration::Settings) base) -> untyped
 
         def self.enabled:  -> bool
       end

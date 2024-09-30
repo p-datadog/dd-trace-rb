@@ -3,6 +3,8 @@ module Datadog
     module Configuration
       class Settings
         include Base
+        include Base::InstanceMethods
+        extend Base::ClassMethods
 
         interface _Remote
           def enabled: () -> bool
