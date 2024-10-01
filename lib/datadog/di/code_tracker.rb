@@ -20,6 +20,7 @@ module Datadog
         @registry = {}
         @trace_point_lock = Mutex.new
         @registry_lock = Mutex.new
+        @compiled_trace_point = nil
       end
 
       # Starts tracking loaded code.
@@ -53,7 +54,8 @@ module Datadog
             # .instruction_sequence.absolute_path (absolute file path when
             #   load or require are used to load code, nil for eval'd code
             #   regardless of whether filename was specified as an argument
-            #   to eval)
+            #   to eval on ruby 3.1+, same as path for eval'd code on ruby 3.0
+            #   and lower)
             # .method_id
             # .path (refers to the code location that called the require/eval/etc.,
             #   not where the loaded code is; use .path on the instruction sequence
@@ -61,9 +63,8 @@ module Datadog
             # .eval_script
             #
             # For now just map the path to the instruction sequence.
-            path = tp.instruction_sequence.absolute_path
-            # path will be nil for eval'd code here.
-            if path
+            unless tp.eval_script
+              path = tp.instruction_sequence.absolute_path
               registry_lock.synchronize do
                 registry[path] = tp.instruction_sequence
               end
