@@ -41,9 +41,19 @@ module Datadog
           # do nothing if the code tracker has already started.
           return if @compiled_trace_point
 
+          # Note: .trace enables the trace point.
           @compiled_trace_point = TracePoint.trace(:script_compiled) do |tp|
             # Useful attributes of the trace point object here:
             # .instruction_sequence
+            # .instruction_sequence.path (either absolute file path for
+            #   loaded or required code, or for eval'd code, if filename
+            #   is specified as argument to eval, then this is the provided
+            #   filename, otherwise this is a synthesized
+            #   "(eval at <definition-file>:<line>)" string)
+            # .instruction_sequence.absolute_path (absolute file path when
+            #   load or require are used to load code, nil for eval'd code
+            #   regardless of whether filename was specified as an argument
+            #   to eval)
             # .method_id
             # .path (refers to the code location that called the require/eval/etc.,
             #   not where the loaded code is; use .path on the instruction sequence
@@ -51,9 +61,12 @@ module Datadog
             # .eval_script
             #
             # For now just map the path to the instruction sequence.
-            path = tp.instruction_sequence.path
-            registry_lock.synchronize do
-              registry[path] = tp.instruction_sequence
+            path = tp.instruction_sequence.absolute_path
+            # path will be nil for eval'd code here.
+            if path
+              registry_lock.synchronize do
+                registry[path] = tp.instruction_sequence
+              end
             end
           end
         end

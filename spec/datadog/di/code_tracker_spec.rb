@@ -13,7 +13,7 @@ RSpec.describe Datadog::DI::CodeTracker do
       tracker.stop
     end
 
-    it "tracks loaded files" do
+    it "tracks loaded file" do
       # The expectations appear to be lazy-loaded, therefore
       # we need to invoke the same expectation before starting
       # code tracking as we'll be using later in the test.
@@ -21,7 +21,7 @@ RSpec.describe Datadog::DI::CodeTracker do
       tracker.start
       # Should still be empty here.
       expect(tracker.send(:registry)).to be_empty
-      load File.join(File.dirname(__FILE__), "code_tracker_test_class_1.rb")
+      load File.join(File.dirname(__FILE__), "code_tracker_load_class.rb")
       expect(tracker.send(:registry).length).to eq(1)
 
       path = tracker.send(:registry).to_a.dig(0, 0)
@@ -30,9 +30,61 @@ RSpec.describe Datadog::DI::CodeTracker do
       # The full path is dependent on the environment/system
       # running the tests, but we can assert on the basename
       # which will be the same.
-      expect(File.basename(path)).to eq("code_tracker_test_class_1.rb")
+      expect(File.basename(path)).to eq("code_tracker_load_class.rb")
       # And, we should in fact have a full path.
       expect(path).to start_with("/")
+    end
+
+    it "tracks required file" do
+      # The expectations appear to be lazy-loaded, therefore
+      # we need to invoke the same expectation before starting
+      # code tracking as we'll be using later in the test.
+      expect(tracker.send(:registry)).to be_empty
+      tracker.start
+      # Should still be empty here.
+      expect(tracker.send(:registry)).to be_empty
+      require_relative "code_tracker_require_class"
+      expect(tracker.send(:registry).length).to eq(1)
+
+      path = tracker.send(:registry).to_a.dig(0, 0)
+      # The path in the registry should be absolute.
+      expect(path[0]).to eq "/"
+      # The full path is dependent on the environment/system
+      # running the tests, but we can assert on the basename
+      # which will be the same.
+      expect(File.basename(path)).to eq("code_tracker_require_class.rb")
+      # And, we should in fact have a full path.
+      expect(path).to start_with("/")
+    end
+
+    context "eval without location" do
+      it "does not track eval'd code" do
+        # The expectations appear to be lazy-loaded, therefore
+        # we need to invoke the same expectation before starting
+        # code tracking as we'll be using later in the test.
+        expect(tracker.send(:registry)).to be_empty
+        tracker.start
+        # Should still be empty here.
+        expect(tracker.send(:registry)).to be_empty
+        eval "1 + 2" # standard:disable Style/EvalWithLocation
+        # Should still be empty here.
+        expect(tracker.send(:registry)).to be_empty
+      end
+    end
+
+    context "eval with location" do
+      it "does not track eval'd code" do
+        # The expectations appear to be lazy-loaded, therefore
+        # we need to invoke the same expectation before starting
+        # code tracking as we'll be using later in the test.
+        expect(tracker.send(:registry)).to be_empty
+        tracker.start
+        # Should still be empty here.
+        expect(tracker.send(:registry)).to be_empty
+        eval "1 + 2", nil, __FILE__, __LINE__
+        # Should still be empty here.
+        expect(tracker.send(:registry)).to be_empty
+      end
     end
   end
 
