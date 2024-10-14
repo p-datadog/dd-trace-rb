@@ -27,10 +27,16 @@ RSpec.describe Datadog::DI::Transport do
   describe 'send methods' do
     skip_unless_integration_testing_enabled
 
-    let(:port) { 8126 }
+    before(:all) do
+      unless agent_host && agent_port
+        skip "Set DD_AGENT_HOST and DD_TRACE_AGENT_PORT in environment to run these tests"
+      end
+    end
+
+    let(:port) { agent_port }
 
     before do
-      expect(agent_settings).to receive(:hostname).and_return('localhost')
+      expect(agent_settings).to receive(:hostname).and_return(agent_host)
       expect(agent_settings).to receive(:port).and_return(port)
       expect(agent_settings).to receive(:timeout_seconds).and_return(1)
       expect(agent_settings).to receive(:ssl).and_return(false)
@@ -76,7 +82,7 @@ RSpec.describe Datadog::DI::Transport do
         it 'raises AgentCommunicationError' do
           expect do
             client.send_diagnostics(payload)
-          end.to raise_exception(Datadog::DI::Error::AgentCommunicationError, /Connection refused.*99999/)
+          end.to raise_exception(Datadog::DI::Error::AgentCommunicationError, /(?:Connection refused|connect).*99999/)
         end
       end
 
@@ -88,7 +94,7 @@ RSpec.describe Datadog::DI::Transport do
         it 'raises AgentCommunicationError' do
           expect do
             client.send_input(payload)
-          end.to raise_exception(Datadog::DI::Error::AgentCommunicationError, /Connection refused.*99999/)
+          end.to raise_exception(Datadog::DI::Error::AgentCommunicationError, /(?:Connection refused|connect).*99999/)
         end
       end
     end
