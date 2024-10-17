@@ -1,0 +1,46 @@
+module Datadog
+  module DI
+    class ProbeNotifierWorker
+      @settings: untyped
+
+      @status_queue: Array
+
+      @snapshot_queue: Array
+
+      @transport: Transport
+
+      @lock: Mutex
+
+      @wake_lock: Mutex
+
+      @wake: ConditionVariable
+
+      @io_in_progress: bool
+
+      @thread: Thread
+
+      @stop_requested: bool
+
+      def initialize: (untyped settings, untyped agent_settings, Transport transport) -> void
+
+      attr_reader settings: untyped
+
+      def start: () -> void
+      def stop: (?::Integer timeout) -> void
+      def flush: () -> void
+
+      private
+
+      attr_reader transport: Transport
+
+      attr_reader wake: ConditionVariable
+
+      attr_reader wake_lock: Mutex
+
+      attr_reader thread: Thread
+      def io_in_progress?: () -> bool
+
+      def maybe_send: () -> bool
+    end
+  end
+end
