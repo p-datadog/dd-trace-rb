@@ -4,7 +4,6 @@ require 'datadog/di/probe_notification_builder'
 
 RSpec.describe Datadog::DI::ProbeNotificationBuilder do
   describe 'log probe' do
-
     let(:redactor) { Datadog::DI::Redactor.new(settings) }
     let(:serializer) { Datadog::DI::Serializer.new(settings, redactor) }
 
@@ -61,7 +60,7 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
         it 'builds expected payload' do
           payload = builder.build_snapshot(probe, snapshot: vars)
           expect(payload).to be_a(Hash)
-          expect(payload.fetch(:'debugger.snapshot').fetch(:captures)).to eq(captures)
+          expect(payload.fetch(:"debugger.snapshot").fetch(:captures)).to eq(captures)
         end
       end
     end
@@ -100,7 +99,7 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
         it 'builds expected payload' do
           payload = builder.build_snapshot(probe, args: args, kwargs: kwargs)
           expect(payload).to be_a(Hash)
-          captures = payload.fetch(:'debugger.snapshot').fetch(:captures)
+          captures = payload.fetch(:"debugger.snapshot").fetch(:captures)
           expect(captures).to eq(expected_captures)
         end
       end
