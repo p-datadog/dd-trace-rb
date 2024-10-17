@@ -1,3 +1,4 @@
+require "datadog/di/spec_helper"
 require 'datadog/di'
 require_relative 'hook_line'
 require_relative 'hook_method'
@@ -95,14 +96,14 @@ RSpec.describe Datadog::DI::Instrumenter do
           expect(observed_calls.first.keys.sort).to eq call_keys
           expect(observed_calls.first[:rv]).to eq 2
           expect(observed_calls.first[:duration]).to be_a(Float)
-          #expect(observed_calls.first[:serialized_entry_args]).to eq(arg1: 2)
+          # expect(observed_calls.first[:serialized_entry_args]).to eq(arg1: 2)
         end
       end
 
       context 'with snapshot capture' do
         let(:probe_args) do
           {type_name: 'HookTestClass', method_name: 'hook_test_method_with_arg',
-          capture_snapshot: true}
+           capture_snapshot: true}
         end
 
         it 'invokes callback and captures parameters' do
@@ -125,12 +126,14 @@ RSpec.describe Datadog::DI::Instrumenter do
     context 'when hooking two identical but different probes' do
       let(:probe) do
         Datadog::DI::Probe.new(**base_probe_args.merge(
-          type_name: 'HookTestClass', method_name: 'hook_test_method'))
+          type_name: 'HookTestClass', method_name: 'hook_test_method'
+        ))
       end
 
       let(:probe2) do
         Datadog::DI::Probe.new(**base_probe_args.merge(
-          type_name: 'HookTestClass', method_name: 'hook_test_method'))
+          type_name: 'HookTestClass', method_name: 'hook_test_method'
+        ))
       end
 
       after do
@@ -177,7 +180,11 @@ RSpec.describe Datadog::DI::Instrumenter do
         # Reload the test class because when methods are instrumented,
         # their definitions are overwritten, and we want the original
         # definition here for checking file paths in stack traces.
-        Object.send(:remove_const, :HookTestClass) rescue nil
+        begin
+          Object.send(:remove_const, :HookTestClass)
+        rescue
+          nil
+        end
         load File.join(File.dirname(__FILE__), 'hook_method.rb')
       end
 
@@ -208,14 +215,14 @@ RSpec.describe Datadog::DI::Instrumenter do
       it 'contains instrumented method as top frame' do
         frame = stack.first
         expect(frame).to be_a(String)
-        expect(frame).to match %r,hook_method\.rb:\d+:in ,
+        expect(frame).to match %r{hook_method\.rb:\d+:in }
       end
 
       it 'contains caller as second frame' do
         frame = stack[1]
         expect(frame).to be_a(String)
         # This test file is calling the instrumented method.
-        expect(frame).to match %r,instrumenter_spec\.rb:\d+:in ,
+        expect(frame).to match %r{instrumenter_spec\.rb:\d+:in }
       end
     end
 
@@ -280,7 +287,6 @@ RSpec.describe Datadog::DI::Instrumenter do
   end
 
   describe '.hook_line' do
-
     after do
       instrumenter.unhook(probe)
     end
@@ -351,6 +357,7 @@ RSpec.describe Datadog::DI::Instrumenter do
 
         before do
           expect(di_settings).to receive(:untargeted_trace_points).and_return(false)
+          Datadog::DI.activate_tracking!
           code_tracker.clear
         end
 
@@ -396,7 +403,7 @@ RSpec.describe Datadog::DI::Instrumenter do
           observed_calls << payload
         end
 
-        #HookLineTestClass.new.test_method
+        # HookLineTestClass.new.test_method
 
         expect(observed_calls).to be_empty
       end
@@ -436,7 +443,7 @@ RSpec.describe Datadog::DI::Instrumenter do
         xit 'contains instrumented method as top frame' do
           frame = payload.fetch(:callers).first
           expect(frame).to be_a(String)
-          expect(frame).to match %r,hook_line\.rb:\d+:in ,
+          expect(frame).to match %r{hook_line\.rb:\d+:in }
         end
       end
     end
