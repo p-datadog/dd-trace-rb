@@ -3,8 +3,9 @@ module Datadog
     class ProbeNotificationBuilder
       @serializer: Serializer
 
-      def initialize: (Serializer serializer) -> void
+      def initialize: (untyped settings, Serializer serializer) -> void
 
+      attr_reader settings: untyped
       attr_reader serializer: Serializer
 
       def build_received: (Probe probe) -> untyped
@@ -26,6 +27,10 @@ module Datadog
       def timestamp_now: () -> untyped
 
       def get_local_variables: (TracePoint trace_point) -> untyped
+      
+      private
+      
+      def thread_id: -> Integer
     end
   end
 end
