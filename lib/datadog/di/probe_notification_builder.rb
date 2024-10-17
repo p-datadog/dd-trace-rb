@@ -6,10 +6,12 @@ module Datadog
     #
     # @api private
     class ProbeNotificationBuilder
-      def initialize(serializer)
+      def initialize(settings, serializer)
+        @settings = settings
         @serializer = serializer
       end
 
+      attr_reader :settings
       attr_reader :serializer
 
       def build_received(probe)
@@ -106,7 +108,7 @@ module Datadog
 
         timestamp = timestamp_now
         {
-          service: Datadog.configuration.service,
+          service: settings.service,
           "debugger.snapshot": {
             id: SecureRandom.uuid,
             timestamp: timestamp,
@@ -129,7 +131,7 @@ module Datadog
             name: probe.file,
             method: probe.method_name || 'no_method',
             thread_name: Thread.current.name,
-            thread_id: Thread.current.native_thread_id,
+            thread_id: thread_id,
             version: 2,
           },
           "dd.trace_id": 136035165280417366521542318182735500431,
@@ -143,7 +145,7 @@ module Datadog
 
       def build_status(probe, message:, status:)
         {
-          service: Datadog.configuration.service,
+          service: settings.service,
           timestamp: timestamp_now,
           message: message,
           ddsource: 'dd_debugger',
@@ -197,6 +199,16 @@ module Datadog
         binding.local_variables.each_with_object({}) do |name, map|
           value = binding.local_variable_get(name)
           map[name] = value
+        end
+      end
+
+      def thread_id
+        thread = Thread.current
+        if thread.respond_to?(:native_thread_id)
+          # Ruby 3.1+
+          thread.native_thread_id
+        else
+          thread.object_id
         end
       end
     end
