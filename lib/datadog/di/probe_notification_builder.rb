@@ -134,8 +134,9 @@ module Datadog
             thread_id: thread_id,
             version: 2,
           },
-          "dd.trace_id": 136035165280417366521542318182735500431,
-          "dd.span_id": 17576285113343575026,
+          # TODO add tests that the trace/span id is correctly propagated
+          "dd.trace_id": Datadog::Tracing.active_trace&.id,
+          "dd.span_id": Datadog::Tracing.active_span&.id,
           ddsource: 'dd_debugger',
           message: probe.template && evaluate_template(probe.template,
             duration: duration ? duration * 1000 : nil),
