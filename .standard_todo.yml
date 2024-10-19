@@ -44,3 +44,4 @@ ignore:
 - tasks/**/**
 - tools/**/**
 - yard/**/**
+- h/*
