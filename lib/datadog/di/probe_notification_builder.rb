@@ -32,8 +32,9 @@ module Datadog
           status: 'EMITTING',)
       end
 
+      # Duration is in seconds.
       def build_executed(probe,
-        trace_point: nil, rv: nil, duration: nil, callers: nil,
+        trace_point: nil, rv: nil, duration: nil, caller_locations: nil,
         args: nil, kwargs: nil, serialized_entry_args: nil)
         snapshot = if probe.line? && probe.capture_snapshot?
           if trace_point.nil?
@@ -41,16 +42,16 @@ module Datadog
           end
           get_local_variables(trace_point)
         end
-        if callers
-          callers = callers[0..9]
-        end
+        # TODO check how many stack frames we should be keeping/sending,
+        # this should be all frames for enriched probes and no frames for
+        # non-enriched probes?
         build_snapshot(probe, rv: rv, snapshot: snapshot,
-          duration: duration, callers: callers, args: args, kwargs: kwargs,
+          duration: duration, caller_locations: caller_locations, args: args, kwargs: kwargs,
           serialized_entry_args: serialized_entry_args)
       end
 
       def build_snapshot(probe, rv: nil, snapshot: nil,
-        duration: nil, callers: nil, args: nil, kwargs: nil,
+        duration: nil, caller_locations: nil, args: nil, kwargs: nil,
         serialized_entry_args: nil)
         # TODO also verify that non-capturing probe does not pass
         # snapshot or vars/args into this method
@@ -85,11 +86,14 @@ module Datadog
 
         location = if probe.line?
           actual_file = if probe.file
-            # Normally callers should always be filled for a line probe
+            # Normally caller_locations should always be filled for a line probe
             # but in the test suite we don't always provide all arguments.
-            callers&.detect do |caller|
-              File.basename(caller.sub(/:.*/, '')) == File.basename(probe.file)
-            end&.sub(/:.*/, '') || probe.file
+            actual_file_basename = File.basename(probe.file)
+            caller_locations&.detect do |loc|
+              # TODO record actual path that probe was installed into,
+              # perform exact match here against that path.
+              File.basename(loc.path) == actual_file_basename
+            end&.path || probe.file
           end
           {
             file: actual_file,
@@ -102,8 +106,8 @@ module Datadog
           }
         end
 
-        stack = if callers
-          format_callers(callers)
+        stack = if caller_locations
+          format_caller_locations(caller_locations)
         end
 
         timestamp = timestamp_now
@@ -131,7 +135,11 @@ module Datadog
             name: probe.file,
             method: probe.method_name || 'no_method',
             thread_name: Thread.current.name,
-            thread_id: thread_id,
+            # Dynamic instrumentation currently does not need thread_id for
+            # anything. It can be sent if a customer requests it at which point
+            # we can also determine which thread identifier to send
+            # (Thread#native_thread_id or something else).
+            thread_id: nil,
             version: 2,
           },
           # TODO add tests that the trace/span id is correctly propagated
@@ -162,17 +170,9 @@ module Datadog
         }
       end
 
-      def format_callers(callers)
-        callers.map do |caller|
-          if caller =~ /\A([^:]+):(\d+):in `([^']+)'\z/
-            {
-              fileName: $1, function: $3, lineNumber: Integer($2),
-            }
-          else
-            {
-              fileName: 'unknown', function: 'unknown', lineNumber: 0,
-            }
-          end
+      def format_caller_locations(caller_locations)
+        caller_locations.map do |loc|
+          {fileName: loc.path, function: loc.label, lineNumber: loc.lineno}
         end
       end
 
@@ -200,16 +200,6 @@ module Datadog
         binding.local_variables.each_with_object({}) do |name, map|
           value = binding.local_variable_get(name)
           map[name] = value
-        end
-      end
-
-      def thread_id
-        thread = Thread.current
-        if thread.respond_to?(:native_thread_id)
-          # Ruby 3.1+
-          thread.native_thread_id
-        else
-          thread.object_id
         end
       end
     end
