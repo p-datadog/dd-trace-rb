@@ -174,9 +174,9 @@ module Datadog
           @lock.synchronize do
             batch = instance_variable_get("@#{event_type}_queue")
             instance_variable_set("@#{event_type}_queue", [])
-            @io_in_progress = batch.any?
+            @io_in_progress = batch.any? # steep:ignore
           end
-          if batch.any?
+          if batch.any? # steep:ignore
             begin
               transport.public_send("send_#{event_type}", batch)
               time = Core::Utils::Time.get_time
@@ -189,7 +189,7 @@ module Datadog
               puts "failed to send #{event_name}: #{exc.class}: #{exc} (at #{exc.backtrace.first})"
             end
           end
-          batch.any?
+          batch.any? # steep:ignore
         rescue ThreadError
           # Normally the queue should only be consumed in this method,
           # however if anyone consumes it elsewhere we don't want to block

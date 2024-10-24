@@ -3,9 +3,9 @@ module Datadog
     class ProbeNotifierWorker
       @settings: untyped
 
-      @status_queue: Array
+      @status_queue: Array[Hash[String, untyped]]
 
-      @snapshot_queue: Array
+      @snapshot_queue: Array[Hash[String, untyped]]
 
       @transport: Transport
 
@@ -31,6 +31,10 @@ module Datadog
 
       private
 
+      def status_queue: () -> Array[Hash[String, untyped]]
+
+      def snapshot_queue: () -> Array[Hash[String, untyped]]
+
       attr_reader transport: Transport
 
       attr_reader wake: ConditionVariable
@@ -41,6 +45,10 @@ module Datadog
       def io_in_progress?: () -> bool
 
       def maybe_send: () -> bool
+
+      def maybe_send_status: () -> bool
+
+      def maybe_send_snapshot: () -> bool
     end
   end
 end
