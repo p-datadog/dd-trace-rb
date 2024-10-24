@@ -167,8 +167,9 @@ RSpec.describe 'DI integration from remote config' do
   let(:expected_snapshot_payload) do
     {
       path: '/debugger/v1/input',
-      'dd.span_id': Integer,
-      'dd.trace_id': Integer,
+      # We do not have active span/trace in the test.
+      'dd.span_id': nil,
+      'dd.trace_id': nil,
       'debugger.snapshot': {
         captures: nil,
         evaluationErrors: [],
