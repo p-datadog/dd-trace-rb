@@ -107,7 +107,7 @@ RSpec.describe Datadog::DI::Remote do
       end
 
       let(:instrumenter) do
-        Datadog::DI::Instrumenter.new(settings, serializer)
+        Datadog::DI::Instrumenter.new(settings, serializer, logger)
       end
 
       let(:probe_notification_builder) do
