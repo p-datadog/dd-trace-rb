@@ -192,7 +192,7 @@ RSpec.describe 'DI integration from remote config' do
       logger: {
         method: 'target_method',
         name: nil,
-        thread_id: Integer,
+        thread_id: nil,
         thread_name: 'Thread.main',
         version: 2,
       },
