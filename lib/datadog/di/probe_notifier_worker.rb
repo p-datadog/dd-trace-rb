@@ -23,12 +23,11 @@ module Datadog
     #
     # @api private
     class ProbeNotifierWorker
-
       # Minimum interval between submissions.
       # TODO make this into an internal setting and increase default to 2 or 3.
       MIN_SEND_INTERVAL = 1
 
-      def initialize(settings, agent_settings, transport)
+      def initialize(settings, transport)
         @settings = settings
         @status_queue = []
         @snapshot_queue = []
@@ -38,12 +37,13 @@ module Datadog
         @io_in_progress = false
         @sleep_remaining = nil
         @wake_scheduled = false
+        @thread = nil
       end
 
       attr_reader :settings
 
       def start
-        return if defined?(@thread) && @thread
+        return if @thread
         @thread = Thread.new do
           loop do
             # TODO If stop is requested, we stop immediately without
