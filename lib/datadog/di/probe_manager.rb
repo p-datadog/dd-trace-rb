@@ -136,9 +136,12 @@ module Datadog
       end
 
       def probe_executed_callback(probe:, **opts)
-        # TODO notify emitting once only
-        payload = probe_notification_builder.build_emitting(probe)
-        probe_notifier_worker.add_status(payload)
+        unless probe.emitting_notified?
+          payload = probe_notification_builder.build_emitting(probe)
+          probe_notifier_worker.add_status(payload)
+          probe.emitting_notified = true
+        end
+
         payload = probe_notification_builder.build_executed(probe, **opts)
         probe_notifier_worker.add_snapshot(payload)
       end

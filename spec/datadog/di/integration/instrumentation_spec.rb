@@ -49,6 +49,38 @@ RSpec.describe 'Instrumentation integration' do
     Datadog::DI::Component.build!(settings, agent_settings)
   end
 
+  let(:expected_installed_payload) do
+    {ddsource: 'dd_debugger',
+      debugger: {
+        diagnostics: {
+          parentId: nil,
+          probeId: String,
+          probeVersion: 0,
+          runtimeId: String,
+          status: 'INSTALLED',
+        }},
+      message: String,
+      service: 'rspec',
+      timestamp: Integer,
+    }
+  end
+
+  let(:expected_emitting_payload) do
+    {ddsource: 'dd_debugger',
+      debugger: {
+        diagnostics: {
+          parentId: nil,
+          probeId: String,
+          probeVersion: 0,
+          runtimeId: String,
+          status: 'EMITTING',
+        }},
+      message: String,
+      service: 'rspec',
+      timestamp: Integer,
+    }
+  end
+
   context 'log probe' do
     before do
       allow(agent_settings).to receive(:hostname)
@@ -123,6 +155,47 @@ RSpec.describe 'Instrumentation integration' do
             run_test do
               expect(InstrumentationSpecTestClass.new.mutating_method('hello world')).to eq('bye world')
             end
+          end
+        end
+      end
+
+      context 'when target is invoked' do
+        let(:probe) do
+          Datadog::DI::Probe.new(id: "1234", type: :log,
+            type_name: 'InstrumentationSpecTestClass', method_name: 'test_method')
+        end
+
+        it 'notifies agent that probe is emitting' do
+          expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+            expect(status).to match(expected_installed_payload)
+          end
+          probe_manager.add_probe(probe)
+          expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+            expect(status).to match(expected_emitting_payload)
+          end
+          allow(component.probe_notifier_worker).to receive(:add_snapshot)
+          expect(InstrumentationSpecTestClass.new.test_method).to eq(42)
+          component.probe_notifier_worker.flush
+        end
+
+        context 'when target is invoked multiple times' do
+          it 'notifies that probe is emitting only once at first invocation' do
+            expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+              expect(status).to match(expected_installed_payload)
+            end
+            probe_manager.add_probe(probe)
+
+            expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+              expect(status).to match(expected_emitting_payload)
+            end
+            expect(component.probe_notifier_worker).to receive(:add_snapshot)
+            expect(InstrumentationSpecTestClass.new.test_method).to eq(42)
+            component.probe_notifier_worker.flush
+
+            expect(component.probe_notifier_worker).not_to receive(:add_status)
+            expect(component.probe_notifier_worker).to receive(:add_snapshot)
+            expect(InstrumentationSpecTestClass.new.test_method).to eq(42)
+            component.probe_notifier_worker.flush
           end
         end
       end
@@ -325,6 +398,48 @@ RSpec.describe 'Instrumentation integration' do
 
               component.probe_notifier_worker.flush
             end
+          end
+        end
+      end
+
+      context 'when target is invoked' do
+        let(:probe) do
+          Datadog::DI::Probe.new(id: "1234", type: :log,
+            file: 'instrumentation_integration_test_class.rb', line_no: 10,
+            capture_snapshot: false,)
+        end
+
+        it 'notifies agent that probe is emitting' do
+          expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+            expect(status).to match(expected_installed_payload)
+          end
+          probe_manager.add_probe(probe)
+          expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+            expect(status).to match(expected_emitting_payload)
+          end
+          allow(component.probe_notifier_worker).to receive(:add_snapshot)
+          expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
+          component.probe_notifier_worker.flush
+        end
+
+        context 'when target is invoked multiple times' do
+          it 'notifies that probe is emitting only once at first invocation' do
+            expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+              expect(status).to match(expected_installed_payload)
+            end
+            probe_manager.add_probe(probe)
+
+            expect(component.probe_notifier_worker).to receive(:add_status) do |status|
+              expect(status).to match(expected_emitting_payload)
+            end
+            expect(component.probe_notifier_worker).to receive(:add_snapshot)
+            expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
+            component.probe_notifier_worker.flush
+
+            expect(component.probe_notifier_worker).not_to receive(:add_status)
+            expect(component.probe_notifier_worker).to receive(:add_snapshot)
+            expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
+            component.probe_notifier_worker.flush
           end
         end
       end

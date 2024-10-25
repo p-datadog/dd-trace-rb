@@ -71,6 +71,8 @@ module Datadog
 
         @rate_limit = rate_limit || (@capture_snapshot ? 1 : 5000)
         @rate_limiter = Datadog::Core::TokenBucket.new(@rate_limit)
+
+        @emitting_notified = false
       end
 
       attr_reader :id
@@ -157,6 +159,11 @@ module Datadog
       # Line trace point for line probes. Normally this would be a targeted
       # trace point.
       attr_accessor :instrumentation_trace_point
+
+      attr_writer :emitting_notified
+      def emitting_notified?
+        !!@emitting_notified
+      end
     end
   end
 end
