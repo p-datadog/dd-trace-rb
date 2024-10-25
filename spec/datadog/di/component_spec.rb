@@ -1,3 +1,4 @@
+require "datadog/di/spec_helper"
 require 'datadog/di/component'
 
 RSpec.describe Datadog::DI::Component do
