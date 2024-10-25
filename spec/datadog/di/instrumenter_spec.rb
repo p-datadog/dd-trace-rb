@@ -52,7 +52,7 @@ RSpec.describe Datadog::DI::Instrumenter do
   end
 
   let(:call_keys) do
-    %i[callers duration probe rv serialized_entry_args]
+    %i[caller_locations duration probe rv serialized_entry_args]
   end
 
   describe '.hook_method' do
@@ -205,7 +205,7 @@ RSpec.describe Datadog::DI::Instrumenter do
       end
 
       let(:stack) do
-        payload.fetch(:callers)
+        payload.fetch(:caller_locations)
       end
 
       it 'contains at least 10 frames' do
@@ -214,15 +214,13 @@ RSpec.describe Datadog::DI::Instrumenter do
 
       it 'contains instrumented method as top frame' do
         frame = stack.first
-        expect(frame).to be_a(String)
-        expect(frame).to match %r{hook_method\.rb:\d+:in }
+        expect(File.basename(frame.path)).to eq 'hook_method.rb'
       end
 
       it 'contains caller as second frame' do
         frame = stack[1]
-        expect(frame).to be_a(String)
         # This test file is calling the instrumented method.
-        expect(frame).to match %r{instrumenter_spec\.rb:\d+:in }
+        expect(File.basename(frame.path)).to eq 'instrumenter_spec.rb'
       end
     end
 
@@ -269,7 +267,7 @@ RSpec.describe Datadog::DI::Instrumenter do
             id: 1, type: :log)
         end
 
-        xit 'does not invoke callback' do
+        it 'does not invoke callback' do
           instrumenter.hook_method(probe) do |payload|
             observed_calls << payload
           end
@@ -292,7 +290,7 @@ RSpec.describe Datadog::DI::Instrumenter do
     end
 
     let(:call_keys) do
-      %i[callers probe trace_point]
+      %i[caller_locations probe trace_point]
     end
 
     context 'when called without a block' do
@@ -394,7 +392,7 @@ RSpec.describe Datadog::DI::Instrumenter do
           id: 1, type: :log)
       end
 
-      xit 'does not invoke callback' do
+      it 'does not invoke callback' do
         observed_calls
 
         expect_any_instance_of(TracePoint).to receive(:enable).with(no_args).and_call_original
@@ -434,16 +432,15 @@ RSpec.describe Datadog::DI::Instrumenter do
         observed_calls.first
       end
 
-      xit 'invokes callback with expected keys' do
+      it 'invokes callback with expected keys' do
         expect(payload).to be_a(Hash)
         expect(payload.keys.sort).to eq(call_keys)
       end
 
       describe 'stack trace' do
-        xit 'contains instrumented method as top frame' do
-          frame = payload.fetch(:callers).first
-          expect(frame).to be_a(String)
-          expect(frame).to match %r{hook_line\.rb:\d+:in }
+        it 'contains instrumented method as top frame' do
+          frame = payload.fetch(:caller_locations).first
+          expect(File.basename(frame.path)).to eq 'hook_line.rb'
         end
       end
     end
@@ -554,16 +551,16 @@ RSpec.describe Datadog::DI::Instrumenter do
           # TODO add assertions for locals
 
           expect(observed_calls[0].keys.sort).to eq call_keys
-          expect(observed_calls[0][:callers]).to be_a(Array)
+          expect(observed_calls[0][:caller_locations]).to be_a(Array)
 
           expect(observed_calls[1].keys.sort).to eq call_keys
-          expect(observed_calls[1][:callers]).to be_a(Array)
+          expect(observed_calls[1][:caller_locations]).to be_a(Array)
 
           expect(observed_calls[2].keys.sort).to eq call_keys
-          expect(observed_calls[2][:callers]).to be_a(Array)
+          expect(observed_calls[2][:caller_locations]).to be_a(Array)
 
           expect(observed_calls[3].keys.sort).to eq call_keys
-          expect(observed_calls[3][:callers]).to be_a(Array)
+          expect(observed_calls[3][:caller_locations]).to be_a(Array)
         end
       end
     end
@@ -574,20 +571,22 @@ RSpec.describe Datadog::DI::Instrumenter do
         require_relative 'hook_line_recursive'
       end
 
+      let(:code_tracker) { Datadog::DI.code_tracker }
+
       # We need to use a rate limiter, otherwise the stack is exhausted
       # very slowly and this test burns 100% CPU for a long time performing
       # snapshot building etc.
-      let(:rate_limiter) do
-        Datadog::Core::TokenBucket.new(1)
+      let(:rate_limit) do
+        1
       end
 
       context 'non-enriched probe' do
         let(:probe) do
           Datadog::DI::Probe.new(file: 'hook_line_recursive.rb', line_no: 11,
-            id: 1, type: :log, rate_limiter: rate_limiter)
+            id: 1, type: :log, rate_limit: rate_limit)
         end
 
-        xit 'does not invoke callback' do
+        it 'does not invoke callback' do
           instrumenter.hook_line(probe) do |payload|
             observed_calls << payload
           end
@@ -601,7 +600,7 @@ RSpec.describe Datadog::DI::Instrumenter do
           expect(observed_calls.length).to eq 1
 
           expect(observed_calls[0].keys.sort).to eq call_keys
-          expect(observed_calls[0][:callers]).to be_a(Array)
+          expect(observed_calls[0][:caller_locations]).to be_a(Array)
         end
       end
     end
