@@ -24,7 +24,7 @@ module Datadog
 
           return unless environment_supported?
 
-          new(settings, agent_settings, code_tracker: DI.code_tracker)
+          new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker)
         end
 
         def build!(settings, agent_settings)
@@ -40,7 +40,7 @@ module Datadog
             raise "DI does not support the environment (development or Ruby version too low or not MRI)"
           end
 
-          new(settings, agent_settings, code_tracker: DI.code_tracker)
+          new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker)
         end
 
         # Checks whether the runtime environment is supported by
@@ -62,9 +62,10 @@ module Datadog
         end
       end
 
-      def initialize(settings, agent_settings, code_tracker: nil)
+      def initialize(settings, agent_settings, logger, code_tracker: nil)
         @settings = settings
         @agent_settings = agent_settings
+        @logger = logger
         @redactor = Redactor.new(settings)
         @serializer = Serializer.new(settings, redactor)
         @instrumenter = Instrumenter.new(settings, serializer, code_tracker: code_tracker)
@@ -72,11 +73,12 @@ module Datadog
         @probe_notifier_worker = ProbeNotifierWorker.new(settings, transport)
         probe_notifier_worker.start
         @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer)
-        @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker)
+        @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger)
       end
 
       attr_reader :settings
       attr_reader :agent_settings
+      attr_reader :logger
       attr_reader :instrumenter
       attr_reader :transport
       attr_reader :probe_notifier_worker

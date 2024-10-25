@@ -11,11 +11,13 @@ module Datadog
     #
     # @api private
     class ProbeManager
-      def initialize(settings, instrumenter, probe_notification_builder, probe_notifier_worker)
+      def initialize(settings, instrumenter, probe_notification_builder,
+        probe_notifier_worker, logger)
         @settings = settings
         @instrumenter = instrumenter
         @probe_notification_builder = probe_notification_builder
         @probe_notifier_worker = probe_notifier_worker
+        @logger = logger
         @installed_probes = {}
         @pending_probes = {}
 
@@ -23,6 +25,8 @@ module Datadog
           install_pending_method_probes(tp.self)
         end
       end
+
+      attr_reader :logger
 
       # TODO test that close is called during component teardown and
       # the trace point is cleared
@@ -67,7 +71,7 @@ module Datadog
         raise if settings.dynamic_instrumentation.propagate_all_exceptions
         # Silence all exceptions?
         # TODO should we propagate here and rescue upstream?
-        warn "Error processing probe configuration: #{exc.class}: #{exc}"
+        logger.warning("Error processing probe configuration: #{exc.class}: #{exc}")
       end
 
       def remove_other_probes(probe_ids)
@@ -91,7 +95,7 @@ module Datadog
               raise if settings.dynamic_instrumentation.propagate_all_exceptions
               # Silence all exceptions?
               # TODO should we propagate here and rescue upstream?
-              warn "Error removing probe #{probe.id}: #{exc.class}: #{exc}"
+              logger.warning("Error removing probe #{probe.id}: #{exc.class}: #{exc}")
             end
           end
         end

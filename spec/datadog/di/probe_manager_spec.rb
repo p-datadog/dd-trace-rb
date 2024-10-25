@@ -30,8 +30,12 @@ RSpec.describe Datadog::DI::ProbeManager do
     instance_double(Datadog::DI::ProbeNotifierWorker)
   end
 
+  let(:logger) do
+    instance_double(Logger)
+  end
+
   let(:manager) do
-    described_class.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker)
+    described_class.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger)
   end
 
   describe '.new' do

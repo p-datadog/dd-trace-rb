@@ -113,8 +113,12 @@ RSpec.describe Datadog::DI::Remote do
         instance_double(Datadog::DI::ProbeNotificationBuilder)
       end
 
+      let(:logger) do
+        instance_double(Logger)
+      end
+
       let(:probe_manager) do
-        Datadog::DI::ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker)
+        Datadog::DI::ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger)
       end
 
       let(:agent_settings) do
