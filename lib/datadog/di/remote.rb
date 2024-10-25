@@ -48,6 +48,7 @@ module Datadog
                   probe = ProbeBuilder.build_from_remote_config(probe_spec)
                   payload = component.probe_notification_builder.build_received(probe)
                   component.probe_notifier_worker.add_status(payload)
+                  # TODO delete before shipping
                   puts "Received probe from RC: #{probe.type} #{probe.location}"
 
                   begin
@@ -57,8 +58,7 @@ module Datadog
                   rescue => e
                     raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
 
-                    # TODO log?
-                    puts "#{e.class}: #{e}"
+                    component.logger.warning("Unhandled exception adding probe in DI remote receiver: #{e.class}: #{e}")
 
                     content.errored("Error applying dynamic instrumentation configuration: #{e.class.name} #{e.message}: #{Array(e.backtrace).join("\n")}")
                   end
@@ -77,8 +77,7 @@ module Datadog
               rescue => e
                 raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
 
-                # TODO log?
-                puts "#{e.class}: #{e}"
+                component.logger.warning("Unhandled exception removing probes in DI remote receiver: #{e.class}: #{e}")
               end
             end
           end
