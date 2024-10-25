@@ -22,7 +22,13 @@ module Datadog
         @pending_probes = {}
 
         @definition_trace_point = TracePoint.trace(:end) do |tp|
-          install_pending_method_probes(tp.self)
+          begin
+            install_pending_method_probes(tp.self)
+          rescue => exc
+            raise if settings.dynamic_instrumentation.propagate_all_exceptions
+            logger.warn("Unhandled exception in definition trace point: #{exc.class}: #{exc}")
+            # TODO test this path
+          end
         end
       end
 
