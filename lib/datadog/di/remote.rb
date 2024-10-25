@@ -58,7 +58,7 @@ module Datadog
                   rescue => e
                     raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
 
-                    component.logger.warning("Unhandled exception adding probe in DI remote receiver: #{e.class}: #{e}")
+                    component.logger.warn("Unhandled exception adding probe in DI remote receiver: #{e.class}: #{e}")
 
                     content.errored("Error applying dynamic instrumentation configuration: #{e.class.name} #{e.message}: #{Array(e.backtrace).join("\n")}")
                   end
@@ -77,7 +77,7 @@ module Datadog
               rescue => e
                 raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
 
-                component.logger.warning("Unhandled exception removing probes in DI remote receiver: #{e.class}: #{e}")
+                component.logger.warn("Unhandled exception removing probes in DI remote receiver: #{e.class}: #{e}")
               end
             end
           end

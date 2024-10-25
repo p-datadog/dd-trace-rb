@@ -71,7 +71,7 @@ module Datadog
         raise if settings.dynamic_instrumentation.propagate_all_exceptions
         # Silence all exceptions?
         # TODO should we propagate here and rescue upstream?
-        logger.warning("Error processing probe configuration: #{exc.class}: #{exc}")
+        logger.warn("Error processing probe configuration: #{exc.class}: #{exc}")
       end
 
       def remove_other_probes(probe_ids)
@@ -95,7 +95,7 @@ module Datadog
               raise if settings.dynamic_instrumentation.propagate_all_exceptions
               # Silence all exceptions?
               # TODO should we propagate here and rescue upstream?
-              logger.warning("Error removing probe #{probe.id}: #{exc.class}: #{exc}")
+              logger.warn("Error removing probe #{probe.id}: #{exc.class}: #{exc}")
             end
           end
         end

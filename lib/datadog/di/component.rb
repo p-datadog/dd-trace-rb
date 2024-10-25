@@ -70,7 +70,7 @@ module Datadog
         @serializer = Serializer.new(settings, redactor)
         @instrumenter = Instrumenter.new(settings, serializer, code_tracker: code_tracker)
         @transport = Transport.new(agent_settings)
-        @probe_notifier_worker = ProbeNotifierWorker.new(settings, transport)
+        @probe_notifier_worker = ProbeNotifierWorker.new(settings, transport, logger)
         probe_notifier_worker.start
         @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer)
         @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger)

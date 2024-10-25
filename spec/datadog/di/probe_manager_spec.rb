@@ -1,3 +1,4 @@
+require "datadog/di/spec_helper"
 require 'datadog/di/probe'
 
 class ProbeManagerSpecTestClass; end
@@ -99,7 +100,11 @@ RSpec.describe Datadog::DI::ProbeManager do
       end
 
       context 'when there is an exception during instrumentation' do
-        it 'drops probe' do
+        it 'logs warning and drops probe' do
+          expect(logger).to receive(:warn) do |msg|
+            expect(msg).to match(/Error processing probe configuration.*Instrumentation error/)
+          end
+
           expect(instrumenter).to receive(:hook) do |probe_|
             expect(probe_).to be(probe)
             raise "Instrumentation error"
@@ -171,8 +176,12 @@ RSpec.describe Datadog::DI::ProbeManager do
       end
 
       context 'when there is an exception during de-instrumentation' do
-        it 'keeps probe in installed list' do
+        it 'logs warning and keeps probe in installed list' do
           expect(instrumenter).to receive(:unhook).with(probe).and_raise("Deinstrumentation error")
+
+          expect(logger).to receive(:warn) do |msg|
+            expect(msg).to match(/Error removing probe.*Deinstrumentation error/)
+          end
 
           manager.remove_other_probes(['123'])
 
@@ -193,9 +202,13 @@ RSpec.describe Datadog::DI::ProbeManager do
             expect(manager.installed_probes.length).to eq 2
           end
 
-          it 'unhooks the second probe' do
+          it 'logs warning and unhooks the second probe' do
             expect(instrumenter).to receive(:unhook).with(probe).and_raise("Deinstrumentation error")
             expect(instrumenter).to receive(:unhook).with(probe2)
+
+            expect(logger).to receive(:warn) do |msg|
+              expect(msg).to match(/Error removing probe.*Deinstrumentation error/)
+            end
 
             manager.remove_other_probes(['123'])
 
