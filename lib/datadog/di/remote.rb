@@ -48,8 +48,7 @@ module Datadog
                   probe = ProbeBuilder.build_from_remote_config(probe_spec)
                   payload = component.probe_notification_builder.build_received(probe)
                   component.probe_notifier_worker.add_status(payload)
-                  # TODO delete before shipping
-                  puts "Received probe from RC: #{probe.type} #{probe.location}"
+                  component.logger.info("Received probe from RC: #{probe.type} #{probe.location}")
 
                   begin
                     # TODO test exception capture

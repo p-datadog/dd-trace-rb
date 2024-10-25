@@ -148,6 +148,11 @@ RSpec.describe Datadog::DI::Remote do
         end
 
         it 'calls probe manager to add a probe' do
+          expect(component).to receive(:logger).and_return(logger)
+          expect(logger).to receive(:info) do |message|
+            expect(message).to match(/Received probe/)
+          end
+
           expect(probe_manager).to receive(:add_probe) do |probe|
             expect(probe.id).to eq('11')
           end
@@ -160,6 +165,11 @@ RSpec.describe Datadog::DI::Remote do
 
         context 'probe addition raises an exception' do
           it 'logs warning and consumes the exception' do
+            expect(component).to receive(:logger).and_return(logger)
+            expect(logger).to receive(:info) do |message|
+              expect(message).to match(/Received probe/)
+            end
+
             expect(logger).to receive(:warn) do |msg|
               expect(msg).to match(/Unhandled exception.*Runtime error from test/)
             end
@@ -177,6 +187,11 @@ RSpec.describe Datadog::DI::Remote do
         end
 
         it 'calls probe manager to remove stale probes' do
+          expect(component).to receive(:logger).and_return(logger)
+          expect(logger).to receive(:info) do |message|
+            expect(message).to match(/Received probe/)
+          end
+
           expect(logger).to receive(:warn) do |msg|
             expect(msg).to match(/Unhandled exception.*Runtime error from test/)
           end
@@ -194,6 +209,11 @@ RSpec.describe Datadog::DI::Remote do
 
         context 'probe removal raises an exception' do
           it 'logs warning and consumes the exception' do
+            expect(component).to receive(:logger).and_return(logger)
+            expect(logger).to receive(:info) do |message|
+              expect(message).to match(/Received probe/)
+            end
+
             expect(logger).to receive(:warn) do |msg|
               expect(msg).to match(/Unhandled exception.*Runtime error 1 from test/)
             end
