@@ -63,7 +63,7 @@ RSpec.describe Datadog::DI::ProbeManager do
       end
 
       context 'when probe is installed successfully' do
-        it 'adds probe to the installed probe list' do
+        it 'returns true and adds probe to the installed probe list' do
           expect(instrumenter).to receive(:hook) do |probe_|
             expect(probe_).to be(probe)
           end
@@ -71,7 +71,7 @@ RSpec.describe Datadog::DI::ProbeManager do
           expect(probe_notification_builder).to receive(:build_installed)
           expect(probe_notifier_worker).to receive(:add_status)
 
-          manager.add_probe(probe)
+          expect(manager.add_probe(probe)).to be true
 
           expect(manager.pending_probes.length).to eq 0
 
@@ -81,7 +81,7 @@ RSpec.describe Datadog::DI::ProbeManager do
       end
 
       context 'when instrumentation target is missing' do
-        it 'adds probe to the pending probe list' do
+        it 'returns false and adds probe to the pending probe list' do
           expect(instrumenter).to receive(:hook) do |probe_|
             expect(probe_).to be(probe)
             raise Datadog::DI::Error::DITargetNotDefined
@@ -90,7 +90,7 @@ RSpec.describe Datadog::DI::ProbeManager do
           expect(probe_notification_builder).not_to receive(:build_installed)
           expect(probe_notifier_worker).not_to receive(:add_status)
 
-          manager.add_probe(probe)
+          expect(manager.add_probe(probe)).to be false
 
           expect(manager.pending_probes.length).to eq 1
           expect(manager.pending_probes["3ecfd456-2d7c-4359-a51f-d4cc44141ffe"]).to be(probe)
@@ -100,7 +100,7 @@ RSpec.describe Datadog::DI::ProbeManager do
       end
 
       context 'when there is an exception during instrumentation' do
-        it 'logs warning and drops probe' do
+        it 'returns nil, logs warning and drops probe' do
           expect(logger).to receive(:warn) do |msg|
             expect(msg).to match(/Error processing probe configuration.*Instrumentation error/)
           end
@@ -113,7 +113,7 @@ RSpec.describe Datadog::DI::ProbeManager do
           expect(probe_notification_builder).not_to receive(:build_installed)
           expect(probe_notifier_worker).not_to receive(:add_status)
 
-          manager.add_probe(probe)
+          expect(manager.add_probe(probe)).to be nil
 
           expect(manager.pending_probes.length).to eq 0
 

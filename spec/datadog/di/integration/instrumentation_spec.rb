@@ -403,6 +403,11 @@ RSpec.describe 'Instrumentation integration' do
       end
 
       context 'when target is invoked' do
+        before do
+          Datadog::DI.activate_tracking!
+          load File.join(File.dirname(__FILE__), 'instrumentation_integration_test_class.rb')
+        end
+
         let(:probe) do
           Datadog::DI::Probe.new(id: "1234", type: :log,
             file: 'instrumentation_integration_test_class.rb', line_no: 10,
@@ -413,7 +418,8 @@ RSpec.describe 'Instrumentation integration' do
           expect(component.probe_notifier_worker).to receive(:add_status) do |status|
             expect(status).to match(expected_installed_payload)
           end
-          probe_manager.add_probe(probe)
+          expect(probe_manager.add_probe(probe)).to be true
+
           expect(component.probe_notifier_worker).to receive(:add_status) do |status|
             expect(status).to match(expected_emitting_payload)
           end
@@ -427,7 +433,7 @@ RSpec.describe 'Instrumentation integration' do
             expect(component.probe_notifier_worker).to receive(:add_status) do |status|
               expect(status).to match(expected_installed_payload)
             end
-            probe_manager.add_probe(probe)
+            expect(probe_manager.add_probe(probe)).to be true
 
             expect(component.probe_notifier_worker).to receive(:add_status) do |status|
               expect(status).to match(expected_emitting_payload)

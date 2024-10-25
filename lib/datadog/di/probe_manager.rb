@@ -70,14 +70,17 @@ module Datadog
           # Always remove from pending list here because it makes the
           # API smaller and shouldn't cause any actual problems.
           pending_probes.delete(probe.id)
+          true
         rescue Error::DITargetNotDefined => exc
           pending_probes[probe.id] = probe
+          false
         end
       rescue => exc
         raise if settings.dynamic_instrumentation.propagate_all_exceptions
         # Silence all exceptions?
         # TODO should we propagate here and rescue upstream?
         logger.warn("Error processing probe configuration: #{exc.class}: #{exc}")
+        nil
       end
 
       def remove_other_probes(probe_ids)
