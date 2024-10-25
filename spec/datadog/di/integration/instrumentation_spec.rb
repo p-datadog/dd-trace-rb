@@ -64,14 +64,12 @@ RSpec.describe 'Instrumentation integration' do
         let(:probe) do
           Datadog::DI::Probe.new(id: "1234", type: :log,
             type_name: 'InstrumentationSpecTestClass', method_name: 'test_method',
-            capture_snapshot: true,
-          )
+            capture_snapshot: true,)
         end
 
         let(:expected_captures) do
           {entry: {arguments: {}, throwable: nil},
-          return: {arguments: {'@return': {type: 'Integer', value: '42'}}, throwable: nil},
-          }
+           return: {arguments: {"@return": {type: 'Integer', value: '42'}}, throwable: nil},}
         end
 
         it 'invokes probe' do
@@ -95,7 +93,7 @@ RSpec.describe 'Instrumentation integration' do
           component.probe_notifier_worker.flush
 
           expect(payload).to be_a(Hash)
-          captures = payload.fetch(:'debugger.snapshot').fetch(:captures)
+          captures = payload.fetch(:"debugger.snapshot").fetch(:captures)
           expect(captures).to eq(expected_captures)
         end
 
@@ -109,18 +107,16 @@ RSpec.describe 'Instrumentation integration' do
           let(:probe) do
             Datadog::DI::Probe.new(id: "1234", type: :log,
               type_name: 'InstrumentationSpecTestClass', method_name: 'mutating_method',
-              capture_snapshot: true,
-            )
+              capture_snapshot: true,)
           end
 
           let(:expected_captures) do
             {entry: {arguments: {
               arg1: {type: 'String', value: 'hello world'},
             }, throwable: nil},
-            return: {arguments: {
-              '@return': {type: 'String', value: 'bye world'},
-            }, throwable: nil},
-            }
+             return: {arguments: {
+               "@return": {type: 'String', value: 'bye world'},
+             }, throwable: nil},}
           end
 
           it 'captures original argument value at entry' do
@@ -137,8 +133,7 @@ RSpec.describe 'Instrumentation integration' do
         let(:probe) do
           Datadog::DI::Probe.new(id: "1234", type: :log,
             file: 'instrumentation_integration_test_class.rb', line_no: 10,
-            capture_snapshot: false,
-          )
+            capture_snapshot: false,)
         end
 
         it 'invokes probe' do
@@ -164,7 +159,7 @@ RSpec.describe 'Instrumentation integration' do
           end
 
           let(:snapshot) do
-            payload.fetch(:'debugger.snapshot')
+            payload.fetch(:"debugger.snapshot")
           end
 
           it 'does not have captures' do
@@ -191,8 +186,7 @@ RSpec.describe 'Instrumentation integration' do
         let(:probe) do
           Datadog::DI::Probe.new(id: "1234", type: :log,
             file: 'instrumentation_integration_test_class.rb', line_no: 10,
-            capture_snapshot: true,
-          )
+            capture_snapshot: true,)
         end
 
         let(:expected_captures) do
@@ -225,7 +219,7 @@ RSpec.describe 'Instrumentation integration' do
           component.probe_notifier_worker.flush
 
           expect(payload).to be_a(Hash)
-          captures = payload.fetch(:'debugger.snapshot').fetch(:captures)
+          captures = payload.fetch(:"debugger.snapshot").fetch(:captures)
           expect(captures).to eq(expected_captures)
         end
       end
@@ -238,8 +232,7 @@ RSpec.describe 'Instrumentation integration' do
 
           let(:probe) do
             Datadog::DI::Probe.new(id: "1234", type: :log,
-              file: 'instrumentation_integration_test_class_2.rb', line_no: 10,
-            )
+              file: 'instrumentation_integration_test_class_2.rb', line_no: 10,)
           end
 
           it 'instruments file when it is loaded' do
@@ -272,8 +265,7 @@ RSpec.describe 'Instrumentation integration' do
           context 'untargeted trace points enabled' do
             let(:probe) do
               Datadog::DI::Probe.new(id: "1234", type: :log,
-                file: 'instrumentation_integration_test_class_3.rb', line_no: 10,
-              )
+                file: 'instrumentation_integration_test_class_3.rb', line_no: 10,)
             end
 
             before do
@@ -283,7 +275,6 @@ RSpec.describe 'Instrumentation integration' do
             after do
               settings.dynamic_instrumentation.untargeted_trace_points = false
             end
-
 
             it 'instruments file immediately' do
               expect(component.transport).to receive(:send_request).at_least(:once)
@@ -310,8 +301,7 @@ RSpec.describe 'Instrumentation integration' do
           context 'untargeted trace points disabled' do
             let(:probe) do
               Datadog::DI::Probe.new(id: "1234", type: :log,
-                file: 'instrumentation_integration_test_class_4.rb', line_no: 10,
-              )
+                file: 'instrumentation_integration_test_class_4.rb', line_no: 10,)
             end
 
             before do

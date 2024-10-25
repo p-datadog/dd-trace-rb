@@ -35,7 +35,6 @@ RSpec.describe Datadog::DI::ProbeManager do
   end
 
   describe '.new' do
-
     after do
       manager.close
     end
@@ -46,7 +45,6 @@ RSpec.describe Datadog::DI::ProbeManager do
   end
 
   describe '#add_probe' do
-
     after do
       allow(instrumenter).to receive(:unhook)
       manager.close

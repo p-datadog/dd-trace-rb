@@ -42,7 +42,6 @@ RSpec.describe Datadog::DI::Remote do
     end
 
     describe 'receiver logic' do
-
       let(:repository) { Datadog::Core::Remote::Configuration::Repository.new }
 
       let(:transaction) do
@@ -55,7 +54,7 @@ RSpec.describe Datadog::DI::Remote do
                 'custom' => {
                   'v' => 1,
                 },
-                'hashes' => { 'sha256' => Digest::SHA256.hexdigest(value_json.to_json) },
+                'hashes' => {'sha256' => Digest::SHA256.hexdigest(value_json.to_json)},
                 'length' => value_json.length
               }
             )
@@ -139,7 +138,6 @@ RSpec.describe Datadog::DI::Remote do
       end
 
       context 'new probe received' do
-
         let(:probe_spec) do
           {id: '11', name: 'bar', type: 'LOG_PROBE', where: {typeName: 'Foo', methodName: 'bar'}}
         end

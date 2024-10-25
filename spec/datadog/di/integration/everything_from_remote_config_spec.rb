@@ -30,7 +30,7 @@ RSpec.describe 'DI integration from remote config' do
             'custom' => {
               'v' => 1,
             },
-            'hashes' => { 'sha256' => Digest::SHA256.hexdigest(value_json.to_json) },
+            'hashes' => {'sha256' => Digest::SHA256.hexdigest(value_json.to_json)},
             'length' => value_json.length
           }
         )
@@ -168,9 +168,9 @@ RSpec.describe 'DI integration from remote config' do
     {
       path: '/debugger/v1/input',
       # We do not have active span/trace in the test.
-      'dd.span_id': nil,
-      'dd.trace_id': nil,
-      'debugger.snapshot': {
+      "dd.span_id": nil,
+      "dd.trace_id": nil,
+      "debugger.snapshot": {
         captures: nil,
         evaluationErrors: [],
         id: LOWERCASE_UUID_REGEXP,
@@ -228,7 +228,6 @@ RSpec.describe 'DI integration from remote config' do
   end
 
   context 'method probe received not matching a loaded class' do
-
     let(:probe_spec) do
       {id: '11', name: 'bar', type: 'LOG_PROBE', where: {typeName: 'Foo', methodName: 'bar'}}
     end
@@ -247,7 +246,6 @@ RSpec.describe 'DI integration from remote config' do
   end
 
   context 'method probe received matching a loaded class' do
-
     def assert_received_and_installed
       expect(payloads).to be_a(Array)
       expect(payloads.length).to eq 2
