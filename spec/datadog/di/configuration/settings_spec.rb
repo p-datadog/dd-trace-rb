@@ -13,6 +13,8 @@ RSpec.describe Datadog::DI::Configuration::Settings do
         ["internal", "propagate_all_exceptions", true],
         ["internal", "propagate_all_exceptions", false],
         ['internal', 'min_send_interval', 5],
+        ['internal', 'development', true],
+        ['internal', 'development', false],
         [nil, "redacted_identifiers", ["foo"]],
         [nil, "redacted_identifiers", []],
         [nil, "redacted_type_names", ["foo*", "bar"]],

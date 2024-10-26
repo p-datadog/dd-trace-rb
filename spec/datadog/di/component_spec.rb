@@ -8,6 +8,7 @@ RSpec.describe Datadog::DI::Component do
     let(:settings) do
       settings = Datadog::Core::Configuration::Settings.new
       settings.dynamic_instrumentation.enabled = dynamic_instrumentation_enabled
+      settings.dynamic_instrumentation.internal.development = true
       settings
     end
 

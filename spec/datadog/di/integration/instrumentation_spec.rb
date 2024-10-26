@@ -29,6 +29,7 @@ RSpec.describe 'Instrumentation integration' do
     Datadog::Core::Configuration::Settings.new.tap do |settings|
       settings.remote.enabled = true
       settings.dynamic_instrumentation.enabled = true
+      settings.dynamic_instrumentation.internal.development = true
       settings.dynamic_instrumentation.internal.propagate_all_exceptions = true
     end
   end

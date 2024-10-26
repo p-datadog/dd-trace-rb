@@ -166,6 +166,15 @@ module Datadog
                   o.type :int
                   o.default 3
                 end
+
+                # Enable dynamic instrumentation in development environments.
+                # Currently DI does not fully implement support for code
+                # unloading and reloading, and is not supported in
+                # non-production environments.
+                option :development do |o|
+                  o.type :bool
+                  o.default false
+                end
               end
             end
           end

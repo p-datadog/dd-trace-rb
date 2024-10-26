@@ -22,7 +22,7 @@ module Datadog
             return
           end
 
-          return unless environment_supported?
+          return unless environment_supported?(settings)
 
           new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker)
         end
@@ -36,7 +36,7 @@ module Datadog
             raise "Requested DI component but remote config is not enabled in settings"
           end
 
-          unless environment_supported?
+          unless environment_supported?(settings)
             raise "DI does not support the environment (development or Ruby version too low or not MRI)"
           end
 
@@ -47,12 +47,13 @@ module Datadog
         # dynamic instrumentation. Currently we only require that, if Rails
         # is used, that Rails environment is not development because
         # DI does not currently support code unloading and reloading.
-        def environment_supported?
-        return true
+        def environment_supported?(settings)
           # TODO add tests?
-          if Datadog::Core::Environment::Execution.development?
-            Datadog.logger.debug("Not enabling dynamic instrumentation because we are in development environment")
-            return false
+          unless settings.dynamic_instrumentation.internal.development
+            if Datadog::Core::Environment::Execution.development?
+              Datadog.logger.debug("Not enabling dynamic instrumentation because we are in development environment")
+              return false
+            end
           end
           if RUBY_ENGINE != 'ruby' || RUBY_VERSION < '2.6'
             Datadog.logger.debug("Not enabling dynamic instrumentation because of unsupported Ruby version")
