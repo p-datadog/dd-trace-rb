@@ -153,6 +153,19 @@ module Datadog
                   o.type :bool
                   o.default false
                 end
+
+                # Minimum interval, in seconds, between probe status and
+                # snapshot submissions to the agent. Probe notifier worker will
+                # batch together payloads submitted during each interval.
+                # A longer interval reduces the overhead imposed by dynamic
+                # instrumentation on the application, but also increases the
+                # time when application code cannot run (when the batches are
+                # being sent out by the probe notifier worker) and creates a
+                # possibility of dropping payloads if the queue gets too long.
+                option :min_send_interval do |o|
+                  o.type :int
+                  o.default 3
+                end
               end
             end
           end

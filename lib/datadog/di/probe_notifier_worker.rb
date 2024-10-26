@@ -23,10 +23,6 @@ module Datadog
     #
     # @api private
     class ProbeNotifierWorker
-      # Minimum interval between submissions.
-      # TODO make this into an internal setting and increase default to 2 or 3.
-      MIN_SEND_INTERVAL = 1
-
       def initialize(settings, transport, logger)
         @settings = settings
         @status_queue = []
@@ -79,7 +75,7 @@ module Datadog
             @lock.synchronize do
               @wake_scheduled = more
             end
-            wake.wait(more ? MIN_SEND_INTERVAL : nil)
+            wake.wait(more ? min_send_interval : nil)
           end
         end
       end
@@ -136,6 +132,11 @@ module Datadog
       attr_reader :wake
       attr_reader :thread
 
+      # Convenience method to keep line length reasonable in the rest of the file.
+      def min_send_interval
+        settings.dynamic_instrumentation.internal.min_send_interval
+      end
+
       # This method should be called while @lock is held.
       def io_in_progress?
         @io_in_progress
@@ -181,14 +182,14 @@ module Datadog
         end
 
         # Determine how much longer the worker thread should sleep
-        # so as not to send in less than MIN_SEND_INTERVAL since the last send.
+        # so as not to send in less than min send interval since the last send.
         # Important: this method must be called when @lock is held.
         #
         # Returns the time remaining to sleep.
         def set_sleep_remaining
           now = Core::Utils::Time.get_time
           @sleep_remaining = if last_sent
-            [last_sent + MIN_SEND_INTERVAL - now, 0].max
+            [last_sent + min_send_interval - now, 0].max
           else
             0
           end
