@@ -46,11 +46,13 @@ module Datadog
         # this should be all frames for enriched probes and no frames for
         # non-enriched probes?
         build_snapshot(probe, rv: rv, snapshot: snapshot,
+          # Actual path of the instrumented file.
+          path: trace_point&.path,
           duration: duration, caller_locations: caller_locations, args: args, kwargs: kwargs,
           serialized_entry_args: serialized_entry_args)
       end
 
-      def build_snapshot(probe, rv: nil, snapshot: nil,
+      def build_snapshot(probe, rv: nil, snapshot: nil, path: nil,
         duration: nil, caller_locations: nil, args: nil, kwargs: nil,
         serialized_entry_args: nil)
         # TODO also verify that non-capturing probe does not pass
@@ -85,21 +87,8 @@ module Datadog
         end
 
         location = if probe.line?
-          # TODO figure out what to do here for line probes with
-          # untargeted trace points, since we don't have actual path at
-          # the instrumentation time. Path should come from the trace point
-          # invocation when we decide whether the invocation matches
-          # a particular probe.
-          actual_file = probe.instrumented_path || if probe.file
-            # Normally caller_locations should always be filled for a line probe
-            # but in the test suite we don't always provide all arguments.
-            actual_file_basename = File.basename(probe.file)
-            caller_locations&.detect do |loc|
-              File.basename(loc.path) == actual_file_basename
-            end&.path || probe.file
-          end
           {
-            file: actual_file,
+            file: path,
             lines: [probe.line_no],
           }
         elsif probe.method?
