@@ -25,7 +25,7 @@ module Datadog
           begin
             install_pending_method_probes(tp.self)
           rescue => exc
-            raise if settings.dynamic_instrumentation.propagate_all_exceptions
+            raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
             logger.warn("Unhandled exception in definition trace point: #{exc.class}: #{exc}")
             # TODO test this path
           end
@@ -76,7 +76,7 @@ module Datadog
           false
         end
       rescue => exc
-        raise if settings.dynamic_instrumentation.propagate_all_exceptions
+        raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
         # Silence all exceptions?
         # TODO should we propagate here and rescue upstream?
         logger.warn("Error processing probe configuration: #{exc.class}: #{exc}")
@@ -101,7 +101,7 @@ module Datadog
               # TODO give up after some time?
               installed_probes.delete(probe.id)
             rescue => exc
-              raise if settings.dynamic_instrumentation.propagate_all_exceptions
+              raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
               # Silence all exceptions?
               # TODO should we propagate here and rescue upstream?
               logger.warn("Error removing probe #{probe.id}: #{exc.class}: #{exc}")

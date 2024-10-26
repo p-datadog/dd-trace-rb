@@ -72,7 +72,7 @@ module Datadog
             begin
               more = maybe_send
             rescue => exc
-              raise if settings.dynamic_instrumentation.propagate_all_exceptions
+              raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
               logger.warn("Error in probe notifier worker: #{exc.class}: #{exc} (at #{exc.backtrace.first})")
             end
@@ -218,7 +218,7 @@ module Datadog
                 @last_sent = time
               end
             rescue => exc
-              raise if settings.dynamic_instrumentation.propagate_all_exceptions
+              raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
               logger.warn("failed to send #{event_name}: #{exc.class}: #{exc} (at #{exc.backtrace.first})")
             end
           end

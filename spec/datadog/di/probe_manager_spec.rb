@@ -6,17 +6,9 @@ class ProbeManagerSpecTestClass; end
 RSpec.describe Datadog::DI::ProbeManager do
   di_test
 
-  let(:settings) do
-    double('settings').tap do |settings|
-      allow(settings).to receive(:dynamic_instrumentation).and_return(di_settings)
-    end
-  end
-
-  let(:di_settings) do
-    double('di settings').tap do |settings|
-      allow(settings).to receive(:enabled).and_return(true)
-      allow(settings).to receive(:propagate_all_exceptions).and_return(false)
-    end
+  mock_settings_for_di do |settings|
+    allow(settings.dynamic_instrumentation).to receive(:enabled).and_return(true)
+    allow(settings.dynamic_instrumentation.internal).to receive(:propagate_all_exceptions).and_return(false)
   end
 
   let(:instrumenter) do

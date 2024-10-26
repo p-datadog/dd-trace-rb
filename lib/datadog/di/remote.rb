@@ -55,7 +55,7 @@ module Datadog
                     probe_manager.add_probe(probe)
                     content.applied
                   rescue => e
-                    raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
+                    raise if component.settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
                     component.logger.warn("Unhandled exception adding probe in DI remote receiver: #{e.class}: #{e}")
 
@@ -74,7 +74,7 @@ module Datadog
                 # TODO test exception capture
                 probe_manager.remove_other_probes(current_probe_ids.keys)
               rescue => e
-                raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
+                raise if component.settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
                 component.logger.warn("Unhandled exception removing probes in DI remote receiver: #{e.class}: #{e}")
               end

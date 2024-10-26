@@ -29,7 +29,7 @@ RSpec.describe 'Instrumentation integration' do
     Datadog::Core::Configuration::Settings.new.tap do |settings|
       settings.remote.enabled = true
       settings.dynamic_instrumentation.enabled = true
-      settings.dynamic_instrumentation.propagate_all_exceptions = true
+      settings.dynamic_instrumentation.internal.propagate_all_exceptions = true
     end
   end
 
@@ -342,11 +342,11 @@ RSpec.describe 'Instrumentation integration' do
             end
 
             before do
-              settings.dynamic_instrumentation.untargeted_trace_points = true
+              settings.dynamic_instrumentation.internal.untargeted_trace_points = true
             end
 
             after do
-              settings.dynamic_instrumentation.untargeted_trace_points = false
+              settings.dynamic_instrumentation.internal.untargeted_trace_points = false
             end
 
             it 'instruments file immediately' do
@@ -378,7 +378,7 @@ RSpec.describe 'Instrumentation integration' do
             end
 
             before do
-              settings.dynamic_instrumentation.untargeted_trace_points = false
+              settings.dynamic_instrumentation.internal.untargeted_trace_points = false
             end
 
             it 'does not instrument file when it is loaded' do

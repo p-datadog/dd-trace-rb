@@ -172,7 +172,7 @@ module Datadog
         # we use mock objects and the methods may be mocked with
         # individual invocations, yielding different return values on
         # different calls to the same method.
-        permit_untargeted_trace_points = settings.dynamic_instrumentation.untargeted_trace_points
+        permit_untargeted_trace_points = settings.dynamic_instrumentation.internal.untargeted_trace_points
 
         iseq = nil
         if code_tracker
@@ -228,7 +228,7 @@ module Datadog
               end
             end
           rescue => exc
-            raise if settings.dynamic_instrumentation.propagate_all_exceptions
+            raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
             logger.warn("Unhandled exception in line trace point: #{exc.class}: #{exc}")
             # TODO test this path
           end

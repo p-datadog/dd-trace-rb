@@ -83,7 +83,7 @@ module Datadog
               DI.component&.probe_manager&.install_pending_line_probes(path)
             rescue => exc
               if component = DI.component
-                raise if component.settings.dynamic_instrumentation.propagate_all_exceptions
+                raise if component.settings.dynamic_instrumentation.internal.propagate_all_exceptions
                 component.logger.warn("Unhandled exception in script_compiled trace point: #{exc.class}: #{exc}")
                 # TODO test this path
               else
