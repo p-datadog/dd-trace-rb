@@ -128,15 +128,18 @@ module Datadog
       def iseqs_for_path_suffix(suffix)
         registry_lock.synchronize do
           exact = registry[suffix]
-          return [exact] if exact
+          return [suffix, exact] if exact
 
           inexact = []
           registry.each do |path, iseq|
             if Utils.path_matches_suffix?(path, suffix)
-              inexact << iseq
+              inexact << [path, iseq]
             end
           end
-          inexact
+          if inexact.length > 1
+            raise Error::MultiplePathsMatch, "Multiple paths matched requested suffix"
+          end
+          inexact.first
         end
       end
 

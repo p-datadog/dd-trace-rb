@@ -160,6 +160,11 @@ module Datadog
       # trace point.
       attr_accessor :instrumentation_trace_point
 
+      # Actual path to the file instrumented by the probe, for line probes,
+      # when code tracking is available and line trace point is targeted.
+      # For untargeted line trace points instrumented path will be nil.
+      attr_accessor :instrumented_path
+
       attr_writer :emitting_notified
       def emitting_notified?
         !!@emitting_notified

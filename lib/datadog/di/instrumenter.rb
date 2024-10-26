@@ -176,8 +176,8 @@ module Datadog
 
         iseq = nil
         if code_tracker
-          iseq = code_tracker.iseqs_for_path_suffix(probe.file).first # steep:ignore
-          unless iseq
+          ret = code_tracker.iseqs_for_path_suffix(probe.file) # steep:ignore
+          unless ret
             if permit_untargeted_trace_points
               # Continue withoout targeting the trace point.
               # This is going to cause a serious performance penalty for
@@ -202,6 +202,10 @@ module Datadog
           # explicitly defined, and we do not have code tracking, do not
           # instrument the method.
           raise Error::DITargetNotDefined, "File not in code tracker registry: #{probe.file}"
+        end
+
+        if ret
+          actual_path, iseq = ret
         end
 
         # If trace point is not targeted, we only need one trace point per file.
@@ -250,6 +254,8 @@ module Datadog
           end
 
           probe.instrumentation_trace_point = tp
+          # actual_path could be nil if we don't use targeted trace points.
+          probe.instrumented_path = actual_path
 
           if iseq
             tp.enable(target: iseq, target_line: line_no)
