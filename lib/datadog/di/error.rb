@@ -26,6 +26,12 @@ module Datadog
       # that does not in fact exist anywhere (e.g. due to a misspelling).
       class DITargetNotDefined < Error
       end
+
+      # Raised when trying to install a probe whose installation failed
+      # earlier in the same process. This exception should contain the
+      # original exception report from initial installation attempt.
+      class ProbePreviouslyFailed < Error
+      end
     end
   end
 end

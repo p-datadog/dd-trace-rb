@@ -66,6 +66,7 @@ RSpec.describe Datadog::DI::ProbeManager do
           expect(manager.add_probe(probe)).to be true
 
           expect(manager.pending_probes.length).to eq 0
+          expect(manager.failed_probes.length).to eq 0
 
           expect(manager.installed_probes.length).to eq 1
           expect(manager.installed_probes["3ecfd456-2d7c-4359-a51f-d4cc44141ffe"]).to be(probe)
@@ -88,11 +89,12 @@ RSpec.describe Datadog::DI::ProbeManager do
           expect(manager.pending_probes["3ecfd456-2d7c-4359-a51f-d4cc44141ffe"]).to be(probe)
 
           expect(manager.installed_probes.length).to eq 0
+          expect(manager.failed_probes.length).to eq 0
         end
       end
 
       context 'when there is an exception during instrumentation' do
-        it 'returns nil, logs warning and drops probe' do
+        it 'logs warning, drops probe and reraises the exception' do
           expect(logger).to receive(:warn) do |msg|
             expect(msg).to match(/Error processing probe configuration.*Instrumentation error/)
           end
@@ -105,11 +107,16 @@ RSpec.describe Datadog::DI::ProbeManager do
           expect(probe_notification_builder).not_to receive(:build_installed)
           expect(probe_notifier_worker).not_to receive(:add_status)
 
-          expect(manager.add_probe(probe)).to be nil
+          expect do
+            manager.add_probe(probe)
+          end.to raise_error(RuntimeError, 'Instrumentation error')
 
           expect(manager.pending_probes.length).to eq 0
 
           expect(manager.installed_probes.length).to eq 0
+
+          expect(manager.failed_probes.length).to eq 1
+          expect(manager.failed_probes[probe.id]).to match(/Instrumentation error/)
         end
       end
     end

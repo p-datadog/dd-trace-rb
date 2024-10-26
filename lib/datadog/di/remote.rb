@@ -59,6 +59,12 @@ module Datadog
 
                     component.logger.warn("Unhandled exception adding probe in DI remote receiver: #{e.class}: #{e}")
 
+                    # If a probe fails to install, we will mark the content
+                    # as errored. On subsequent remote configuration application
+                    # attemps, probe manager will raise the "previously errored"
+                    # exception and we'll rescue it here, again marking the
+                    # content as errored but with a somewhat different exception
+                    # message.
                     content.errored("Error applying dynamic instrumentation configuration: #{e.class.name} #{e.message}: #{Array(e.backtrace).join("\n")}")
                   end
 

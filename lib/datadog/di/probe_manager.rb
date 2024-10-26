@@ -20,6 +20,7 @@ module Datadog
         @logger = logger
         @installed_probes = {}
         @pending_probes = {}
+        @failed_probes = {}
 
         @definition_trace_point = TracePoint.trace(:end) do |tp|
           begin
@@ -56,9 +57,21 @@ module Datadog
       attr_reader :installed_probes
       attr_reader :pending_probes
 
+      # Probes that failed to instrument for reasons other than the target is
+      # not yet loaded are added to this collection, so that we do not try
+      # to instrument them every time remote configuration is processed.
+      attr_reader :failed_probes
+
       # config is one probe info
       def add_probe(probe)
         # TODO lock here?
+
+        # Probe failed to install previously, do not try to install it again.
+        if msg = failed_probes[probe.id]
+          # TODO test this path
+          raise Error::ProbePreviouslyFailed, msg
+        end
+
         begin
           instrumenter.hook(probe, &method(:probe_executed_callback))
 
@@ -76,11 +89,17 @@ module Datadog
           false
         end
       rescue => exc
+        # In "propagate all exceptions" mode we will try to instrument again.
         raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
-        # Silence all exceptions?
-        # TODO should we propagate here and rescue upstream?
+
         logger.warn("Error processing probe configuration: #{exc.class}: #{exc}")
-        nil
+        # TODO report probe as failed to agent since we won't attempt to
+        # install it again.
+
+        # TODO add top stack frame to message
+        failed_probes[probe.id] = "#{exc.class}: #{exc}"
+
+        raise
       end
 
       def remove_other_probes(probe_ids)
