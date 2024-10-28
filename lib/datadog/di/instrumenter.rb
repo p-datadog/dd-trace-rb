@@ -226,6 +226,10 @@ module Datadog
               block&.call(probe: probe, trace_point: tp, caller_locations: caller_locations)
             end
           end
+        rescue => exc
+          raise if settings.dynamic_instrumentation.propagate_all_exceptions
+          logger.warn("Unhandled exception in line trace point: #{exc.class}: #{exc}")
+          # TODO test this path
         end
 
         # TODO internal check - remove or use a proper exception
