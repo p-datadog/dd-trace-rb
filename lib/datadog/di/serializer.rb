@@ -38,9 +38,31 @@ module Datadog
     #
     # @api private
     class Serializer
-      @@condition_registry = []
+      # Third-party library integration / custom serializers.
+      #
+      # Dynamic instrumentation has limited payload sizes, and for efficiency
+      # reasons it is not desirable to transmit data to Datadog that will
+      # never contain useful information. Additionally, due to depth limits,
+      # desired data may not even be included in payloads when serialized
+      # with the default, naive serializer. Therefore, custom objects like
+      # ActiveRecord model instances may need custom serializers.
+      #
+      # CUSTOMER NOTE: The API for defining custom serializers is not yet
+      # finalized. Please create an issue at
+      # https://github.com/datadog/dd-trace-rb/issues describing the
+      # object(s) you wish to serialize so that we can ensure your use case
+      # will be supported as the library evolves.
+      #
+      # Note that the current implementation does not permit defining a
+      # serializer for a particular class, which is the simplest use case.
+      # This is because the library itself does not need this functionality
+      # yet, and it won't help for ActiveRecord models (that derive from
+      # a common base class but are all of different classes) or for Mongoid
+      # models (that do not have a common base class at all but include a
+      # standard Mongoid module).
+      @@flat_registry = []
       def self.register(condition: nil, &block)
-        @@condition_registry << {condition: condition, proc: block}
+        @@flat_registry << {condition: condition, proc: block}
       end
 
       def initialize(settings, redactor)
@@ -107,7 +129,7 @@ module Datadog
           return {type: class_name(cls), notCapturedReason: "redactedIdent"}
         end
 
-        @@condition_registry.each do |entry|
+        @@flat_registry.each do |entry|
           if condition = entry[:condition] and condition.call(value)
             serializer_proc = entry.fetch(:proc)
             return serializer_proc.call(self, value, name: nil, depth: depth)

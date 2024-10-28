@@ -17,6 +17,14 @@ require_relative 'di/serializer'
 require_relative 'di/transport'
 
 if defined?(ActiveRecord::Base)
+  # The third-party library integrations need to be loaded after the
+  # third-party libraries are loaded. Tracing and appsec use Railtie
+  # to delay integrations until all of the application's dependencies
+  # are loaded, when running under Rails. We should do the same here in
+  # principle, however DI currently only has an ActiveRecord integration
+  # and AR should be loaded before any application code is loaded, being
+  # part of Rails, therefore for now we should be OK to just require the
+  # AR integration from here.
   require_relative 'di/contrib/active_record'
 end
 
