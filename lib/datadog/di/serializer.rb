@@ -84,10 +84,6 @@ module Datadog
         end
       end
 
-      def type_serialized_entry(cls, serialized)
-        {type: class_name(cls)}.update(serialized)
-      end
-
       # Serializes a single named value.
       #
       # The name is needed to perform sensitive data redaction.
@@ -118,7 +114,7 @@ module Datadog
           end
         end
 
-        serialized = {}
+        serialized = {type: class_name(cls)}
         case value
         when NilClass
           serialized.update(isNull: true)
@@ -218,8 +214,10 @@ module Datadog
             serialized.update(fields: fields)
           end
         end
-        type_serialized_entry(cls, serialized)
+        serialized
       end
+
+      private
 
       # Returns the name for the specified class object.
       #
