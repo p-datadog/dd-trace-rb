@@ -80,15 +80,15 @@ RSpec.describe Datadog::DI::Serializer do
         ]]}},
       {name: "AR model with filled out attributes",
         input: -> { SerializerRailsSpecTestBasicModel.new(
-          title: 'Hello, world!', created_at: Time.now, updated_at: Time.now) },
+          title: 'Hello, world!', created_at: Time.utc(2020, 1, 2), updated_at: Time.utc(2020, 1, 3)) },
         expected: {type: "SerializerRailsSpecTestBasicModel", entries: [[
           {type: 'Symbol', value: 'attributes'},
           {type: 'Hash', entries: [
             [{type: 'String', value: 'id'}, {type: 'NilClass', isNull: true}],
             [{type: 'String', value: 'title'}, {type: 'String', value: 'Hello, world!'}],
             # TODO serialize Time, Date, DateTime types
-            [{type: 'String', value: 'created_at'}, {type: 'Time', notCapturedReason: 'depth'}],
-            [{type: 'String', value: 'updated_at'}, {type: 'Time', notCapturedReason: 'depth'}],
+            [{type: 'String', value: 'created_at'}, {type: 'Time', value: '2020-01-02T00:00:00Z'}],
+            [{type: 'String', value: 'updated_at'}, {type: 'Time', value: '2020-01-03T00:00:00Z'}],
           ]},
         ]]}},
     ]
