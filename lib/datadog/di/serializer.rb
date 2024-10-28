@@ -122,6 +122,8 @@ module Datadog
           serialized.update(value: value.to_s)
         when Time
           serialized.update(value: value.iso8601)
+        when Date
+          serialized.update(value: value.to_s)
         when String, Symbol
           need_dup = false
           value = if String === value
