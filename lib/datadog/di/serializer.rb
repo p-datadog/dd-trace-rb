@@ -120,6 +120,8 @@ module Datadog
           serialized.update(isNull: true)
         when Integer, Float, TrueClass, FalseClass
           serialized.update(value: value.to_s)
+        when Time
+          serialized.update(value: value.iso8601)
         when String, Symbol
           need_dup = false
           value = if String === value

@@ -63,6 +63,8 @@ RSpec.describe Datadog::DI::Serializer do
        expected: {type: "String", notCapturedReason: "redactedIdent"}},
       {name: "variable name given and is not a redacted identifier", input: "123", var_name: "normal",
        expected: {type: "String", value: "123"}},
+      {name: 'Time value', input: Time.utc(2020, 1, 2, 3, 4, 5),
+        expected: {type: 'Time', value: '2020-01-02T03:04:05Z'}},
     ]
 
     define_serialize_value_cases(cases)
