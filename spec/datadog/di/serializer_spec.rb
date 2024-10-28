@@ -364,4 +364,23 @@ RSpec.describe Datadog::DI::Serializer do
       end
     end
   end
+
+  describe '.register' do
+    context 'with condition' do
+      before do
+        described_class.register(condition: lambda { |value| value =~ /serializer spec hello/ }) do |serializer, value, name:, depth:|
+          serializer.serialize_value('replacement value')
+        end
+      end
+
+      let(:expected) do
+        {type: 'String', value: 'replacement value'}
+      end
+
+      it 'invokes custom serializer' do
+        serialized = serializer.serialize_value('serializer spec hello world')
+        expect(serialized).to eq(expected)
+      end
+    end
+  end
 end
