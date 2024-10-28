@@ -121,6 +121,8 @@ module Datadog
         when Integer, Float, TrueClass, FalseClass
           serialized.update(value: value.to_s)
         when Time
+          # This path also handles DateTime values although they do not need
+          # to be explicitly added to the case statement.
           serialized.update(value: value.iso8601)
         when Date
           serialized.update(value: value.to_s)

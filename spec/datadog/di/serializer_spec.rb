@@ -67,6 +67,8 @@ RSpec.describe Datadog::DI::Serializer do
         expected: {type: 'Time', value: '2020-01-02T03:04:05Z'}},
       {name: 'Date value', input: Date.new(2020, 1, 2),
         expected: {type: 'Date', value: '2020-01-02'}},
+      {name: 'DateTime value', input: DateTime.new(2020, 1, 2, 3, 4, 5),
+        expected: {type: 'DateTime', value: '2020-01-02T03:04:05+00:00'}},
     ]
 
     define_serialize_value_cases(cases)
