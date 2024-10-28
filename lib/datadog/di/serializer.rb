@@ -38,6 +38,11 @@ module Datadog
     #
     # @api private
     class Serializer
+      @@condition_registry = []
+      def self.register(condition: nil, &block)
+        @@condition_registry << {condition: condition, proc: block}
+      end
+
       def initialize(settings, redactor)
         @settings = settings
         @redactor = redactor
@@ -79,6 +84,10 @@ module Datadog
         end
       end
 
+      def type_serialized_entry(cls, serialized)
+        {type: class_name(cls)}.update(serialized)
+      end
+
       # Serializes a single named value.
       #
       # The name is needed to perform sensitive data redaction.
@@ -92,15 +101,24 @@ module Datadog
       #
       # Respects string length, collection size and traversal depth limits.
       def serialize_value(value, name: nil, depth: settings.dynamic_instrumentation.max_capture_depth)
+        cls = value.class
+
         if redactor.redact_type?(value)
-          return {type: class_name(value.class), notCapturedReason: "redactedType"}
+          return {type: class_name(cls), notCapturedReason: "redactedType"}
         end
 
         if name && redactor.redact_identifier?(name)
-          return {type: class_name(value.class), notCapturedReason: "redactedIdent"}
+          return {type: class_name(cls), notCapturedReason: "redactedIdent"}
         end
 
-        serialized = {type: class_name(value.class)}
+        @@condition_registry.each do |entry|
+          if condition = entry[:condition] and condition.call(value)
+            serializer_proc = entry.fetch(:proc)
+            return serializer_proc.call(self, value, name: nil, depth: depth)
+          end
+        end
+
+        serialized = {}
         case value
         when NilClass
           serialized.update(isNull: true)
@@ -200,10 +218,8 @@ module Datadog
             serialized.update(fields: fields)
           end
         end
-        serialized
+        type_serialized_entry(cls, serialized)
       end
-
-      private
 
       # Returns the name for the specified class object.
       #

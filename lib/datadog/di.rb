@@ -16,6 +16,10 @@ require_relative 'di/remote'
 require_relative 'di/serializer'
 require_relative 'di/transport'
 
+if defined?(ActiveRecord::Base)
+  require_relative 'di/contrib/active_record'
+end
+
 module Datadog
   # Namespace for Datadog dynamic instrumentation.
   #
