@@ -100,8 +100,8 @@ module Datadog
       # (integers, strings, arrays, hashes).
       #
       # Respects string length, collection size and traversal depth limits.
-      def serialize_value(value, name: nil, depth: settings.dynamic_instrumentation.max_capture_depth)
-        cls = value.class
+      def serialize_value(value, name: nil, depth: settings.dynamic_instrumentation.max_capture_depth, type: nil)
+        cls = type || value.class
 
         if redactor.redact_type?(value)
           return {type: class_name(cls), notCapturedReason: "redactedType"}

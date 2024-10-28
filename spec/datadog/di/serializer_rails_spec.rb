@@ -5,7 +5,10 @@ require 'active_record'
 require 'sqlite3'
 require "datadog/di/contrib/active_record"
 
-class SerializerRailsSpecTestModel < ActiveRecord::Base
+class SerializerRailsSpecTestEmptyModel < ActiveRecord::Base
+end
+
+class SerializerRailsSpecTestBasicModel < ActiveRecord::Base
 end
 
 RSpec.describe Datadog::DI::Serializer do
@@ -26,7 +29,10 @@ RSpec.describe Datadog::DI::Serializer do
     ActiveRecord::Base.establish_connection('sqlite3::memory:')
 
     ActiveRecord::Schema.define(version: 20161003090450) do
-      create_table 'serializer_rails_spec_test_models', force: :cascade do |t|
+      create_table 'serializer_rails_spec_test_empty_models', force: :cascade do |t|
+      end
+
+      create_table 'serializer_rails_spec_test_basic_models', force: :cascade do |t|
         t.string   'title'
         t.datetime 'created_at', null: false
         t.datetime 'updated_at', null: false
@@ -55,7 +61,36 @@ RSpec.describe Datadog::DI::Serializer do
     end
 
     cases = [
-      {name: "AR model", input: -> { SerializerRailsSpecTestModel.new }, expected: {type: "NilClass", isNull: true}},
+      {name: "AR model with no attributes",
+        input: -> { SerializerRailsSpecTestEmptyModel.new },
+        expected: {type: "SerializerRailsSpecTestEmptyModel", entries: [[
+          {type: 'Symbol', value: 'attributes'},
+          {type: 'Hash', entries: [[{type: 'String', value: 'id'}, {type: 'NilClass', isNull: true}]]},
+        ]]}},
+      {name: "AR model with empty attributes",
+        input: -> { SerializerRailsSpecTestBasicModel.new },
+        expected: {type: "SerializerRailsSpecTestBasicModel", entries: [[
+          {type: 'Symbol', value: 'attributes'},
+          {type: 'Hash', entries: [
+            [{type: 'String', value: 'id'}, {type: 'NilClass', isNull: true}],
+            [{type: 'String', value: 'title'}, {type: 'NilClass', isNull: true}],
+            [{type: 'String', value: 'created_at'}, {type: 'NilClass', isNull: true}],
+            [{type: 'String', value: 'updated_at'}, {type: 'NilClass', isNull: true}],
+          ]},
+        ]]}},
+      {name: "AR model with filled out attributes",
+        input: -> { SerializerRailsSpecTestBasicModel.new(
+          title: 'Hello, world!', created_at: Time.now, updated_at: Time.now) },
+        expected: {type: "SerializerRailsSpecTestBasicModel", entries: [[
+          {type: 'Symbol', value: 'attributes'},
+          {type: 'Hash', entries: [
+            [{type: 'String', value: 'id'}, {type: 'NilClass', isNull: true}],
+            [{type: 'String', value: 'title'}, {type: 'String', value: 'Hello, world!'}],
+            # TODO serialize Time, Date, DateTime types
+            [{type: 'String', value: 'created_at'}, {type: 'Time', notCapturedReason: 'depth'}],
+            [{type: 'String', value: 'updated_at'}, {type: 'Time', notCapturedReason: 'depth'}],
+          ]},
+        ]]}},
     ]
 
     define_serialize_value_cases(cases)
