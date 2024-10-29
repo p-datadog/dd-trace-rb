@@ -35,7 +35,7 @@ module Datadog
             if settings.respond_to?(:dynamic_instrumentation) && settings.dynamic_instrumentation.enabled
               register_capabilities(Datadog::DI::Remote.capabilities)
               register_products(Datadog::DI::Remote.products)
-              register_receivers(Datadog::DI::Remote.receivers)
+              register_receivers(Datadog::DI::Remote.receivers(@telemetry))
             end
 
             register_capabilities(Datadog::Tracing::Remote.capabilities)
