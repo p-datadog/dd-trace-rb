@@ -102,6 +102,10 @@ module Datadog
       # therefore, it should only be called when there is no parallel
       # activity (in another thread) that causes more notifications
       # to be generated.
+      #
+      # This method is used by the test suite to wait until notifications have
+      # been sent out, and could be used for graceful stopping of the
+      # worker thread.
       def flush
         loop do
           if @thread.nil? || !@thread.alive?
