@@ -12,12 +12,13 @@ module Datadog
     # @api private
     class ProbeManager
       def initialize(settings, instrumenter, probe_notification_builder,
-        probe_notifier_worker, logger)
+        probe_notifier_worker, logger, telemetry: nil)
         @settings = settings
         @instrumenter = instrumenter
         @probe_notification_builder = probe_notification_builder
         @probe_notifier_worker = probe_notifier_worker
         @logger = logger
+        @telemetry = telemetry
         @installed_probes = {}
         @pending_probes = {}
         @failed_probes = {}
@@ -28,12 +29,14 @@ module Datadog
           rescue => exc
             raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
             logger.warn("Unhandled exception in definition trace point: #{exc.class}: #{exc}")
+            telemetry&.report(exc, description: "Unhandled exception in definition trace point")
             # TODO test this path
           end
         end
       end
 
       attr_reader :logger
+      attr_reader :telemetry
 
       # TODO test that close is called during component teardown and
       # the trace point is cleared
@@ -93,6 +96,7 @@ module Datadog
         raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
         logger.warn("Error processing probe configuration: #{exc.class}: #{exc}")
+        telemetry&.report(exc, description: "Error processing probe configuration")
         # TODO report probe as failed to agent since we won't attempt to
         # install it again.
 
@@ -124,6 +128,7 @@ module Datadog
               # Silence all exceptions?
               # TODO should we propagate here and rescue upstream?
               logger.warn("Error removing probe #{probe.id}: #{exc.class}: #{exc}")
+              telemetry&.report(exc, description: "Error removing probe #{probe.id}")
             end
           end
         end

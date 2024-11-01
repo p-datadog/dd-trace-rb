@@ -54,10 +54,11 @@ module Datadog
     #
     # @api private
     class Instrumenter
-      def initialize(settings, serializer, logger, code_tracker: nil)
+      def initialize(settings, serializer, logger, code_tracker: nil, telemetry: nil)
         @settings = settings
         @serializer = serializer
         @logger = logger
+        @telemetry = telemetry
         @code_tracker = code_tracker
 
         @lock = Mutex.new
@@ -66,6 +67,7 @@ module Datadog
       attr_reader :settings
       attr_reader :serializer
       attr_reader :logger
+      attr_reader :telemetry
       attr_reader :code_tracker
 
       # This is a substitute for Thread::Backtrace::Location
@@ -234,11 +236,13 @@ module Datadog
           rescue => exc
             raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
             logger.warn("Unhandled exception in line trace point: #{exc.class}: #{exc}")
+            telemetry&.report(exc, description: "Unhandled exception in line trace point")
             # TODO test this path
           end
         rescue => exc
           raise if settings.dynamic_instrumentation.propagate_all_exceptions
           logger.warn("Unhandled exception in line trace point: #{exc.class}: #{exc}")
+          telemetry&.report(exc, description: "Unhandled exception in line trace point")
           # TODO test this path
         end
 

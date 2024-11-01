@@ -65,13 +65,15 @@ module Datadog
         @@flat_registry << {condition: condition, proc: block}
       end
 
-      def initialize(settings, redactor)
+      def initialize(settings, redactor, telemetry: nil)
         @settings = settings
         @redactor = redactor
+        @telemetry = telemetry
       end
 
       attr_reader :settings
       attr_reader :redactor
+      attr_reader :telemetry
 
       # Serializes positional and keyword arguments to a method,
       # as obtained by a method probe.
@@ -244,6 +246,7 @@ module Datadog
           end
           serialized
         rescue => exc
+          telemetry&.report(exc, description: "Error serializing")
           {type: class_name(cls), notSerializedReason: "#{exc}"}
         end
       end

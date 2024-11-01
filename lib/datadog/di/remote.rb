@@ -54,10 +54,11 @@ module Datadog
                     # TODO test exception capture
                     probe_manager.add_probe(probe)
                     content.applied
-                  rescue => e
+                  rescue => exc
                     raise if component.settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
-                    component.logger.warn("Unhandled exception adding probe in DI remote receiver: #{e.class}: #{e}")
+                    component.logger.warn("Unhandled exception adding probe in DI remote receiver: #{exc.class}: #{exc}")
+                    component.telemetry&.report(exc, description: "Unhandled exception adding probe in DI remote receiver")
 
                     # If a probe fails to install, we will mark the content
                     # as errored. On subsequent remote configuration application
@@ -65,7 +66,8 @@ module Datadog
                     # exception and we'll rescue it here, again marking the
                     # content as errored but with a somewhat different exception
                     # message.
-                    content.errored("Error applying dynamic instrumentation configuration: #{e.class.name} #{e.message}: #{Array(e.backtrace).join("\n")}")
+                    # TODO stack trace must be redacted or not sent at all
+                    content.errored("Error applying dynamic instrumentation configuration: #{exc.class.name} #{exc.message}: #{Array(exc.backtrace).join("\n")}")
                   end
 
                   # Important: even if processing fails for this probe config,
@@ -79,10 +81,11 @@ module Datadog
               begin
                 # TODO test exception capture
                 probe_manager.remove_other_probes(current_probe_ids.keys)
-              rescue => e
+              rescue => exc
                 raise if component.settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
-                component.logger.warn("Unhandled exception removing probes in DI remote receiver: #{e.class}: #{e}")
+                component.logger.warn("Unhandled exception removing probes in DI remote receiver: #{exc.class}: #{exc}")
+                component.telemetry&.report(exc, description: "Unhandled exception removing probes in DI remote receiver")
               end
             end
           end

@@ -130,6 +130,10 @@ RSpec.describe Datadog::DI::Remote do
         JSON.parse(probe_spec.to_json)
       end
 
+      let(:telemetry) do
+        instance_double(Datadog::Core::Telemetry::Component)
+      end
+
       before do
         expect(Datadog::DI).to receive(:component).at_least(:once).and_return(component)
       end
@@ -157,6 +161,7 @@ RSpec.describe Datadog::DI::Remote do
 
         context 'probe addition raises an exception' do
           it 'logs warning and consumes the exception' do
+            expect(component).to receive(:telemetry).and_return(telemetry)
             expect(component).to receive(:logger).and_return(logger)
             expect(logger).to receive(:info) do |message|
               expect(message).to match(/Received probe/)
@@ -166,6 +171,7 @@ RSpec.describe Datadog::DI::Remote do
               expect(msg).to match(/Unhandled exception.*Runtime error from test/)
             end
             expect(component).to receive(:logger).and_return(logger)
+            expect(telemetry).to receive(:report)
 
             expect(probe_manager).to receive(:add_probe).and_raise("Runtime error from test")
             expect(component).to receive(:probe_notification_builder).and_return(probe_notification_builder)
@@ -179,6 +185,7 @@ RSpec.describe Datadog::DI::Remote do
         end
 
         it 'calls probe manager to remove stale probes' do
+          allow(component).to receive(:telemetry)
           expect(component).to receive(:logger).and_return(logger)
           expect(logger).to receive(:info) do |message|
             expect(message).to match(/Received probe/)
@@ -201,6 +208,7 @@ RSpec.describe Datadog::DI::Remote do
 
         context 'probe removal raises an exception' do
           it 'logs warning and consumes the exception' do
+            expect(component).to receive(:telemetry).and_return(telemetry).at_least(:once)
             expect(component).to receive(:logger).and_return(logger)
             expect(logger).to receive(:info) do |message|
               expect(message).to match(/Received probe/)
@@ -209,6 +217,7 @@ RSpec.describe Datadog::DI::Remote do
             expect(logger).to receive(:warn) do |msg|
               expect(msg).to match(/Unhandled exception.*Runtime error 1 from test/)
             end
+            expect(telemetry).to receive(:report)
 
             allow(probe_manager).to receive(:add_probe).and_raise("Runtime error 1 from test")
             expect(component).to receive(:logger).and_return(logger)
@@ -221,6 +230,7 @@ RSpec.describe Datadog::DI::Remote do
               expect(msg).to match(/Unhandled exception.*Runtime error 2 from test/)
             end
             expect(component).to receive(:logger).and_return(logger)
+            expect(telemetry).to receive(:report)
 
             expect(probe_manager).to receive(:remove_other_probes).with(['11']).and_raise("Runtime error 2 from test")
             expect do

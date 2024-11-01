@@ -23,8 +23,9 @@ module Datadog
     #
     # @api private
     class ProbeNotifierWorker
-      def initialize(settings, transport, logger)
+      def initialize(settings, transport, logger, telemetry: nil)
         @settings = settings
+        @telemetry = telemetry
         @status_queue = []
         @snapshot_queue = []
         @transport = transport
@@ -40,6 +41,7 @@ module Datadog
 
       attr_reader :settings
       attr_reader :logger
+      attr_reader :telemetry
 
       def start
         return if @thread
@@ -76,6 +78,7 @@ module Datadog
               raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
               logger.warn("Error in probe notifier worker: #{exc.class}: #{exc} (at #{exc.backtrace.first})")
+              telemetry&.report(exc, description: "Error in probe notifier worker")
             end
             @lock.synchronize do
               @wake_scheduled = more
@@ -240,14 +243,18 @@ module Datadog
             rescue => exc
               raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
               logger.warn("failed to send #{event_name}: #{exc.class}: #{exc} (at #{exc.backtrace.first})")
+              # Should we report this error to telemetry? Most likely failure
+              # to send is due to a network issue, and trying to send a
+              # telemetry message would also fail.
             end
           end
           batch.any? # steep:ignore
-        rescue ThreadError
+        rescue ThreadError => exc
           # Normally the queue should only be consumed in this method,
           # however if anyone consumes it elsewhere we don't want to block
           # while consuming it here. Rescue ThreadError and return.
-          logger.warn("unexpected #{event_name} queue underflow - consumed elsewhere?")
+          logger.warn("Unexpected #{event_name} queue underflow - consumed elsewhere?")
+          telemetry&.report(exc, description: "Unexpected #{event_name} queue underflow")
         ensure
           @lock.synchronize do
             @io_in_progress = false

@@ -14,7 +14,7 @@ module Datadog
     # resources and installed tracepoints upon shutdown.
     class Component
       class << self
-        def build(settings, agent_settings)
+        def build(settings, agent_settings, telemetry: nil)
           return unless settings.respond_to?(:dynamic_instrumentation) && settings.dynamic_instrumentation.enabled
 
           unless settings.respond_to?(:remote) && settings.remote.enabled
@@ -24,10 +24,10 @@ module Datadog
 
           return unless environment_supported?(settings)
 
-          new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker)
+          new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker, telemetry: telemetry)
         end
 
-        def build!(settings, agent_settings)
+        def build!(settings, agent_settings, telemetry: nil)
           unless settings.respond_to?(:dynamic_instrumentation) && settings.dynamic_instrumentation.enabled
             raise "Requested DI component but DI is not enabled in settings"
           end
@@ -40,7 +40,7 @@ module Datadog
             raise "DI does not support the environment (development or Ruby version too low or not MRI)"
           end
 
-          new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker)
+          new(settings, agent_settings, Datadog.logger, code_tracker: DI.code_tracker, telemetry: telemetry)
         end
 
         # Checks whether the runtime environment is supported by
@@ -63,23 +63,25 @@ module Datadog
         end
       end
 
-      def initialize(settings, agent_settings, logger, code_tracker: nil)
+      def initialize(settings, agent_settings, logger, code_tracker: nil, telemetry: nil)
         @settings = settings
         @agent_settings = agent_settings
         @logger = logger
+        @telemetry = telemetry
         @redactor = Redactor.new(settings)
-        @serializer = Serializer.new(settings, redactor)
-        @instrumenter = Instrumenter.new(settings, serializer, logger, code_tracker: code_tracker)
+        @serializer = Serializer.new(settings, redactor, telemetry: telemetry)
+        @instrumenter = Instrumenter.new(settings, serializer, logger, code_tracker: code_tracker, telemetry: telemetry)
         @transport = Transport.new(agent_settings)
-        @probe_notifier_worker = ProbeNotifierWorker.new(settings, transport, logger)
+        @probe_notifier_worker = ProbeNotifierWorker.new(settings, transport, logger, telemetry: telemetry)
         probe_notifier_worker.start
         @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer)
-        @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger)
+        @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger, telemetry: telemetry)
       end
 
       attr_reader :settings
       attr_reader :agent_settings
       attr_reader :logger
+      attr_reader :telemetry
       attr_reader :instrumenter
       attr_reader :transport
       attr_reader :probe_notifier_worker

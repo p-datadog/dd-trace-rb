@@ -85,6 +85,7 @@ module Datadog
               if component = DI.component
                 raise if component.settings.dynamic_instrumentation.internal.propagate_all_exceptions
                 component.logger.warn("Unhandled exception in script_compiled trace point: #{exc.class}: #{exc}")
+                component.telemetry&.report(exc, description: "Unhandled exception in script_compiled trace point")
                 # TODO test this path
               else
                 # If we don't have a component, we cannot log anything properly.
