@@ -76,22 +76,20 @@ RSpec.describe Datadog::DI::ProbeNotifierWorker do
         {hello: 'world'}
       end
 
-      xit 'sends the snapshot' do
+      it 'sends the snapshot' do
         expect(worker.send(:snapshot_queue)).to be_empty
 
         expect(transport).to receive(:send_snapshot).once.with([snapshot])
 
         worker.add_snapshot(snapshot)
 
-        # Since sending is asynchronous, we need to relinquish execution
-        # for the sending thread to run.
-        sleep(0.1)
+        worker.flush
 
         expect(worker.send(:snapshot_queue)).to eq([])
       end
 
       context 'when three snapshots are added in quick succession' do
-        xit 'sends two batches' do
+        it 'sends two batches' do
           expect(worker.send(:snapshot_queue)).to be_empty
 
           expect(transport).to receive(:send_snapshot).once.with([snapshot])
@@ -101,22 +99,15 @@ RSpec.describe Datadog::DI::ProbeNotifierWorker do
           worker.add_snapshot(snapshot)
           sleep 0.1
           worker.add_snapshot(snapshot)
-
-          # Since sending is asynchronous, we need to relinquish execution
-          # for the sending thread to run.
           sleep(0.1)
 
           # At this point the first snapshot should have been sent,
           # with the remaining two in the queue
           expect(worker.send(:snapshot_queue)).to eq([snapshot, snapshot])
 
-          sleep 0.4
-          # Still within the cooldown period
-          expect(worker.send(:snapshot_queue)).to eq([snapshot, snapshot])
-
           expect(transport).to receive(:send_snapshot).once.with([snapshot, snapshot])
 
-          sleep 0.5
+          worker.flush
           expect(worker.send(:snapshot_queue)).to eq([])
         end
       end
