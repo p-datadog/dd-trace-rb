@@ -46,9 +46,6 @@ require 'datadog'
 # currently integrated into the Ruby tracer due to being under development.
 require 'datadog/di'
 
-p Datadog::DI
-p Datadog::DI::Redactor
-
 class DIInstrumentBenchmark
   class Target
     def test_method
