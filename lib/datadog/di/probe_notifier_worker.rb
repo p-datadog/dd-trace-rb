@@ -35,6 +35,7 @@ module Datadog
         @sleep_remaining = nil
         @wake_scheduled = false
         @thread = nil
+        @flush = 0
       end
 
       attr_reader :settings
@@ -49,20 +50,24 @@ module Datadog
             # and then quit?
             break if @stop_requested
 
-            sleep_remaining = @lock.synchronize do
-              if sleep_remaining && sleep_remaining > 0
-                # Recalculate how much sleep time is remaining, then sleep that long.
-                set_sleep_remaining
-              else
-                0
+            # If a flush was requested, send immediately and do not
+            # wait for the cooldown period.
+            if @flush == 0
+              sleep_remaining = @lock.synchronize do
+                if sleep_remaining && sleep_remaining > 0
+                  # Recalculate how much sleep time is remaining, then sleep that long.
+                  set_sleep_remaining
+                else
+                  0
+                end
               end
-            end
 
-            if sleep_remaining > 0
-              # Do not need to update @wake_scheduled here because
-              # wake-up is already scheduled for the earliest possible time.
-              wake.wait(sleep_remaining)
-              next
+              if sleep_remaining > 0
+                # Do not need to update @wake_scheduled here because
+                # wake-up is already scheduled for the earliest possible time.
+                wake.wait(sleep_remaining)
+                next
+              end
             end
 
             begin
@@ -107,25 +112,35 @@ module Datadog
       # been sent out, and could be used for graceful stopping of the
       # worker thread.
       def flush
-        loop do
-          if @thread.nil? || !@thread.alive?
-            return
-          end
+        @lock.synchronize do
+          @flush += 1
+        end
+        begin
+          loop do
+            if @thread.nil? || !@thread.alive?
+              return
+            end
 
-          io_in_progress, queues_empty = @lock.synchronize do
-            [io_in_progress?, status_queue.empty? && snapshot_queue.empty?]
-          end
+            io_in_progress, queues_empty = @lock.synchronize do
+              [io_in_progress?, status_queue.empty? && snapshot_queue.empty?]
+            end
 
-          if io_in_progress
-            # If we just call Thread.pass we could be in a busy loop -
-            # add a sleep.
-            sleep 0.25
-            next
-          elsif queues_empty
-            break
-          else
-            sleep 0.25
-            next
+            if io_in_progress
+              # If we just call Thread.pass we could be in a busy loop -
+              # add a sleep.
+              sleep 0.25
+              next
+            elsif queues_empty
+              break
+            else
+              wake.signal
+              sleep 0.25
+              next
+            end
+          end
+        ensure
+          @lock.synchronize do
+            @flush -= 1
           end
         end
       end
