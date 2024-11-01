@@ -52,7 +52,7 @@ module Datadog
 
             # If a flush was requested, send immediately and do not
             # wait for the cooldown period.
-            if @flush == 0
+            if @lock.synchronize { @flush } == 0
               sleep_remaining = @lock.synchronize do
                 if sleep_remaining && sleep_remaining > 0
                   # Recalculate how much sleep time is remaining, then sleep that long.
