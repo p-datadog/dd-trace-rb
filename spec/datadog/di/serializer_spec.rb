@@ -30,6 +30,8 @@ end
 # Should have no instance variables
 class DISerializerSpecTestClass; end
 
+class DISerializerCustomExceptionTestClass; end
+
 RSpec.describe Datadog::DI::Serializer do
   di_test
 
@@ -368,7 +370,7 @@ RSpec.describe Datadog::DI::Serializer do
   describe '.register' do
     context 'with condition' do
       before do
-        described_class.register(condition: lambda { |value| value =~ /serializer spec hello/ }) do |serializer, value, name:, depth:|
+        described_class.register(condition: lambda { |value| String === value && value =~ /serializer spec hello/ }) do |serializer, value, name:, depth:|
           serializer.serialize_value('replacement value')
         end
       end
@@ -381,6 +383,31 @@ RSpec.describe Datadog::DI::Serializer do
         serialized = serializer.serialize_value('serializer spec hello world')
         expect(serialized).to eq(expected)
       end
+    end
+  end
+
+  context 'when serialization raises an exception' do
+    before do
+      # Register a custom serializer that will raise an exception
+      Datadog::DI::Serializer.register(condition: lambda { |value| DISerializerCustomExceptionTestClass === value }) do |*args|
+        raise "Test exception"
+      end
+    end
+
+    describe "#serialize_value" do
+      let(:serialized) do
+        serializer.serialize_value(value, **options)
+      end
+
+      cases = [
+        {name: "serializes other values", input: {a: DISerializerCustomExceptionTestClass.new, b: 1},
+          expected: {type: "Hash", entries: [
+            [{type: 'Symbol', value: 'a'}, {type: 'DISerializerCustomExceptionTestClass', notSerializedReason: 'Test exception'}],
+            [{type: 'Symbol', value: 'b'}, {type: 'Integer', value: '1'}],
+          ]}},
+      ]
+
+      define_serialize_value_cases(cases)
     end
   end
 end
