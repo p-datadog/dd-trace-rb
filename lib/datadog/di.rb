@@ -84,3 +84,7 @@ module Datadog
     end
   end
 end
+
+# Activate code tracking by default because line trace points will not work
+# without it.
+Datadog::DI.activate_tracking!
