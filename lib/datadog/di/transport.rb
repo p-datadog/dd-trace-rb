@@ -27,6 +27,7 @@ module Datadog
       def initialize(agent_settings)
         # Note that this uses host, port, timeout and TLS flag from
         # agent settings.
+        @agent_settings = agent_settings
         @client = Core::Transport::HTTP::Adapters::Net.new(agent_settings)
       end
 
@@ -39,8 +40,20 @@ module Datadog
       end
 
       def send_input(payload)
-        send_request('Probe snapshot submission', INPUT_PATH, payload,
-          headers: {'content-type' => 'application/json'},)
+              client = Net::HTTP.new(@agent_settings.hostname, @agent_settings.port)
+        headers =
+        {
+            'content-type' => 'application/json',
+        }
+
+        response = client.post(INPUT_PATH, JSON.dump(payload), headers)
+        p response
+        unless (200..299).include?(Integer(response.code))
+          raise Error::AgentCommunicationError, "Probe status submission failed: #{response.code}"
+        end
+
+#        send_request('Probe snapshot submission', INPUT_PATH, payload,
+#          headers: {'content-type' => 'application/json'},)
       end
 
       # TODO status should use either input or diagnostics endpoints
