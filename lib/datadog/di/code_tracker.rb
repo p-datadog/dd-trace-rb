@@ -79,6 +79,10 @@ module Datadog
                 registry[path] = tp.instruction_sequence
               end
             end
+
+            # TODO this line is not being exercised
+            DI.component&.probe_manager&.install_pending_line_probes(path)
+
           # Since this method normally is called from customer applications,
           # rescue any exceptions that might not be handled to not break said
           # customer applications.
