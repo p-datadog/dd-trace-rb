@@ -1,5 +1,5 @@
 require "datadog/di/spec_helper"
-require 'datadog/di/probe'
+require 'datadog/di/probe_manager'
 
 class ProbeManagerSpecTestClass; end
 
