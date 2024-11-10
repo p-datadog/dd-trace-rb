@@ -19,11 +19,6 @@ end
 RSpec.describe 'Instrumentation integration' do
   di_test
 
-  before(:all) do
-    Datadog::DI.activate_tracking!
-    require_relative 'instrumentation_integration_test_class'
-  end
-
   after do
     component.shutdown!
   end
@@ -206,11 +201,18 @@ RSpec.describe 'Instrumentation integration' do
     end
 
     context 'line probe' do
+      with_code_tracking
+
       context 'simple log probe' do
         let(:probe) do
           Datadog::DI::Probe.new(id: "1234", type: :log,
             file: 'instrumentation_integration_test_class.rb', line_no: 10,
             capture_snapshot: false,)
+        end
+
+        before do
+          Object.send(:remove_const, :InstrumentationIntegrationTestClass) rescue nil
+          load File.join(File.dirname(__FILE__), 'instrumentation_integration_test_class.rb')
         end
 
         it 'invokes probe' do
@@ -277,6 +279,11 @@ RSpec.describe 'Instrumentation integration' do
           }}}}
         end
 
+        before do
+          Object.send(:remove_const, :InstrumentationIntegrationTestClass) rescue nil
+          load File.join(File.dirname(__FILE__), 'instrumentation_integration_test_class.rb')
+        end
+
         it 'invokes probe' do
           expect(component.transport).to receive(:send_request).at_least(:once)
           probe_manager.add_probe(probe)
@@ -303,13 +310,7 @@ RSpec.describe 'Instrumentation integration' do
 
       context 'when target file is not loaded initially and is loaded later' do
         context 'when code tracking is available' do
-          before do
-            Datadog::DI.activate_tracking!
-          end
-
-          after do
-            Datadog::DI.deactivate_tracking!
-          end
+          with_code_tracking
 
           let(:probe) do
             Datadog::DI::Probe.new(id: "1234", type: :log,
@@ -339,9 +340,7 @@ RSpec.describe 'Instrumentation integration' do
         end
 
         context 'when code tracking is not available' do
-          before do
-            Datadog::DI.deactivate_tracking!
-          end
+          without_code_tracking
 
           context 'untargeted trace points enabled' do
             let(:probe) do
@@ -412,7 +411,7 @@ RSpec.describe 'Instrumentation integration' do
 
       context 'when target is invoked' do
         before do
-          Datadog::DI.activate_tracking!
+          Object.send(:remove_const, :InstrumentationIntegrationTestClass) rescue nil
           load File.join(File.dirname(__FILE__), 'instrumentation_integration_test_class.rb')
         end
 
