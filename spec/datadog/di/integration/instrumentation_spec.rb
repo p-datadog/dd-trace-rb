@@ -50,34 +50,34 @@ RSpec.describe 'Instrumentation integration' do
 
   let(:expected_installed_payload) do
     {ddsource: 'dd_debugger',
-      debugger: {
-        diagnostics: {
-          parentId: nil,
-          probeId: String,
-          probeVersion: 0,
-          runtimeId: String,
-          status: 'INSTALLED',
-        }},
-      message: String,
-      service: 'rspec',
-      timestamp: Integer,
-    }
+     debugger: {
+       diagnostics: {
+         parentId: nil,
+         probeId: String,
+         probeVersion: 0,
+         runtimeId: String,
+         status: 'INSTALLED',
+       }
+     },
+     message: String,
+     service: 'rspec',
+     timestamp: Integer,}
   end
 
   let(:expected_emitting_payload) do
     {ddsource: 'dd_debugger',
-      debugger: {
-        diagnostics: {
-          parentId: nil,
-          probeId: String,
-          probeVersion: 0,
-          runtimeId: String,
-          status: 'EMITTING',
-        }},
-      message: String,
-      service: 'rspec',
-      timestamp: Integer,
-    }
+     debugger: {
+       diagnostics: {
+         parentId: nil,
+         probeId: String,
+         probeVersion: 0,
+         runtimeId: String,
+         status: 'EMITTING',
+       }
+     },
+     message: String,
+     service: 'rspec',
+     timestamp: Integer,}
   end
 
   context 'log probe' do
