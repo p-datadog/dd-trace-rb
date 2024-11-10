@@ -1,3 +1,4 @@
+require "datadog/di/spec_helper"
 require 'datadog/di'
 
 # Note: this file contains integration tests for instrumentation.
