@@ -56,8 +56,6 @@ module Datadog
       # existing mappings in the registry
       def activate_tracking!
         (@code_tracker ||= CodeTracker.new).start
-        # & is demanded by steep, code tracker is always not nil here.
-        #code_tracker&.start
       end
 
       # Deactivates code tracking. In normal usage of DI this method should
