@@ -85,6 +85,7 @@ module Datadog
   end
 end
 
+=begin not yet enabled
 # :script_compiled trace point was added in Ruby 2.6.
 if RUBY_VERSION >= '2.6'
   begin
@@ -102,3 +103,4 @@ if RUBY_VERSION >= '2.6'
     end
   end
 end
+=end
