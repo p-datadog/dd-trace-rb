@@ -6,6 +6,8 @@ require 'datadog/di'
 # For Instrumenter-only tests, use instrumenter_spec.rb in the parent
 # directory.
 
+# rubocop:disable Style/RescueModifier
+
 class InstrumentationSpecTestClass
   def test_method(a = 1)
     42
@@ -296,8 +298,8 @@ RSpec.describe 'Instrumentation integration' do
           expect(component.transport).to receive(:send_request).at_least(:once)
           probe_manager.add_probe(probe)
           payload = nil
-          expect(component.probe_notifier_worker).to receive(:add_snapshot) do |_payload|
-            payload = _payload
+          expect(component.probe_notifier_worker).to receive(:add_snapshot) do |payload_|
+            payload = payload_
           end
           expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
           component.probe_notifier_worker.flush
@@ -459,3 +461,5 @@ RSpec.describe 'Instrumentation integration' do
     end
   end
 end
+
+# rubocop:enable Style/RescueModifier
