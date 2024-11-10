@@ -34,6 +34,7 @@ RSpec.describe Datadog::DI::Component do
         it 'returns a Datadog::DI::Component instance' do
           component = described_class.build(settings, agent_settings)
           expect(component).to be_a(described_class)
+          component.shutdown!
         end
       end
 
