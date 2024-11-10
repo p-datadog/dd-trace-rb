@@ -306,6 +306,10 @@ RSpec.describe 'Instrumentation integration' do
             Datadog::DI.activate_tracking!
           end
 
+          after do
+            Datadog::DI.deactivate_tracking!
+          end
+
           let(:probe) do
             Datadog::DI::Probe.new(id: "1234", type: :log,
               file: 'instrumentation_integration_test_class_2.rb', line_no: 10,)

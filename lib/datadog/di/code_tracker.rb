@@ -80,7 +80,6 @@ module Datadog
               end
             end
 
-            # TODO this line is not being exercised
             DI.component&.probe_manager&.install_pending_line_probes(path)
 
           # Since this method normally is called from customer applications,
