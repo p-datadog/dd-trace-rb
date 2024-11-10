@@ -115,8 +115,8 @@ RSpec.describe 'Instrumentation integration' do
           expect(component.transport).to receive(:send_request).at_least(:once)
           probe_manager.add_probe(probe)
           payload = nil
-          expect(component.probe_notifier_worker).to receive(:add_snapshot) do |_payload|
-            payload = _payload
+          expect(component.probe_notifier_worker).to receive(:add_snapshot) do |payload_|
+            payload = payload_
           end
 
           yield
@@ -228,8 +228,8 @@ RSpec.describe 'Instrumentation integration' do
           let(:payload) do
             probe_manager.add_probe(probe)
             payload = nil
-            expect(component.probe_notifier_worker).to receive(:add_snapshot) do |_payload|
-              payload = _payload
+            expect(component.probe_notifier_worker).to receive(:add_snapshot) do |payload_|
+              payload = payload_
             end
             expect(InstrumentationIntegrationTestClass.new.test_method).to eq(42)
             component.probe_notifier_worker.flush

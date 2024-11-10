@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Lint/AssignmentInCondition
+
 module Datadog
   module DI
     # Stores probes received from remote config (that we can parse, in other
@@ -85,7 +87,7 @@ module Datadog
           # API smaller and shouldn't cause any actual problems.
           pending_probes.delete(probe.id)
           true
-        rescue Error::DITargetNotDefined => exc
+        rescue Error::DITargetNotDefined
           pending_probes[probe.id] = probe
           false
         end
@@ -177,3 +179,5 @@ module Datadog
     end
   end
 end
+
+# rubocop:enable Lint/AssignmentInCondition
