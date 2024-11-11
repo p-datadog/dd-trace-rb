@@ -65,7 +65,6 @@ module Datadog
       # to instrument them every time remote configuration is processed.
       attr_reader :failed_probes
 
-      # config is one probe info
       def add_probe(probe)
         # TODO lock here?
 
