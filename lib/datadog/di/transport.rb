@@ -62,7 +62,8 @@ module Datadog
 
       def send_request(desc, **options)
         # steep:ignore:start
-        env = OpenStruct.new(**options)
+        #env = OpenStruct.new(**options)
+        env = Core::Transport::HTTP::Env.new(nil, options)
         # steep:ignore:end
         response = client.post(env)
         unless response.ok?
