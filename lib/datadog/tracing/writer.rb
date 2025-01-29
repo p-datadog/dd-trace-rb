@@ -160,7 +160,8 @@ module Datadog
           buffer_size: @buff_size,
           on_trace: @trace_handler,
           interval: @flush_interval,
-          shutdown_timeout: @shutdown_timeout
+          shutdown_timeout: @shutdown_timeout,
+          logger: Datadog.logger,
         )
 
         @worker.start
