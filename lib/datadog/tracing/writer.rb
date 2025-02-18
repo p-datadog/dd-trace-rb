@@ -19,7 +19,7 @@ module Datadog
         :events
 
       def initialize(options = {})
-        @logger = options.fetch(:logger, Datadog.logger)
+        @logger = options[:logger] || Datadog.logger
 
         # writer and transport parameters
         @buff_size = options.fetch(:buffer_size, Workers::AsyncTransport::DEFAULT_BUFFER_MAX_SIZE)
