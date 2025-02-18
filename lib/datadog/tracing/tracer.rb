@@ -60,7 +60,7 @@ module Datadog
         ),
         span_sampler: Sampling::Span::Sampler.new,
         tags: {},
-        writer: Writer.new
+        writer: Writer.new(logger: logger),
       )
         @trace_flush = trace_flush
         @default_service = default_service
