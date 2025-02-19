@@ -28,7 +28,8 @@ module Datadog
       def initialize(agent_settings)
         # Note that this uses host, port, timeout and TLS flag from
         # agent settings.
-        @client = Core::Transport::HTTP::Adapters::Net.new(agent_settings)
+        #@client = Core::Transport::HTTP::Adapters::Net.new(agent_settings)
+        @client = Core::Remote::Transport::HTTP.default(agent_settings: agent_settings)
       end
 
       def send_diagnostics(payload)
