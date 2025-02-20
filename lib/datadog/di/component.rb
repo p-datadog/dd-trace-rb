@@ -81,7 +81,7 @@ module Datadog
         @redactor = Redactor.new(settings)
         @serializer = Serializer.new(settings, redactor, telemetry: telemetry)
         @instrumenter = Instrumenter.new(settings, serializer, logger, code_tracker: code_tracker, telemetry: telemetry)
-        @transport = Transport.new(agent_settings)
+        @transport = Transport::HTTP.default(agent_settings: agent_settings)
         @probe_notifier_worker = ProbeNotifierWorker.new(settings, transport, logger, telemetry: telemetry)
         @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer)
         @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger, telemetry: telemetry)
