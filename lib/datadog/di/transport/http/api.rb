@@ -20,15 +20,15 @@ module Datadog
           def defaults
             Datadog::Core::Transport::HTTP::API::Map[
               DIAGNOSTICS => Spec.new do |s|
-                s.diagnostics = Traces::API::Endpoint.new(
+                s.diagnostics = Core::Transport::HTTP::API::Endpoint.new(
                   '/debugger/v1/diagnostics',
-                  Core::Encoding::JsonEncoder,
+                  Core::Encoding::JSONEncoder,
                 )
               end,
               INPUT => Spec.new do |s|
-                s.input = Traces::API::Endpoint.new(
+                s.input = Core::Transport::HTTP::API::Endpoint.new(
                   '/debugger/v1/input',
-                  Core::Encoding::JsonEncoder,
+                  Core::Encoding::JSONEncoder,
                 )
               end,
             ]
@@ -38,6 +38,8 @@ module Datadog
           end
 
           class Spec < Core::Transport::HTTP::API::Spec
+            attr_accessor :diagnostics
+            attr_accessor :input
           end
         end
       end

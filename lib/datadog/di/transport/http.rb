@@ -29,17 +29,41 @@ module Datadog
 
         # Builds a new Transport::HTTP::Client with default settings
         # Pass a block to override any settings.
-        def default(
+        def diagnostics(
           agent_settings: DO_NOT_USE_ENVIRONMENT_AGENT_SETTINGS,
           **options
         )
-          new(Debugger::Transport) do |transport|
+          new(Diagnostics::Transport) do |transport|
             transport.adapter(agent_settings)
             transport.headers default_headers
 
             apis = API.defaults
 
             transport.api API::DIAGNOSTICS, apis[API::DIAGNOSTICS]
+
+            # Apply any settings given by options
+            unless options.empty?
+              transport.default_api = options[:api_version] if options.key?(:api_version)
+              transport.headers options[:headers] if options.key?(:headers)
+            end
+
+            # Call block to apply any customization, if provided
+            yield(transport) if block_given?
+          end
+        end
+
+        # Builds a new Transport::HTTP::Client with default settings
+        # Pass a block to override any settings.
+        def input(
+          agent_settings: DO_NOT_USE_ENVIRONMENT_AGENT_SETTINGS,
+          **options
+        )
+          new(Input::Transport) do |transport|
+            transport.adapter(agent_settings)
+            transport.headers default_headers
+
+            apis = API.defaults
+
             transport.api API::INPUT, apis[API::INPUT]
 
             # Apply any settings given by options
