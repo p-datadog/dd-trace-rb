@@ -53,8 +53,7 @@ module Datadog
 
             # Endpoint for negotiation
             class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
-              attr_reader \
-                :encoder
+              attr_reader :encoder
 
               def initialize(path, encoder)
                 super(:post, path)
@@ -63,12 +62,12 @@ module Datadog
 
               def call(env, &block)
                 # Add trace count header
-                #env.headers[HEADER_TRACE_COUNT] = env.request.parcel.trace_count.to_s
+                # env.headers[HEADER_TRACE_COUNT] = env.request.parcel.trace_count.to_s
 
                 # Encode body & type
-                #require'byebug';byebug
-                #env.headers[HEADER_CONTENT_TYPE] = encoder.content_type
-                #env.body = env.request.parcel.data
+                # require'byebug';byebug
+                # env.headers[HEADER_CONTENT_TYPE] = encoder.content_type
+                # env.body = env.request.parcel.data
                 event_payload = Core::Vendor::Multipart::Post::UploadIO.new(
                   StringIO.new(JSON.dump(env.request.parcel.data)), 'application/json', 'event.json'
                 )

@@ -37,7 +37,11 @@ module Datadog
               # TODO Datadog::Core::Transport::InternalErrorResponse
               # does not have +code+ method, what is the actual API of
               # these response objects?
-              raise Error::AgentCommunicationError, "send_diagnostics failed: #{response.code rescue '???'}: #{response.payload}"
+              raise Error::AgentCommunicationError, "send_diagnostics failed: #{begin
+                response.code
+              rescue
+                "???"
+              end}: #{response.payload}"
             end
           rescue Error::AgentCommunicationError
             raise
@@ -52,6 +56,6 @@ module Datadog
           end
         end
       end
-   end
+    end
   end
 end
