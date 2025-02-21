@@ -261,23 +261,6 @@ RSpec.describe 'DI integration from remote config' do
       end
     end
 
-    # Events can be batched, meaning +post+ could be called once or twice
-    # depending on how threads are scheduled by the VM.
-=begin
-    expect(component.transport.send(:client)).to receive(:post).at_least(:once) do |env|
-      notify_payload = if env.path == '/debugger/v1/diagnostics'
-        JSON.parse(env.form.fetch('event').io.read, symbolize_names: true)
-      else
-        JSON.parse(env.body)
-      end
-      expect(notify_payload).to be_a(Array)
-      notify_payload.each do |payload|
-        payloads << payload.merge(path: env.path)
-      end
-      mock_response
-    end
-=end
-
     receiver.call(repository, transaction)
 
     component.probe_notifier_worker.flush
