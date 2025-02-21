@@ -13,13 +13,17 @@ RSpec.describe Datadog::DI::ProbeNotifierWorker do
     allow(settings.dynamic_instrumentation.internal).to receive(:snapshot_queue_capacity).and_return(10)
   end
 
-  let(:transport) do
-    instance_double(Datadog::DI::Transport)
+  let(:agent_settings) do
+    instance_double_agent_settings
   end
 
   di_logger_double
 
-  let(:worker) { described_class.new(settings, transport, logger) }
+  let(:worker) { described_class.new(settings, logger, agent_settings: agent_settings) }
+
+  after do
+    worker.stop
+  end
 
   context 'not started' do
     describe '#add_snapshot' do
