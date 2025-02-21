@@ -68,7 +68,6 @@ module Datadog
                 # env.headers[HEADER_TRACE_COUNT] = env.request.parcel.trace_count.to_s
 
                 # Encode body & type
-                # require'byebug';byebug
                 env.headers[HEADER_CONTENT_TYPE] = encoder.content_type
                 env.body = env.request.parcel.data
 
