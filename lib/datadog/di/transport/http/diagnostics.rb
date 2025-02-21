@@ -50,6 +50,17 @@ module Datadog
                 end
               end
             end
+
+            # Endpoint for negotiation
+            class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
+              attr_reader \
+                :encoder
+
+              def initialize(path, encoder)
+                super(:post, path)
+                @encoder = encoder
+              end
+            end
           end
         end
 

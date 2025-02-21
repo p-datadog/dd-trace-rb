@@ -22,13 +22,13 @@ module Datadog
           def defaults
             Datadog::Core::Transport::HTTP::API::Map[
               DIAGNOSTICS => Spec.new do |s|
-                s.diagnostics = Core::Transport::HTTP::API::Endpoint.new(
+                s.diagnostics = Diagnostics::API::Endpoint.new(
                   '/debugger/v1/diagnostics',
                   Core::Encoding::JSONEncoder,
                 )
               end,
               INPUT => Spec.new do |s|
-                s.input = Core::Transport::HTTP::API::Endpoint.new(
+                s.input = Input::API::Endpoint.new(
                   '/debugger/v1/input',
                   Core::Encoding::JSONEncoder,
                 )
