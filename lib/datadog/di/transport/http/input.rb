@@ -53,12 +53,26 @@ module Datadog
 
             # Endpoint for negotiation
             class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
+              HEADER_CONTENT_TYPE = 'Content-Type'
+
               attr_reader \
                 :encoder
 
               def initialize(path, encoder)
                 super(:post, path)
                 @encoder = encoder
+              end
+
+              def call(env, &block)
+                # Add trace count header
+                #env.headers[HEADER_TRACE_COUNT] = env.request.parcel.trace_count.to_s
+
+                # Encode body & type
+                #require'byebug';byebug
+                env.headers[HEADER_CONTENT_TYPE] = encoder.content_type
+                env.body = env.request.parcel.data
+
+                super(env, &block)
               end
             end
           end
