@@ -174,8 +174,16 @@ module Datadog
         @status_transport ||= DI::Transport::HTTP.diagnostics(agent_settings: agent_settings)
       end
 
+      def do_send_status(batch)
+        status_transport.send_diagnostics(batch)
+      end
+
       def snapshot_transport
         @snapshot_transport ||= DI::Transport::HTTP.input(agent_settings: agent_settings)
+      end
+
+      def do_send_snapshot(batch)
+        snapshot_transport.send_input(batch)
       end
 
       [
@@ -253,7 +261,7 @@ module Datadog
           if batch.any? # steep:ignore
             begin
               logger.trace { "di: sending #{batch.length} #{event_type} event(s) to agent" } # steep:ignore
-              send("#{event_type}_transport").public_send("send_#{event_type}", batch)
+              send("do_send_#{event_type}", batch)
               time = Core::Utils::Time.get_time
               @lock.synchronize do
                 @last_sent = time
