@@ -4,6 +4,8 @@ require_relative '../../../core/encoding'
 require_relative '../../../core/transport/http/api/map'
 require_relative '../../../core/transport/http/api/instance'
 require_relative '../../../core/transport/http/api/spec'
+require_relative 'diagnostics'
+require_relative 'input'
 
 module Datadog
   module DI
@@ -35,16 +37,13 @@ module Datadog
           end
 
           class Instance < Core::Transport::HTTP::API::Instance
-            include Transport::Diagnostics::API::Instance
-            include Transport::Input::API::Instance
+            include Diagnostics::API::Instance
+            include Input::API::Instance
           end
 
           class Spec < Core::Transport::HTTP::API::Spec
-            include Transport::Diagnostics::API::Spec
-            include Transport::Input::API::Spec
-
-            #attr_accessor :diagnostics
-            #attr_accessor :input
+            include Diagnostics::API::Spec
+            include Input::API::Spec
           end
         end
       end

@@ -40,7 +40,7 @@ module Datadog
           agent_settings: DO_NOT_USE_ENVIRONMENT_AGENT_SETTINGS,
           **options
         )
-          new(Diagnostics::Transport) do |transport|
+          new(DI::Transport::Diagnostics::Transport) do |transport|
             transport.adapter(agent_settings)
             transport.headers default_headers
 
@@ -65,7 +65,7 @@ module Datadog
           agent_settings: DO_NOT_USE_ENVIRONMENT_AGENT_SETTINGS,
           **options
         )
-          new(Input::Transport) do |transport|
+          new(DI::Transport::Input::Transport) do |transport|
             transport.adapter(agent_settings)
             transport.headers default_headers
 
