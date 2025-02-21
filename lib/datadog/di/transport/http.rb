@@ -18,6 +18,12 @@ module Datadog
     module Transport
       # Namespace for HTTP transport components
       module HTTP
+
+        DO_NOT_USE_ENVIRONMENT_AGENT_SETTINGS = Datadog::Core::Configuration::AgentSettingsResolver.call(
+          Datadog::Core::Configuration::Settings.new,
+          logger: nil,
+        )
+
         module_function
 
         # Builds a new Transport::HTTP::Client

@@ -29,8 +29,19 @@ module Datadog
         module Client
           def send_diagnostics_payload(request)
             send_request(request) do |api, env|
-            xx
               api.send_diagnostics(env)
+            end
+          end
+        end
+
+        module API
+          module Instance
+            def send_diagnostics(env)
+              raise TracesNotSupportedError, spec unless spec.is_a?(Traces::API::Spec)
+
+              spec.send_diagnostics(env) do |request_env|
+                call(request_env)
+              end
             end
           end
         end

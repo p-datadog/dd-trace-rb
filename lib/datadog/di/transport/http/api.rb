@@ -35,11 +35,14 @@ module Datadog
           end
 
           class Instance < Core::Transport::HTTP::API::Instance
+            include Diagnostics::API::Instance
           end
 
           class Spec < Core::Transport::HTTP::API::Spec
-            attr_accessor :diagnostics
-            attr_accessor :input
+            include Diagnostics::API::Spec
+
+            #attr_accessor :diagnostics
+            #attr_accessor :input
           end
         end
       end
