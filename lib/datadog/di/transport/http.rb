@@ -9,6 +9,7 @@ require_relative '../../core/transport/http/adapters/net'
 require_relative '../../core/transport/http/adapters/test'
 require_relative '../../core/transport/http/adapters/unix_socket'
 require_relative 'http/api'
+require_relative 'debugger'
 require_relative '../../core/transport/http/builder'
 require_relative '../../../datadog/version'
 
@@ -32,7 +33,7 @@ module Datadog
           agent_settings: DO_NOT_USE_ENVIRONMENT_AGENT_SETTINGS,
           **options
         )
-          new do |transport|
+          new(Debugger::Transport) do |transport|
             transport.adapter(agent_settings)
             transport.headers default_headers
 
