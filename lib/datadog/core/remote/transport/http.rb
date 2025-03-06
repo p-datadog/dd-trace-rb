@@ -68,7 +68,8 @@ module Datadog
           # Pass a block to override any settings.
           def v7(
             agent_settings:,
-            **options
+            api_version: nil,
+            headers: nil
           )
             new(Core::Remote::Transport::Config::Transport) do |transport|
               transport.adapter(agent_settings)
