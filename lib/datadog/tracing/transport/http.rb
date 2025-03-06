@@ -49,27 +49,6 @@ module Datadog
             yield(transport) if block_given?
           end
         end
-
-        def default_headers
-          {
-            Datadog::Core::Transport::Ext::HTTP::HEADER_CLIENT_COMPUTED_TOP_LEVEL => '1',
-            Datadog::Core::Transport::Ext::HTTP::HEADER_META_LANG => Datadog::Core::Environment::Ext::LANG,
-            Datadog::Core::Transport::Ext::HTTP::HEADER_META_LANG_VERSION => Datadog::Core::Environment::Ext::LANG_VERSION,
-            Datadog::Core::Transport::Ext::HTTP::HEADER_META_LANG_INTERPRETER =>
-              Datadog::Core::Environment::Ext::LANG_INTERPRETER,
-            Datadog::Core::Transport::Ext::HTTP::HEADER_META_LANG_INTERPRETER_VENDOR => Core::Environment::Ext::LANG_ENGINE,
-            Datadog::Core::Transport::Ext::HTTP::HEADER_META_TRACER_VERSION =>
-              Datadog::Core::Environment::Ext::GEM_DATADOG_VERSION
-          }.tap do |headers|
-            # Add container ID, if present.
-            container_id = Datadog::Core::Environment::Container.container_id
-            headers[Datadog::Core::Transport::Ext::HTTP::HEADER_CONTAINER_ID] = container_id unless container_id.nil?
-            # Pretend that stats computation are already done by the client
-            if Datadog.configuration.appsec.standalone.enabled
-              headers[Datadog::Core::Transport::Ext::HTTP::HEADER_CLIENT_COMPUTED_STATS] = 'yes'
-            end
-          end
-        end
       end
     end
   end
