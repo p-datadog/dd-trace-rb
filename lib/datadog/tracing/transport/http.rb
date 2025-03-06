@@ -30,7 +30,7 @@ module Datadog
         )
           new(Transport::Traces::Transport) do |transport|
             transport.adapter(agent_settings)
-            transport.headers default_headers
+            transport.headers Core::Transport::HTTP.default_headers
 
             apis = API.defaults
 

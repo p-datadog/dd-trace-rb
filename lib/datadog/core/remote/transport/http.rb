@@ -45,7 +45,7 @@ module Datadog
           )
             new(Core::Remote::Transport::Negotiation::Transport) do |transport|
               transport.adapter(agent_settings)
-              transport.headers(default_headers)
+              transport.headers(Core::Transport::HTTP.default_headers)
 
               apis = API.defaults
 
@@ -73,7 +73,7 @@ module Datadog
           )
             new(Core::Remote::Transport::Config::Transport) do |transport|
               transport.adapter(agent_settings)
-              transport.headers default_headers
+              transport.headers Core::Transport::HTTP.default_headers
 
               apis = API.defaults
 

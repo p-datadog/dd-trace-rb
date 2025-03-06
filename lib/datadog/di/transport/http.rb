@@ -34,7 +34,7 @@ module Datadog
         )
           new(DI::Transport::Diagnostics::Transport) do |transport|
             transport.adapter(agent_settings)
-            transport.headers default_headers
+            transport.headers Core::Transport::HTTP.default_headers
 
             apis = API.defaults
 
@@ -62,7 +62,7 @@ module Datadog
         )
           new(DI::Transport::Input::Transport) do |transport|
             transport.adapter(agent_settings)
-            transport.headers default_headers
+            transport.headers Core::Transport::HTTP.default_headers
 
             apis = API.defaults
 
@@ -79,7 +79,6 @@ module Datadog
             # Call block to apply any customization, if provided
             yield(transport) if block_given?
           end
-        end
         end
       end
     end
