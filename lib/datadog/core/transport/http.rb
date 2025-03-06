@@ -51,6 +51,7 @@ module Datadog
             if container_id = Datadog::Core::Environment::Container.container_id
               headers[Datadog::Core::Transport::Ext::HTTP::HEADER_CONTAINER_ID] = container_id
             end
+            # TODO inject configuration rather than reading from global here
             if Datadog.configuration.appsec.standalone.enabled
               # Sending this header to the agent will disable metrics computation (and billing) on the agent side
               # by pretending it has already been done on the library side.
