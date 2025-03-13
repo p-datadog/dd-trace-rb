@@ -17,8 +17,11 @@ module Datadog
       class << self
         PRODUCT = 'LIVE_DEBUGGING'
 
+        SYMDB = 'LIVE_DEBUGGING_SYMBOL_DB'
+
         def products
-          [PRODUCT]
+        #require'byebug';byebug
+          [PRODUCT, SYMDB]
         end
 
         def capabilities
@@ -45,6 +48,9 @@ module Datadog
               current_probe_ids = {}
               repository.contents.each do |content|
                 case content.path.product
+                when SYMDB
+                  require'byebug';byebug
+                  1
                 when PRODUCT
                   begin
                     probe_spec = parse_content(content)
@@ -124,6 +130,7 @@ module Datadog
         end
 
         def receiver(products = [PRODUCT], &block)
+        #require'byebug';byebug
           matcher = Core::Remote::Dispatcher::Matcher::Product.new(products)
           [Core::Remote::Dispatcher::Receiver.new(matcher, &block)]
         end
