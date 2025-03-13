@@ -21,7 +21,7 @@ module Datadog
 
         def products
         #require'byebug';byebug
-          [PRODUCT, SYMDB]
+          [SYMDB]
         end
 
         def capabilities
