@@ -47,6 +47,7 @@ module Datadog
 
               current_probe_ids = {}
               repository.contents.each do |content|
+              p content.path
                 case content.path.product
                 when SYMDB
                   require'byebug';byebug

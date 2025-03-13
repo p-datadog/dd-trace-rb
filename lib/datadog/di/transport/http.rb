@@ -7,6 +7,7 @@ require_relative '../../core/environment/ext'
 require_relative '../../core/transport/ext'
 require_relative 'diagnostics'
 require_relative 'input'
+require_relative 'symdb'
 require_relative 'http/api'
 require_relative '../../core/transport/http'
 require_relative '../../../datadog/version'
@@ -63,6 +64,31 @@ module Datadog
             apis = API.defaults
 
             transport.api API::INPUT, apis[API::INPUT]
+
+            # Apply any settings given by options
+            unless options.empty?
+              transport.default_api = options[:api_version] if options.key?(:api_version)
+              transport.headers options[:headers] if options.key?(:headers)
+            end
+
+            # Call block to apply any customization, if provided
+            yield(transport) if block_given?
+          end
+        end
+
+        # Builds a new Transport::HTTP::Client with default settings
+        # Pass a block to override any settings.
+        def symdb(
+          agent_settings:,
+          **options
+        )
+          new(DI::Transport::Symdb::Transport) do |transport|
+            transport.adapter(agent_settings)
+            transport.headers default_headers
+
+            apis = API.defaults
+
+            transport.api API::SYMDB, apis[API::SYMDB]
 
             # Apply any settings given by options
             unless options.empty?

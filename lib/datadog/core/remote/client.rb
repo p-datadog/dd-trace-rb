@@ -142,7 +142,7 @@ module Datadog
 
           client_tracer = {
             runtime_id: Core::Environment::Identity.id,
-            language: Core::Environment::Identity.lang,
+            language: 'python',#Core::Environment::Identity.lang,
             tracer_version: tracer_version,
             service: service_name,
             env: Datadog.configuration.env,
