@@ -142,7 +142,8 @@ module Datadog
 
           client_tracer = {
             runtime_id: Core::Environment::Identity.id,
-            language: 'python',#Core::Environment::Identity.lang,
+            #language: Core::Environment::Identity.lang,
+            language: 'python',
             tracer_version: tracer_version,
             service: service_name,
             env: Datadog.configuration.env,
@@ -181,6 +182,7 @@ module Datadog
 
         def tracer_version
           @tracer_version ||= Core::Environment::Identity.gem_datadog_version_semver2
+          '3.2.1'
         end
 
         def ruby_engine_version
