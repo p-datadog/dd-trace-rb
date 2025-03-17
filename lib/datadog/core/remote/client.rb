@@ -48,6 +48,7 @@ module Datadog
 
           begin
             paths = response.client_configs.map do |path|
+            puts "** received #{path}"
               Configuration::Path.parse(path)
             end
 
