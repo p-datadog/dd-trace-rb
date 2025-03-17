@@ -28,6 +28,7 @@ module Datadog
         def sync
           # TODO: Skip sync if no capabilities are registered
           response = transport.send_config(payload)
+          require'byebug';byebug
 
           if response.ok?
             process_response(response)
@@ -45,6 +46,8 @@ module Datadog
 
             return
           end
+
+          require'byebug';byebug
 
           begin
             paths = response.client_configs.map do |path|

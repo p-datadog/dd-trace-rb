@@ -23,9 +23,18 @@ module Datadog
               def initialize(http_response, options = {}) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
                 super(http_response)
 
+                unless http_response.ok?
+                  raise "Response not OK"
+                end
+
+                unless http_response.http_response.content_type == 'application/json'
+                  raise "Content type not JSON"
+                end
+
                 begin
                   payload = JSON.parse(http_response.payload, symbolize_names: true)
                 rescue JSON::ParserError => e
+                require'byebug';byebug
                   raise ParseError.new(:roots, e)
                 end
 

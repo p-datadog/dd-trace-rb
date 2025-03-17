@@ -50,8 +50,10 @@ module Datadog
               p content.path
                 case content.path.product
                 when SYMDB
-                  require'byebug';byebug
-                  1
+                  content = parse_content(content)
+                  # TODO handle false instruction in content, also
+                  # run in background thread.
+                  do_symdb
                 when PRODUCT
                   begin
                     probe_spec = parse_content(content)
@@ -146,6 +148,11 @@ module Datadog
           raise ReadError, 'EOF reached' if data.nil?
 
           JSON.parse(data)
+        end
+
+        def do_symdb
+          require_relative 'uploader'
+          Uploader.new.upload
         end
       end
     end
