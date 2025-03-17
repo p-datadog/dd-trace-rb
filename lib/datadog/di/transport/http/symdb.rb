@@ -66,10 +66,7 @@ module Datadog
 
             # Endpoint for negotiation
             class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
-              HEADER_CONTENT_TYPE = 'Content-Type'
-
-              attr_reader \
-                :encoder
+              attr_reader :encoder
 
               def initialize(path, encoder)
                 super(:post, path)
@@ -77,10 +74,10 @@ module Datadog
               end
 
               def call(env, &block)
-                # Encode body & type
-                env.headers[HEADER_CONTENT_TYPE] = encoder.content_type
-                #p encoder.content_type
-                env.body = env.request.parcel.data
+                event_payload = Core::Vendor::Multipart::Post::UploadIO.new(
+                  StringIO.new(env.request.parcel.data), 'application/json', 'symbols.json'
+                )
+                env.form = {'event' => event_payload}
 
                 super(env, &block)
               end
