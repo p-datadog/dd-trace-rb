@@ -16,9 +16,10 @@ module Datadog
 
       class << self
         PRODUCT = 'LIVE_DEBUGGING'
+        SYMDB_PRODUCT = 'LIVE_DEBUGGING_SYMBOL_DB'
 
         def products
-          [PRODUCT]
+          [PRODUCT, SYMDB_PRODUCT]
         end
 
         def capabilities
@@ -43,8 +44,21 @@ module Datadog
               probe_manager = component.probe_manager
 
               current_probe_ids = {}
+              # This loop processes both of the DI products, because the
+              # probes are given as top-level entries and the absence of
+              # an entry is signal to remove a previously received probe.
+              # We could process the symdb payload separately by filtering
+              # it out of the contents (and thus looping over the contents
+              # twice).
               repository.contents.each do |content|
                 case content.path.product
+                when SYMDB_PRODUCT
+                  # Currently the content always instructs symdb uploading
+                  # to be enabled. We could parse the content here and
+                  # do something else but in the interest of development time
+                  # the current implementation assumes present backend behavior
+                  # of always sending "true" in the content.
+                  component.start_symdb_uploader
                 when PRODUCT
                   begin
                     probe_spec = parse_content(content)

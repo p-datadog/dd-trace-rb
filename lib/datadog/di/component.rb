@@ -82,6 +82,7 @@ module Datadog
         @probe_notifier_worker = ProbeNotifierWorker.new(settings, logger, agent_settings: agent_settings, telemetry: telemetry)
         @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer)
         @probe_manager = ProbeManager.new(settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger, telemetry: telemetry)
+        @symdb_uploader = nil
         probe_notifier_worker.start
       end
 
@@ -96,6 +97,7 @@ module Datadog
       attr_reader :probe_manager
       attr_reader :redactor
       attr_reader :serializer
+      attr_reader :symdb_uploader
 
       # Shuts down dynamic instrumentation.
       #
@@ -111,6 +113,14 @@ module Datadog
         probe_manager.clear_hooks
         probe_manager.close
         probe_notifier_worker.stop
+        symdb_uploader&.stop
+      end
+
+      def start_symdb_uploader
+        unless @symdb_uploader
+          @symdb_uploader = SymdbUploader.new
+          symdb_uploader.start
+        end
       end
     end
   end
