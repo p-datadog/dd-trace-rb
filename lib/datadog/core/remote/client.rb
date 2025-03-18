@@ -68,6 +68,7 @@ module Datadog
           # TODO: sometimes it can strangely be so that paths.empty?
           # TODO: sometimes it can strangely be so that targets.empty?
 
+          p paths
           apply_config(paths, targets, contents)
         end
 
@@ -142,6 +143,8 @@ module Datadog
             "ruby.gem.libddwaf.platform:#{gem_spec('libddwaf').platform}",
             "ruby.gem.libdatadog.version:#{gem_spec('libdatadog').version}",
             "ruby.gem.libdatadog.platform:#{gem_spec('libdatadog').platform}",
+            "git.repository_url:https://test/test",
+            "git.commit.sha:12345",
           ]
 
           client_tracer = {
