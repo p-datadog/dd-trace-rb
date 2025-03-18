@@ -118,7 +118,7 @@ module Datadog
 
       def start_symdb_uploader
         unless @symdb_uploader
-          @symdb_uploader = SymdbUploader.new
+          @symdb_uploader = SymdbUploader.new(agent_settings: agent_settings, logger: logger)
           symdb_uploader.start
         end
       end
