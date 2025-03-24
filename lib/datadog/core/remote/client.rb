@@ -15,7 +15,7 @@ module Datadog
 
         attr_reader :transport, :repository, :id, :dispatcher, :logger
 
-        def initialize(transport, capabilities, logger:, repository: Configuration::Repository.new)
+        def initialize(transport, capabilities, logger:, repository: Configuration::Repository.new(logger: logger))
           @transport = transport
           @logger = logger
 
