@@ -72,7 +72,7 @@ module Datadog
           private_class_method :new
         end
 
-        # ContentList stores a list of Conetnt instances
+        # ContentList stores a list of Content instances
         # It provides convinient methods for finding content base on Configuration::Path and Configuration::Target
         class ContentList < Array
           class << self
