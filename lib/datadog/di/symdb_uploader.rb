@@ -51,7 +51,7 @@ module Datadog
       end
 
       def transport
-        @transport ||= DI::Transport::HTTP.symdb(agent_settings: agent_settings)
+        @transport ||= DI::Transport::HTTP.symdb(agent_settings: agent_settings, logger: logger)
       end
     end
   end
