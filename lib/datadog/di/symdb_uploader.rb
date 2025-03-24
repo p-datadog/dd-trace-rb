@@ -18,12 +18,7 @@ module Datadog
 
       def start
         @thread = Thread.new do
-          # TODO loop and upload new code as it is loaded.
-          # Can use code tracker to be notified about newly loaded code.
-          $LOADED_FEATURES.each do |path|
-            add_path(path)
-          end
-          flush
+          upload
         end
       end
 
@@ -31,6 +26,15 @@ module Datadog
         @thread.kill
         @thread.join
         @thread = nil
+      end
+
+      def upload
+        # TODO loop and upload new code as it is loaded.
+        # Can use code tracker to be notified about newly loaded code.
+        $LOADED_FEATURES.each do |path|
+          add_path(path)
+        end
+        flush
       end
 
       private
