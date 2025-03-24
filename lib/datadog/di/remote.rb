@@ -58,6 +58,7 @@ module Datadog
                   # do something else but in the interest of development time
                   # the current implementation assumes present backend behavior
                   # of always sending "true" in the content.
+                  component.logger.debug { "di: starting symbol database uploader" }
                   component.start_symdb_uploader
                 when PRODUCT
                   begin
