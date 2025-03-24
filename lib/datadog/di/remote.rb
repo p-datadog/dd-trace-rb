@@ -137,7 +137,7 @@ module Datadog
           end
         end
 
-        def receiver(products = [PRODUCT], &block)
+        def receiver(products = [PRODUCT, SYMDB_PRODUCT], &block)
           matcher = Core::Remote::Dispatcher::Matcher::Product.new(products)
           [Core::Remote::Dispatcher::Receiver.new(matcher, &block)]
         end
