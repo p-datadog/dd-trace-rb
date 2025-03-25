@@ -9,7 +9,6 @@ module Datadog
         # Repository
         class Repository
           attr_reader \
-            :logger,
             :contents,
             :opaque_backend_state,
             :root_version,
@@ -19,8 +18,7 @@ module Datadog
 
           INITIAL_TARGETS_VERSION = 0
 
-          def initialize(logger:)
-            @logger = logger
+          def initialize
             @contents = ContentList.new
             @opaque_backend_state = nil
             @root_version = UNVERIFIED_ROOT_VERSION
