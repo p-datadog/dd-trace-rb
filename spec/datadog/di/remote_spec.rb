@@ -16,7 +16,11 @@ RSpec.describe Datadog::DI::Remote do
   end
 
   it 'declares the LIVE_DEBUGGING product' do
-    expect(remote.products).to contain_exactly('LIVE_DEBUGGING')
+    expect(remote.products).to include('LIVE_DEBUGGING')
+  end
+
+  it 'declares the LIVE_DEBUGGING_SYMBOL_DB product' do
+    expect(remote.products).to include('LIVE_DEBUGGING_SYMBOL_DB')
   end
 
   it 'declares no capabilities' do
