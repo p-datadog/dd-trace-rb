@@ -35,6 +35,8 @@ module Datadog
           add_path(path)
         end
         flush
+      rescue => exc
+        logger.debug { "di: error uploading symbols: #{exc.class}: #{exc}" }
       end
 
       private
