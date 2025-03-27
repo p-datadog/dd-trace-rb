@@ -17,9 +17,10 @@ module Datadog
       class << self
         PRODUCT = 'LIVE_DEBUGGING'
         SYMDB_PRODUCT = 'LIVE_DEBUGGING_SYMBOL_DB'
+        ALL_PRODUCTS = [PRODUCT, SYMDB_PRODUCT].freeze
 
         def products
-          [PRODUCT, SYMDB_PRODUCT]
+          ALL_PRODUCTS
         end
 
         def capabilities
@@ -138,7 +139,7 @@ module Datadog
           end
         end
 
-        def receiver(products = [PRODUCT, SYMDB_PRODUCT], &block)
+        def receiver(products = ALL_PRODUCTS, &block)
           matcher = Core::Remote::Dispatcher::Matcher::Product.new(products)
           [Core::Remote::Dispatcher::Receiver.new(matcher, &block)]
         end
