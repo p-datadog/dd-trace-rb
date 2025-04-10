@@ -165,14 +165,14 @@ RSpec.describe Datadog::Core::Crashtracking::Component, skip: !CrashtrackingHelp
 
     context 'integration testing' do
       shared_context 'HTTP server' do
+        http_server do |http_server|
+          http_server.mount_proc('/', &server_proc)
+        end
         let(:http_server_options) do
           {
             Logger: log,
             AccessLog: access_log,
           }
-        end
-        http_server do |http_server|
-          http_server.mount_proc('/', &server_proc)
         end
         let(:hostname) { '127.0.0.1' }
         let(:log) { WEBrick::Log.new(StringIO.new, WEBrick::Log::WARN) }
@@ -235,16 +235,16 @@ RSpec.describe Datadog::Core::Crashtracking::Component, skip: !CrashtrackingHelp
         let(:temporary_directory) { Dir.mktmpdir }
         let(:socket_path) { "#{temporary_directory}/rspec_unix_domain_socket" }
         let(:unix_domain_socket) { UNIXServer.new(socket_path) } # Closing the socket is handled by webrick
+        define_http_server do |http_server|
+          http_server.listeners << unix_domain_socket
+          http_server.mount_proc('/', &server_proc)
+        end
         let(:http_server_options) do
           {
             Logger: log,
             AccessLog: access_log,
             DoNotListen: true,
           }
-        end
-        define_http_server do |http_server|
-          http_server.listeners << unix_domain_socket
-          http_server.mount_proc('/', &server_proc)
         end
         let(:agent_base_url) { "unix://#{socket_path}" }
 

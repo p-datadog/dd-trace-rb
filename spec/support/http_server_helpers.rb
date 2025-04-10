@@ -8,10 +8,11 @@ module HttpServerHelpers
       let(:http_server_options) { {} }
 
       let(:http_server) do
-        WEBrick::HTTPServer.new({
+        options = {
           Port: 0,
           StartCallback: -> { http_server_init_signal.push(1) }
-        }.merge(http_server_options)).tap do |http_server|
+        }.merge(http_server_options)
+        WEBrick::HTTPServer.new(options).tap do |http_server|
           instance_exec(http_server, &block)
         end
       end
