@@ -3,6 +3,9 @@ require 'webrick'
 module HttpServerHelpers
   module ClassMethods
     def define_http_server(&block)
+      # If you wish to override any of the following let blocks, be sure
+      # you do so AFTER calling +http_server+.
+
       let(:http_server_port) { http_server[:Port] }
       let(:http_server_init_signal) { Queue.new }
       let(:http_server_options) { {} }
