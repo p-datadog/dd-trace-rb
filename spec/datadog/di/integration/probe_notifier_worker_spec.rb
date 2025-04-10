@@ -1,6 +1,5 @@
 require "datadog/di/spec_helper"
 require 'datadog/di'
-require 'webrick'
 
 # standard tries to wreck regular expressions in this fiel
 # rubocop:disable Style/PercentLiteralDelimiters
@@ -36,17 +35,17 @@ RSpec.describe Datadog::DI::ProbeNotifierWorker do
   let(:diagnostics_payloads) { [] }
   let(:input_payloads) { [] }
 
-  http_server do |server|
+  http_server do |http_server|
     @received_snapshot_count = 0
     @received_snapshot_bytes = 0
 
-    server.mount_proc('/debugger/v1/diagnostics') do |req, res|
+    http_server.mount_proc('/debugger/v1/diagnostics') do |req, res|
       # This request is a multipart form post
       expect(req.content_type).to match(%r,^multipart/form-data;,)
       diagnostics_payloads << req.body
     end
 
-    server.mount_proc('/debugger/v1/input') do |req, res|
+    http_server.mount_proc('/debugger/v1/input') do |req, res|
       payload = JSON.parse(req.body)
       input_payloads << payload
     end
