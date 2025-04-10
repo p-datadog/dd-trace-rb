@@ -242,7 +242,7 @@ RSpec.describe Datadog::Core::Crashtracking::Component, skip: !CrashtrackingHelp
             DoNotListen: true,
           }
         end
-        http_server(append: true) do |http_server|
+        http_server do |http_server|
           http_server.listeners << unix_domain_socket
           http_server.mount_proc('/', &server_proc)
         end
