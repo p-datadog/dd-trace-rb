@@ -49,11 +49,14 @@ module Datadog
                      connection_from_id(connection_id)
                    end
 
-            if conn && conn.instance_variable_defined?(:@config)
-              conn.instance_variable_get(:@config)
-            else
-              EMPTY_CONFIG
+            unless conn.respond_to?(:_datadog_config)
+              class << conn
+                def _datadog_config
+                  @config
+                end
+              end
             end
+            conn._datadog_config || EMPTY_CONFIG
           end
 
           # DEV: JRuby responds to {ObjectSpace._id2ref}, despite raising an error
