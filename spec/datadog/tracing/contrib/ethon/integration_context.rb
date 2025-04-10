@@ -2,7 +2,21 @@ require 'webrick'
 require 'spec/support/thread_helpers'
 
 RSpec.shared_context 'integration context' do
-  http_server
+  http_server do |http_server|
+    http_server.mount_proc '/' do |req, res|
+      sleep(0.001) if req.query['simulate_timeout']
+      res.status = (req.query['status'] || req.body['status']).to_i
+      if req.query['return_headers']
+        headers = {}
+        req.each do |header_name|
+          headers[header_name] = req.header[header_name]
+        end
+        res.body = JSON.generate(headers: headers)
+      else
+        res.body = 'response'
+      end
+    end
+  end
   let(:http_server_options) do
     {
       Logger: log,
@@ -17,27 +31,6 @@ RSpec.shared_context 'integration context' do
   end
   let(:access_log) do
     [[log_buffer, WEBrick::AccessLog::COMBINED_LOG_FORMAT]]
-  end
-
-  before(:all) do
-
-    http_server.mount_proc '/' do |req, res|
-      sleep(0.001) if req.query['simulate_timeout']
-      res.status = (req.query['status'] || req.body['status']).to_i
-      if req.query['return_headers']
-        headers = {}
-        req.each do |header_name|
-          headers[header_name] = req.header[header_name]
-        end
-        res.body = JSON.generate(headers: headers)
-      else
-        res.body = 'response'
-      end
-    end
-
-    ThreadHelpers.with_leaky_thread_creation(:ethon_test_server) do
-      @thread = Thread.new { server.start }
-    end
   end
 
   let(:host) { 'localhost' }
