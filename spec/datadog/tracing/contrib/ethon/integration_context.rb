@@ -21,7 +21,6 @@ RSpec.shared_context 'integration context' do
   let(:host) { 'localhost' }
   let(:status) { '200' }
   let(:path) { '/sample/path' }
-  let(:port) { http_server_port }
   let(:method) { 'GET' }
   let(:simulate_timeout) { false }
   let(:timeout) { 5 }
