@@ -8,6 +8,8 @@ RSpec.describe Datadog::Core::Configuration::AgentlessSettingsResolver do
     end
   end
 
+  before { pp ENV }
+
   let(:logger) { instance_double(Datadog::Core::Logger) }
   let(:logger) { Logger.new(STDERR) }
 
