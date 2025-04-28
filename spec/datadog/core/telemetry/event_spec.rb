@@ -53,22 +53,28 @@ RSpec.describe Datadog::Core::Telemetry::Event do
           event1 = event_class.new(components)
           event2 = event_class.new(components)
           expect(event1.payload).to eq(event2.payload)
-          expect(event1).not_to eq(event2)
+          expect(event1).to eq(event2)
           expect(event1.hash).to eq(event2.hash)
         end
       end
 
       context 'different components' do
         let(:second_settings) do
-          Datadog::Core::Configuration::Settings.new
+          Datadog::Core::Configuration::Settings.new.tap do |settings|
+            settings.agent.host = 'test-different'
+          end
         end
 
         it 'event instances should not be equal' do
           event1 = event_class.new(components)
-          event2 = event_class.new(Datadog::Core::Configuration::Components.new(second_settings))
+          pp settings
+          second_components = Datadog::Core::Configuration::Components.new(second_settings)
+          event2 = event_class.new(second_components)
+          pp event1.payload
           expect(event1.payload).not_to eq(event2.payload)
+          p event1.payload
           expect(event1).not_to eq(event2)
-          expect(event1.hash).to eq(event2.hash)
+          expect(event1.hash).not_to eq(event2.hash)
         end
       end
     end

@@ -74,7 +74,7 @@ module Datadog
           def ==(other)
             other.is_a?(self.class) && payload == other.payload
           end
-          alias eql? ==
+          #alias eql? ==
 
           private
 
