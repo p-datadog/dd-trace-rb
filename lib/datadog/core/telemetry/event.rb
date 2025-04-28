@@ -69,9 +69,11 @@ module Datadog
             # @type var products: Hash[Symbol, Hash[Symbol, Object]]
             products = {
               appsec: {
+                # TODO
                 enabled: Datadog::AppSec.enabled?,
               },
               profiler: {
+                # TODO
                 enabled: Datadog::Profiling.enabled?,
               },
               # DEV: Not implemented yet
