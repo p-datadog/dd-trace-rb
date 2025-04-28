@@ -128,6 +128,8 @@ module Datadog
           # @process_discovery_fd = Core::ProcessDiscovery.get_and_store_metadata(settings, @logger)
 
           self.class.configure_tracing(settings)
+
+          @telemetry.emit_started!
         end
 
         # Starts up components

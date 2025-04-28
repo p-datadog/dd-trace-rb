@@ -102,7 +102,7 @@ module Datadog
 
         def flush_events(events)
           return if events.empty?
-          return if !enabled? || !sent_started_event?
+          return if !enabled?
 
           events = deduplicate_logs(events)
 
@@ -111,7 +111,7 @@ module Datadog
         end
 
         def heartbeat!
-          return if !enabled? || !sent_started_event?
+          return if !enabled?
 
           send_event(Event::AppHeartbeat.new)
         end

@@ -103,8 +103,6 @@ module Datadog
           @stopped = false
 
           @worker.start
-
-          emit_started! unless sent_started_event?
         end
 
         def dependency_collection?
@@ -133,6 +131,7 @@ module Datadog
 
         def emit_started!
           return unless enabled?
+          return if sent_started_event?
 
           if failed_to_start?
             logger.debug('Telemetry app-started event exhausted retries, disabling telemetry worker')
