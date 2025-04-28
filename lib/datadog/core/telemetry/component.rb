@@ -13,8 +13,13 @@ require_relative '../utils/forking'
 module Datadog
   module Core
     module Telemetry
-      # Telemetry entrypoint, coordinates sending telemetry events at various points in app lifecycle.
-      # Note: Telemetry does not spawn its worker thread in fork processes, thus no telemetry is sent in forked processes.
+      # Telemetry component, coordinates sending telemetry events at various
+      # points in app lifecycle.
+      #
+      # Note: Telemetry does not spawn its worker thread in fork processes,
+      # thus no telemetry is sent in forked processes.
+      #
+      # @api private
       class Component
         attr_reader :enabled, :logger
         alias enabled? enabled
