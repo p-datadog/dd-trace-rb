@@ -71,16 +71,21 @@ module Datadog
             }
           end
 
+          def ==(other)
+            other.is_a?(self.class) && payload == other.payload
+          end
+          alias eql? ==
+
           private
 
           def products
             # @type var products: Hash[Symbol, Hash[Symbol, Object]]
             products = {
               appsec: {
-                enabled: components.appsec&.enabled?,
+                enabled: !!components.appsec&.enabled?,
               },
               profiler: {
-                enabled: components.profiling&.enabled?,
+                enabled: !!components.profiler&.enabled?,
               },
               dynamic_instrumentation: {
                 enabled: !!components.dynamic_instrumentation,

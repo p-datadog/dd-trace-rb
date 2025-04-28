@@ -10,11 +10,13 @@ RSpec.describe Datadog::Core::Telemetry::Event do
   subject(:payload) { event.payload }
 
   shared_examples 'event with no attributes' do
-    it 'all event instances to the same' do
-      event1 = event_class.new
-      event2 = event_class.new
-      expect(event1).to eq(event2)
-      expect(event1.hash).to eq(event2.hash)
+    describe 'equality' do
+      it 'all event instances should be equal' do
+        event1 = event_class.new
+        event2 = event_class.new
+        expect(event1).to eq(event2)
+        expect(event1.hash).to eq(event2.hash)
+      end
     end
   end
 
@@ -23,6 +25,10 @@ RSpec.describe Datadog::Core::Telemetry::Event do
       stub_const('MyLogger', Class.new(::Logger)).new(nil)
     end
     let(:event_class) { described_class::AppStarted }
+    let(:event) { event_class.new(components) }
+    let(:components) do
+      Datadog.send(:components)
+    end
     before do
       allow_any_instance_of(Datadog::Core::Utils::Sequence).to receive(:next).and_return(id)
 
@@ -40,7 +46,32 @@ RSpec.describe Datadog::Core::Telemetry::Event do
         c.appsec.sca_enabled = false
       end
     end
-    it_behaves_like 'event with no attributes'
+
+    describe 'equality' do
+      context 'same components' do
+        it 'event instances should be equal' do
+          event1 = event_class.new(components)
+          event2 = event_class.new(components)
+          expect(event1.payload).to eq(event2.payload)
+          expect(event1).not_to eq(event2)
+          expect(event1.hash).to eq(event2.hash)
+        end
+      end
+
+      context 'different components' do
+        let(:second_settings) do
+          Datadog::Core::Configuration::Settings.new
+        end
+
+        it 'event instances should not be equal' do
+          event1 = event_class.new(components)
+          event2 = event_class.new(Datadog::Core::Configuration::Components.new(second_settings))
+          expect(event1.payload).not_to eq(event2.payload)
+          expect(event1).not_to eq(event2)
+          expect(event1.hash).to eq(event2.hash)
+        end
+      end
+    end
 
     it do
       # Helper to make configuration matching table easier to read
@@ -51,6 +82,9 @@ RSpec.describe Datadog::Core::Telemetry::Event do
       is_expected.to match(
         products: {
           appsec: {
+            enabled: false,
+          },
+          dynamic_instrumentation: {
             enabled: false,
           },
           profiler: hash_including(enabled: false),
