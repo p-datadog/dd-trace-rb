@@ -49,6 +49,12 @@ module Datadog
 
         # Telemetry class for the 'app-started' event
         class AppStarted < Base
+          def initialize(components)
+            @components = components
+          end
+
+          attr_reader :components
+
           def type
             'app-started'
           end
@@ -69,17 +75,14 @@ module Datadog
             # @type var products: Hash[Symbol, Hash[Symbol, Object]]
             products = {
               appsec: {
-                # TODO
-                enabled: Datadog::AppSec.enabled?,
+                enabled: components.appsec&.enabled?,
               },
               profiler: {
-                # TODO
-                enabled: Datadog::Profiling.enabled?,
+                enabled: components.profiling&.enabled?,
               },
-              # DEV: Not implemented yet
-              # dynamic_instrumentation: {
-              #   enabled: true,
-              # }
+              dynamic_instrumentation: {
+                enabled: !!components.dynamic_instrumentation,
+              }
             }
 
             if (unsupported_reason = Datadog::Profiling.unsupported_reason)

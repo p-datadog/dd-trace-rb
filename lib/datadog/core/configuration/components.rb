@@ -129,7 +129,7 @@ module Datadog
 
           self.class.configure_tracing(settings)
 
-          @telemetry.emit_started!
+          @telemetry.emit_started!(self)
         end
 
         # Starts up components

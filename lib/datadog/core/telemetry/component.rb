@@ -129,7 +129,7 @@ module Datadog
           @stopped = true
         end
 
-        def emit_started!
+        def emit_started!(components)
           return unless enabled?
           return if sent_started_event?
 
@@ -140,7 +140,7 @@ module Datadog
           end
 
           TELEMETRY_STARTED_ONCE.run do
-            res = @worker.send(:send_event, Event::AppStarted.new)
+            res = @worker.send(:send_event, Event::AppStarted.new(components))
 
             if res.ok?
               logger.debug('Telemetry app-started event is successfully sent')
