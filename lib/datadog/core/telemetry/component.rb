@@ -17,9 +17,14 @@ module Datadog
       # Note: Telemetry does not spawn its worker thread in fork processes, thus no telemetry is sent in forked processes.
       class Component
         attr_reader :enabled, :logger
+        alias enabled? enabled
 
         include Core::Utils::Forking
         include Telemetry::Logging
+
+        APP_STARTED_EVENT_RETRIES = 10
+
+        TELEMETRY_STARTED_ONCE = Utils::OnlyOnceSuccessful.new(APP_STARTED_EVENT_RETRIES)
 
         def self.build(settings, agent_settings, logger)
           enabled = settings.telemetry.enabled
@@ -74,9 +79,10 @@ module Datadog
           metrics_enabled: true,
           log_collection_enabled: true
         )
-          @enabled = enabled
+          @enabled = !!enabled
           @log_collection_enabled = log_collection_enabled
           @logger = logger
+          @dependency_collection = !!dependency_collection
 
           @metrics_manager = MetricsManager.new(
             enabled: enabled && metrics_enabled,
@@ -97,6 +103,20 @@ module Datadog
           @stopped = false
 
           @worker.start
+
+          emit_started! unless sent_started_event?
+        end
+
+        def dependency_collection?
+          @dependency_collection
+        end
+
+        def sent_started_event?
+          TELEMETRY_STARTED_ONCE.success?
+        end
+
+        def failed_to_start?
+          TELEMETRY_STARTED_ONCE.failed?
         end
 
         def disable!
@@ -109,6 +129,31 @@ module Datadog
 
           @worker.stop(true)
           @stopped = true
+        end
+
+        def emit_started!
+          return unless enabled?
+
+          if failed_to_start?
+            logger.debug('Telemetry app-started event exhausted retries, disabling telemetry worker')
+            disable!
+            return
+          end
+
+          TELEMETRY_STARTED_ONCE.run do
+            res = @worker.send(:send_event, Event::AppStarted.new)
+
+            if res.ok?
+              logger.debug('Telemetry app-started event is successfully sent')
+
+              @worker.send(:send_event, Event::AppDependenciesLoaded.new) if dependency_collection?
+
+              true
+            else
+              logger.debug('Error sending telemetry app-started event, retry after heartbeat interval...')
+              false
+            end
+          end
         end
 
         def emit_closing!

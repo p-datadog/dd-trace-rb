@@ -15,9 +15,6 @@ module Datadog
         include Core::Workers::Polling
 
         DEFAULT_BUFFER_MAX_SIZE = 1000
-        APP_STARTED_EVENT_RETRIES = 10
-
-        TELEMETRY_STARTED_ONCE = Utils::OnlyOnceSuccessful.new(APP_STARTED_EVENT_RETRIES)
 
         def initialize(
           heartbeat_interval_seconds:,
@@ -71,14 +68,6 @@ module Datadog
           buffer.push(event)
         end
 
-        def sent_started_event?
-          TELEMETRY_STARTED_ONCE.success?
-        end
-
-        def failed_to_start?
-          TELEMETRY_STARTED_ONCE.failed?
-        end
-
         # Wait for the worker to send out all events that have already
         # been queued.
         #
@@ -99,8 +88,6 @@ module Datadog
 
         def perform(*events)
           return if !enabled? || forked?
-
-          started! unless sent_started_event?
 
           metric_events = @metrics_manager.flush!
           events = [] if events.nil?
@@ -127,31 +114,6 @@ module Datadog
           return if !enabled? || !sent_started_event?
 
           send_event(Event::AppHeartbeat.new)
-        end
-
-        def started!
-          return unless enabled?
-
-          if failed_to_start?
-            logger.debug('Telemetry app-started event exhausted retries, disabling telemetry worker')
-            disable!
-            return
-          end
-
-          TELEMETRY_STARTED_ONCE.run do
-            res = send_event(Event::AppStarted.new)
-
-            if res.ok?
-              logger.debug('Telemetry app-started event is successfully sent')
-
-              send_event(Event::AppDependenciesLoaded.new) if @dependency_collection
-
-              true
-            else
-              logger.debug('Error sending telemetry app-started event, retry after heartbeat interval...')
-              false
-            end
-          end
         end
 
         def send_event(event)

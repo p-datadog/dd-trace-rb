@@ -46,7 +46,7 @@ RSpec.describe 'Telemetry integration tests' do
 
     context 'first run' do
       before do
-        Datadog::Core::Telemetry::Worker::TELEMETRY_STARTED_ONCE.send(:reset_ran_once_state_for_tests)
+        Datadog::Core::Telemetry::Component::TELEMETRY_STARTED_ONCE.send(:reset_ran_once_state_for_tests)
       end
 
       it 'sends startup payloads' do
@@ -101,7 +101,7 @@ RSpec.describe 'Telemetry integration tests' do
     context 'not first run' do
       before do
         # To avoid noise from the startup events, turn those off.
-        Datadog::Core::Telemetry::Worker::TELEMETRY_STARTED_ONCE.run do
+        Datadog::Core::Telemetry::Component::TELEMETRY_STARTED_ONCE.run do
           # nothing
         end
       end
