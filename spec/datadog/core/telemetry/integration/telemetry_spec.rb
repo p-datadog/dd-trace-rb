@@ -8,7 +8,15 @@ require 'datadog/core/configuration'
 
 RSpec.describe 'Telemetry integration tests' do
   let!(:components) do
-    Datadog.send(:build_components, settings)
+    old_components = Datadog.send(:components, allow_initialization: false)
+    components = if old_components
+      Datadog.send(:replace_components!, settings, old_components)
+    else
+      Datadog.send(:build_components, settings)
+    end
+    Datadog.send(:safely_synchronize) do |write_components|
+      write_components.call(components)
+    end
   end
 
   after do
@@ -16,8 +24,10 @@ RSpec.describe 'Telemetry integration tests' do
   end
 
   let(:component) do
-    Datadog::Core::Telemetry::Component.build(settings, agent_settings, logger)
-    #Datadog.send(:components).telemetry
+    #Datadog::Core::Telemetry::Component.build(settings, agent_settings, logger)
+    #Datadog.configure do |c|
+    #end
+    Datadog.send(:components).telemetry
   end
 
   let(:agent_settings) do
