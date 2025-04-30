@@ -14,6 +14,8 @@ module Datadog
         # Currently only supports the HTTP protocol.
         class Transport
           def self.build_agent_transport(agent_settings)
+          p agent_settings.port
+          p agent_settings.hostname
             Transport.new(
               host: agent_settings.hostname,
               port: agent_settings.port,
@@ -52,11 +54,14 @@ module Datadog
           end
 
           def request(request_type:, payload:)
+          p 'req',adapter
             env = Core::Transport::HTTP::Env.new(Core::Transport::Request.new)
             env.path = @path
             env.body = payload
             env.headers = headers(request_type: request_type)
+            #require'byebug';byebug
             adapter.post(env)
+            #p 'req done'
           end
 
           private
@@ -87,7 +92,9 @@ module Datadog
                 hostname: @host,
                 port: @port,
                 # TODO: get timeout_seconds from somewhere
+                timeout_seconds: 2,
               )
+              p agent_settings
               Core::Transport::HTTP::Adapters::Net.new(agent_settings)
             end
           end

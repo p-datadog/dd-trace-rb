@@ -84,10 +84,12 @@ module Datadog
           metrics_enabled: true,
           log_collection_enabled: true
         )
-          @enabled = !!enabled
-          @log_collection_enabled = log_collection_enabled
           @logger = logger
+          @logger = ::Logger.new(STDERR)
+          @enabled = !!enabled
+          @log_collection_enabled = !!log_collection_enabled
           @dependency_collection = !!dependency_collection
+          require'byebug';byebug unless enabled
 
           @metrics_manager = MetricsManager.new(
             enabled: enabled && metrics_enabled,
@@ -154,7 +156,7 @@ module Datadog
 
               true
             else
-              logger.debug('Error sending telemetry app-started event, retry after heartbeat interval...')
+              logger.debug("Error sending telemetry app-started event, retry after heartbeat interval: #{res}")
               false
             end
           end
