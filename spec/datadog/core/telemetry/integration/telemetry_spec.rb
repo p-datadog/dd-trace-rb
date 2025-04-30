@@ -77,6 +77,7 @@ RSpec.describe 'Telemetry integration tests' do
           component
 
           component.flush
+          pp sent_payloads
           expect(sent_payloads.length).to eq 2
 
           payload = sent_payloads[0]
@@ -186,6 +187,15 @@ RSpec.describe 'Telemetry integration tests' do
       end
 
       let(:expected_headers) { expected_base_headers }
+
+      before do
+        p http_server_port
+        #require'byebug';byebug
+        http = Net::HTTP.new('127.0.0.1',http_server_port)
+          response = http.request(Net::HTTP::Get.new('/'))
+          p response
+        p 1234
+      end
 
       include_examples 'telemetry'
     end
