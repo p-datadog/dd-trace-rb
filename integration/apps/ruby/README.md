@@ -6,11 +6,20 @@ For generating Datadog APM traces and profiles.
 
 ## Installation
 
+### Build Base Images
+
+From the `integration` directory of `dd-trace-rb` (two levels up from this file),
+run `script/build-images` to build base images for all Ruby versions or,
+if you are interested in a particular version, run
+`script/build-images -v 3.4`.
+
+### Configure Datadog API Key
+
 Install [direnv](https://github.com/direnv/direnv) for applying local settings.
 
 1. `cp .envrc.sample .envrc` and add your Datadog API key.
 2. `direnv allow` to load the env var.
-3. `docker-compose run --rm app bin/setup`
+3. `docker compose run --rm app bin/setup`
 
 ## Running the application
 
@@ -22,12 +31,12 @@ docker run --rm --name dd-agent  -v /var/run/docker.sock:/var/run/docker.sock:ro
 
 ### Starting the application
 
-Run `docker-compose up` to auto-start the application.
+Run `docker compose up` to auto-start the application.
 
 Alternatively, you can run it manually with:
 
 ```sh
-docker-compose run --rm app bin/run <process>
+docker compose run --rm app bin/run <process>
 ```
 
 The `<process>` argument is optional, and will default to `DD_DEMO_ENV_PROCESS` if not provided. See [Processes](#processes) for more details.
@@ -46,10 +55,10 @@ Then rebuild the application environment with:
 
     ```
     # Delete old containers & volumes first
-    docker-compose down -v
+    docker compose down -v
 
     # Rebuild `app` image
-    docker-compose build --no-cache app
+    docker compose build --no-cache app
     ```
 
 Finally start the application.
