@@ -127,7 +127,7 @@ module Datadog
         def perform(*events)
           return if !enabled? || forked?
 
-          started! unless sent_started_event?
+          started_or_changed!
 
           metric_events = @metrics_manager.flush!
           events = [] if events.nil?
@@ -180,6 +180,29 @@ module Datadog
               logger.debug('Error sending telemetry app-started event, retry after heartbeat interval...')
               false
             end
+          end
+        end
+
+        def changed!
+          res = send_event(Event::AppStarted.new)
+
+          if res.ok?
+            logger.debug('Telemetry app-started event is successfully sent')
+
+            send_event(Event::AppDependenciesLoaded.new) if @dependency_collection
+
+            true
+          else
+            logger.debug('Error sending telemetry app-started event, retry after heartbeat interval...')
+            false
+          end
+        end
+
+        def started_or_changed!
+          if sent_started_event?
+            changed!
+          else
+            started!
           end
         end
 
