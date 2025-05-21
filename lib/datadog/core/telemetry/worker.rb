@@ -184,7 +184,7 @@ module Datadog
         end
 
         def changed!
-          res = send_event(Event::FakeAppClientConfigurationChange.new)
+          res = send_event(Event::SynthAppClientConfigurationChange.new)
 
           if res.ok?
             logger.debug('Telemetry app-started event is successfully sent')
