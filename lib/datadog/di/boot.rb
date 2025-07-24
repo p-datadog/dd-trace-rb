@@ -27,12 +27,15 @@ if %w[1 true yes].include?(ENV['DD_DYNAMIC_INSTRUMENTATION_ENABLED']) # steep:ig
   # We seem to have Datadog.logger here already
   Datadog.logger.debug("di: activating code tracking")
   Datadog::DI.activate_tracking
-
-  if probe_file_path = ENV['DD_DYNAMIC_INSTRUMENTATION_PROBE_FILE']
-    p Datadog.send(:components, allow_initialization: false)
-  end
 end
 
 require_relative 'contrib'
 
 Datadog::DI::Contrib.load_now_or_later
+
+if %w[1 true yes].include?(ENV['DD_DYNAMIC_INSTRUMENTATION_ENABLED']) # steep:ignore
+  if probe_file_path = ENV['DD_DYNAMIC_INSTRUMENTATION_PROBE_FILE']
+    require_relative 'probe_file_loader'
+    Datadog::DI::ProbeFileLoader.load_now_or_later
+  end
+end
