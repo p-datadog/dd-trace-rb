@@ -43,6 +43,8 @@ module Datadog
             if component
 
               probe_manager = component.probe_manager
+              probe_notification_builder = component.probe_notification_builder
+              probe_notifier_worker = component.probe_notifier_worker
 
               current_probe_ids = {}
               repository.contents.each do |content|
