@@ -238,7 +238,7 @@ module Datadog
           probe.emitting_notified = true
         end
 
-        payload = probe_notification_builder.build_executed(probe, context)
+        payload = probe_notification_builder.build_executed(context)
         probe_notifier_worker.add_snapshot(payload)
       end
 

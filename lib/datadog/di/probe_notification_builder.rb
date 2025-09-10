@@ -40,11 +40,13 @@ module Datadog
 
       # Duration is in seconds.
       # path is the actual path of the instrumented file.
-      def build_executed(probe, context)
-        build_snapshot(probe, context)
+      def build_executed(context)
+        build_snapshot(context)
       end
 
-      def build_snapshot(probe, context)
+      def build_snapshot(context)
+        probe = context.probe
+
         if probe.capture_snapshot? && !context.target_self
           raise ArgumentError, "Asked to build snapshot with snapshot capture but target_self is nil"
         end

@@ -10,11 +10,11 @@ module Datadog
       #
       # @api private
       class Context
-        def initialize(probe:, settings:, serializer:, locals:,
+        def initialize(probe:, settings: nil, serializer: nil, locals: nil,
           # In Ruby everything is a method, therefore we should always have
           # a target self. However, if we are not capturing a snapshot,
           # there is no need to pass in the target self.
-          target_self:,
+          target_self: nil,
           path: nil, caller_locations: nil,
           serialized_entry_args: nil,
           return_value: nil, duration: nil, exception: nil)
