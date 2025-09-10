@@ -816,7 +816,7 @@ RSpec.describe Datadog::DI::Instrumenter do
       end
 
       let(:stack) do
-        payload.fetch(:caller_locations)
+        payload.caller_locations
       end
 
       it 'contains at least 10 frames' do
@@ -1075,7 +1075,7 @@ RSpec.describe Datadog::DI::Instrumenter do
 
       describe 'stack trace' do
         it 'contains instrumented method as top frame' do
-          frame = payload.fetch(:caller_locations).first
+          frame = payload.caller_locations.first
           expect(File.basename(frame.path)).to eq 'hook_line.rb'
         end
       end
@@ -1122,12 +1122,12 @@ RSpec.describe Datadog::DI::Instrumenter do
         HookLineBasicTestClass.new.test_method
 
         expect(observed_calls.length).to eq 2
-        expect(observed_calls.first).to be_a(Hash)
+        expect(observed_calls.first).to be_a(Datadog::DI::EL::Context)
         # We do not have locals here because we are not capturing,
         # but we do have path which came from the trace point object.
         expect(observed_calls.first.path).to be_a(String)
-        expect(observed_calls[1]).to be_a(Hash)
-        expect(observed_calls[1][:path]).to be_a(String)
+        expect(observed_calls[1]).to be_a(Datadog::DI::EL::Context)
+        expect(observed_calls[1].path).to be_a(String)
       end
     end
 
@@ -1159,7 +1159,7 @@ RSpec.describe Datadog::DI::Instrumenter do
         HookLineTargetedTestClass.new.test_method
 
         expect(observed_calls.length).to eq 1
-        expect(observed_calls.first).to be_a(Hash)
+        expect(observed_calls.first).to be_a(Datadog::DI::EL::Context)
       end
 
       context 'end line of a method' do
