@@ -164,11 +164,16 @@ module Datadog
               end
               caller_locs = method_frame + caller_locations # steep:ignore
               # TODO capture arguments at exit
+
+              context = EL::Context.new(locals: nil, target_self: self,
+                probe: probe, settings: settings, serializer: serializer,
+                serialized_entry_args: serialized_entry_args,
+                caller_locations: caller_locs,
+                return_value: rv, duration: duration, exception: exc,
+              )
+
               # & is to stop steep complaints, block is always present here.
-              block&.call(probe: probe, rv: rv, exception: exc,
-                duration: duration, caller_locations: caller_locs,
-                target_self: self,
-                serialized_entry_args: serialized_entry_args)
+              block&.call(context)
               if exc
                 raise exc
               else
@@ -341,7 +346,10 @@ module Datadog
             # are needed
             locals = Instrumenter.get_local_variables(tp)
             context = EL::Context.new(locals: locals, target_self: tp.self,
-              probe: probe, settings: settings, serializer: serializer)
+              probe: probe, settings: settings, serializer: serializer,
+              path: tp.path,
+              caller_locations: caller_locations,
+            )
 
             continue &&= if condition = probe.condition
               condition.satisfied?(context)
@@ -353,10 +361,7 @@ module Datadog
 
             if continue
               # & is to stop steep complaints, block is always present here.
-              block&.call(probe: probe,
-                context: context,
-                target_self: tp.self,
-                path: tp.path, caller_locations: caller_locations)
+              block&.call(context)
             end
           rescue => exc
             raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
