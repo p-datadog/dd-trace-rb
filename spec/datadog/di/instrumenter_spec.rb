@@ -1282,7 +1282,7 @@ RSpec.describe Datadog::DI::Instrumenter do
             id: 1, type: :log, rate_limit: rate_limit)
         end
 
-        it 'does not invoke callback' do
+        it 'invokes the callback only once' do
           instrumenter.hook_line(probe) do |payload|
             observed_calls << payload
           end

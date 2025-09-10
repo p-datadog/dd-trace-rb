@@ -344,24 +344,34 @@ module Datadog
               true
             end
 
-            # TODO consider delaying local variable collection until they
-            # are needed
-            locals = Instrumenter.get_local_variables(tp)
-            context = EL::Context.new(locals: locals, target_self: tp.self,
-              probe: probe, settings: settings, serializer: serializer,
-              path: tp.path,
-              caller_locations: caller_locations,
-            )
-
-            continue &&= if condition = probe.condition
-              condition.satisfied?(context)
-            else
-              true
+            if continue
+              if condition = probe.condition
+                context = EL::Context.new(
+                  locals: Instrumenter.get_local_variables(tp),
+                  target_self: tp.self,
+                  probe: probe, settings: settings, serializer: serializer,
+                  path: tp.path,
+                  caller_locations: caller_locations,
+                )
+                continue = condition.satisfied?(context)
+              end
             end
 
             continue &&= rate_limiter.nil? || rate_limiter.allow? # standard:disable Style/AndOr
 
             if continue
+              # The context creation is relatively expensive and we don't
+              # want to run it if the callback won't be executed due to the
+              # rate limit.
+              # Thus the copy-paste of the creation call here.
+              context ||= EL::Context.new(
+                locals: Instrumenter.get_local_variables(tp),
+                target_self: tp.self,
+                probe: probe, settings: settings, serializer: serializer,
+                path: tp.path,
+                caller_locations: caller_locations,
+              )
+
               # & is to stop steep complaints, block is always present here.
               block&.call(context)
             end
