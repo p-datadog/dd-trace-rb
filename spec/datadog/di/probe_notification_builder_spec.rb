@@ -164,7 +164,9 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
     let(:payload) { builder.build_executed(context) }
 
     let(:context) do
-      Datadog::DI::EL::Context.new(probe: probe)
+      Datadog::DI::EL::Context.new(
+        settings: settings, serializer: serializer,
+        probe: probe)
     end
 
     context 'with template' do
@@ -271,6 +273,7 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
 
       let(:context) do
         Datadog::DI::EL::Context.new(probe: probe,
+          settings: settings, serializer: serializer,
           path: '/foo.rb',
           serialized_locals: serialized_locals, target_self: Object.new)
       end
