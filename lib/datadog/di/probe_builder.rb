@@ -35,7 +35,10 @@ module Datadog
           line_no: config["where"]&.[]("lines")&.compact&.map(&:to_i)&.first,
           type_name: config["where"]&.[]("typeName"),
           method_name: config["where"]&.[]("methodName"),
+          # We should not be using the template for anything - we instead
+          # use +segments+ - but keep the template for debugging.
           template: config["template"],
+          template_segments: config['segments'],
           capture_snapshot: !!config["captureSnapshot"],
           max_capture_depth: config["capture"]&.[]("maxReferenceDepth"),
           max_capture_attribute_count: config["capture"]&.[]("maxFieldCount"),
