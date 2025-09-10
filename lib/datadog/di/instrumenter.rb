@@ -337,9 +337,13 @@ module Datadog
               true
             end
 
+            # TODO consider delaying local variable collection until they
+            # are needed
+            locals = Instrumenter.get_local_variables(tp)
+            context = EL::Context.new(locals: locals, target_self: tp.self,
+              probe: probe, settings: settings, serializer: serializer)
+
             continue &&= if condition = probe.condition
-              locals = Instrumenter.get_local_variables(tp)
-              context = EL::Context.new(locals: locals, target: tp.self)
               condition.satisfied?(context)
             else
               true
@@ -348,19 +352,9 @@ module Datadog
             continue &&= rate_limiter.nil? || rate_limiter.allow? # standard:disable Style/AndOr
 
             if continue
-              serialized_locals = if probe.capture_snapshot?
-                serializer.serialize_vars(locals || Instrumenter.get_local_variables(tp),
-                  depth: probe.max_capture_depth || settings.dynamic_instrumentation.max_capture_depth,
-                  attribute_count: probe.max_capture_attribute_count || settings.dynamic_instrumentation.max_capture_attribute_count,)
-              end
-              if probe.capture_snapshot?
-                serializer.serialize_value(tp.self,
-                  depth: probe.max_capture_depth || settings.dynamic_instrumentation.max_capture_depth,
-                  attribute_count: probe.max_capture_attribute_count || settings.dynamic_instrumentation.max_capture_attribute_count,)
-              end
               # & is to stop steep complaints, block is always present here.
               block&.call(probe: probe,
-                serialized_locals: serialized_locals,
+                context: context,
                 target_self: tp.self,
                 path: tp.path, caller_locations: caller_locations)
             end

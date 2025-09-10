@@ -42,10 +42,10 @@ module Datadog
       # path is the actual path of the instrumented file.
       def build_executed(probe,
         path: nil, rv: nil, exception: nil, duration: nil, caller_locations: nil,
+        context:,
         serialized_locals: nil, args: nil, kwargs: nil, target_self: nil,
         serialized_entry_args: nil)
-        build_snapshot(probe, rv: rv, exception: exception,
-          serialized_locals: serialized_locals,
+        build_snapshot(probe, context: context, rv: rv, exception: exception,
           # Actual path of the instrumented file.
           path: path,
           duration: duration,
@@ -58,7 +58,8 @@ module Datadog
           serialized_entry_args: serialized_entry_args)
       end
 
-      def build_snapshot(probe, rv: nil, exception: nil, serialized_locals: nil, path: nil,
+      def build_snapshot(probe, context:, rv: nil, exception: nil,
+        path: nil,
         # In Ruby everything is a method, therefore we should always have
         # a target self. However, if we are not capturing a snapshot,
         # there is no need to pass in the target self.
@@ -99,9 +100,9 @@ module Datadog
             }
           elsif probe.line?
             {
-              lines: serialized_locals && {
+              lines: (locals = context.serialized_locals) && {
                 probe.line_no => {
-                  locals: serialized_locals,
+                  locals: locals,
                   arguments: {self: serializer.serialize_value(target_self)},
                 },
               },
@@ -161,8 +162,10 @@ module Datadog
           "dd.trace_id": active_trace&.id&.to_s,
           "dd.span_id": active_span&.id&.to_s,
           ddsource: 'dd_debugger',
-          message: probe.template && evaluate_template(probe.template,
-            duration: duration ? duration * 1000 : 0),
+          message: probe.template_segments && evaluate_template(
+            probe.template_segments,
+            context),
+            #duration: duration ? duration * 1000 : 0),
           timestamp: timestamp,
         }
       end
@@ -193,12 +196,15 @@ module Datadog
         end
       end
 
-      def evaluate_template(template, **vars)
-        message = template.dup
-        vars.each do |key, value|
-          message.gsub!("{@#{key}}") { value.to_s }
-        end
-        message
+      def evaluate_template(template_segments, **vars)
+        template_segments.map do |segment|
+          case segment
+          when String
+            segment
+          else
+            segment.evaluate(context).to_s
+          end
+        end.join('')
       end
 
       def timestamp_now
