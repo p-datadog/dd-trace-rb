@@ -10,7 +10,7 @@ module Datadog
       #
       # @api private
       class Context
-        def initialize(probe:, settings: nil, serializer: nil, locals: nil,
+        def initialize(probe:, settings:, serializer:, locals: nil,
           # In Ruby everything is a method, therefore we should always have
           # a target self. However, if we are not capturing a snapshot,
           # there is no need to pass in the target self.
@@ -52,7 +52,7 @@ module Datadog
 
         def serialized_locals
           # TODO cache?
-          serializer.serialize_vars(locals,
+          locals && serializer.serialize_vars(locals,
             depth: probe.max_capture_depth || settings.dynamic_instrumentation.max_capture_depth,
             attribute_count: probe.max_capture_attribute_count || settings.dynamic_instrumentation.max_capture_attribute_count,)
         end

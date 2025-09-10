@@ -45,7 +45,7 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
       end
 
       context 'with snapshot' do
-        let(:serialized_locals) do
+        let(:locals) do
           double('local variables')
         end
 
@@ -59,9 +59,14 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
           }}}
         end
 
+        let(:context) do
+          Datadog::DI::EL::Context.new(
+            settings: settings, serializer: serializer,
+            probe: probe, locals: locals, target_self: Object.new)
+        end
+
         it 'builds expected payload' do
-          payload = builder.build_snapshot(probe,
-            serialized_locals: serialized_locals, target_self: Object.new)
+          payload = builder.build_snapshot(context)
           expect(payload).to be_a(Hash)
           expect(payload.fetch(:"debugger.snapshot").fetch(:captures)).to eq(captures)
         end
@@ -108,10 +113,14 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
           }}
         end
 
+        let(:context) do
+          Datadog::DI::EL::Context.new(
+            settings: settings, serializer: serializer,
+            probe: probe, args: args, kwargs: kwargs, target_self: Object.new)
+        end
+
         it 'builds expected payload' do
-          payload = builder.build_snapshot(
-            probe, args: args, kwargs: kwargs, target_self: Object.new
-          )
+          payload = builder.build_snapshot(context)
           expect(payload).to be_a(Hash)
           captures = payload.fetch(:"debugger.snapshot").fetch(:captures)
           expect(captures).to eq(expected_captures)
