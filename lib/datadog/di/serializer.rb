@@ -219,6 +219,25 @@ module Datadog
               serialized.update(notCapturedReason: "depth")
             else
               fields = {}
+
+              if Exception === value
+                begin
+                  # Note: instance variables are prefixed with @,
+                  # the message will NOT be shadowed if there is an
+                  # instance variable named @message in the object.
+                  #
+                  # The +message+ method is likely to be customer code.
+                  # However, the message is not available otherwise on
+                  # standard library exceptions.
+                  fields.update(message: value.message)
+                rescue NoMemoryError, Interrupt, SystemExit
+                  raise
+                rescue Exception
+                  # Nothing
+                  # TODO store as notCapturedReason?
+                end
+              end
+
               cur = 0
 
               # MRI and JRuby 9.4.5+ preserve instance variable definition
