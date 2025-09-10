@@ -146,6 +146,8 @@ module Datadog
               rescue NoMemoryError, Interrupt, SystemExit
                 raise
               rescue Exception => exc
+                # We will raise the exception captured here later, after
+                # the instrumentation callback runs.
               end
 
               duration = Core::Utils::Time.get_time - start_time
