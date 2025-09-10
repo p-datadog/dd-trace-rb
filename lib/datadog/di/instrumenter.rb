@@ -143,6 +143,8 @@ module Datadog
                 else
                   super(&target_block)
                 end
+              rescue NoMemoryError, Interrupt, SystemExit
+                raise
               rescue Exception => exc
               end
 
