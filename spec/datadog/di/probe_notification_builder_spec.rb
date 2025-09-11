@@ -341,7 +341,16 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
 
   describe '#evaluate_template' do
     context 'when there are variables to be substituted' do
-      let(:template) { "{@hello} {@world}" }
+      let(:compiler) { Datadog::DI::EL::Compiler.new }
+
+      let(:template_segments) do
+        [
+          compiler.compile('ref' => 'hello'),
+          ' ',
+          compiler.compile('ref' => 'world'),
+        ]
+      end
+
       let(:vars) do
         {
           hello: 'test',
