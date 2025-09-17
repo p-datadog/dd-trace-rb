@@ -103,8 +103,9 @@ module Datadog
         cls = symbolize_class_name(probe.type_name)
         serializer = self.serializer
         method_name = probe.method_name
-        loc = begin
-          cls.instance_method(method_name).source_location
+        begin
+          instance_method = cls.instance_method(method_name)
+          loc = instance_method.source_location
         rescue NameError
           # The target method is not defined.
           # This could be because it will be explicitly defined later
@@ -115,6 +116,34 @@ module Datadog
         end
         rate_limiter = probe.rate_limiter
         settings = self.settings
+
+        if instance_method
+          tp = TracePoint.new(:call, :return, :end) do |tp|
+          p tp.event
+            Thread.current[:dd_trace_rb_di] ||= {}
+            if tp.event == :call
+              Thread.current[:dd_trace_rb_di][tp.object_id] ||= []
+              Thread.current[:dd_trace_rb_di][tp.object_id] << {start_time: Core::Utils::Time.get_time}
+            else # :return
+            p tp, tp.return_value, $!
+              state = Thread.current[:dd_trace_rb_di][tp.object_id].pop
+
+              duration = Core::Utils::Time.get_time - state[:start_time]
+
+              context = EL::Context.new(locals: nil, target_self: self,
+                probe: probe, settings: settings, serializer: serializer,
+                #serialized_entry_args: serialized_entry_args,
+                caller_locations: caller_locations,
+                return_value: tp.return_value,
+                duration: duration,
+                exception: nil, #tp.raised_exception,
+              )
+
+              # & is to stop steep complaints, block is always present here.
+              block&.call(context)
+            end
+          end
+        end
 
         mod = Module.new do
           define_method(method_name) do |*args, **kwargs, &target_block| # steep:ignore
@@ -210,13 +239,17 @@ module Datadog
         end
 
         lock.synchronize do
-          if probe.instrumentation_module
-            # Already instrumented from another thread
-            return
-          end
+          if tp
+            tp.enable(target: instance_method)
+          else
+            if probe.instrumentation_module
+              # Already instrumented from another thread
+              return
+            end
 
-          probe.instrumentation_module = mod
-          cls.send(:prepend, mod)
+            probe.instrumentation_module = mod
+            cls.send(:prepend, mod)
+          end
         end
       end
 
