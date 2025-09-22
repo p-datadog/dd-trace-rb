@@ -1329,7 +1329,9 @@ RSpec.describe Datadog::DI::Instrumenter do
           id: 1, type: :log, rate_limit: rate_limit, condition: condition)
       end
 
-      let(:condition) {}
+      let(:condition) do
+        Datadog::DI::EL::Compiler.new.compile(ast)
+      end
 
       before do
         load File.join(File.dirname(__FILE__), 'hook_line_load.rb')
@@ -1343,10 +1345,8 @@ RSpec.describe Datadog::DI::Instrumenter do
 
       context 'when condition is on local variable' do
         context 'when condition is met' do
-          let(:condition) do
-            Datadog::DI::EL::Expression.new(
-              "ref('local') == 42"
-            )
+          let(:ast) do
+            {'eq' => [{'ref' => 'local'}, 42]}
           end
 
           it 'invokes the callback' do
@@ -1358,10 +1358,8 @@ RSpec.describe Datadog::DI::Instrumenter do
         end
 
         context 'when condition is not met' do
-          let(:condition) do
-            Datadog::DI::EL::Expression.new(
-              "ref('local') == 43"
-            )
+          let(:ast) do
+            {'eq' => [{'ref' => 'local'}, 43]}
           end
 
           it 'does not invoke the callback' do
@@ -1381,10 +1379,8 @@ RSpec.describe Datadog::DI::Instrumenter do
         end
 
         context 'when condition is met' do
-          let(:condition) do
-            Datadog::DI::EL::Expression.new(
-              "iref('@ivar') == 42"
-            )
+          let(:ast) do
+            {'eq' => [{'ref' => '@ivar'}, 42]}
           end
 
           it 'invokes the callback' do
@@ -1396,10 +1392,8 @@ RSpec.describe Datadog::DI::Instrumenter do
         end
 
         context 'when condition is not met' do
-          let(:condition) do
-            Datadog::DI::EL::Expression.new(
-              "iref('@ivar') == 43"
-            )
+          let(:ast) do
+            {'eq' => [{'ref' => '@ivar'}, 43]}
           end
 
           it 'does not invoke the callback' do

@@ -8,8 +8,8 @@ module Datadog
       # @api private
       class Expression
         def initialize(compiled_expr)
-          unless String === compiled_expr
-            #raise ArgumentError, "compiled_expr must be a string"
+          unless Proc === compiled_expr
+            raise ArgumentError, "compiled_expr must be a Proc: #{compiled_expr}"
           end
 
           #puts RubyVM::InstructionSequence.disasm(compiled_expr)
