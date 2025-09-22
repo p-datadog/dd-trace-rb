@@ -9,7 +9,7 @@ module Datadog
       class Expression
         def initialize(compiled_expr)
           unless String === compiled_expr
-            raise ArgumentError, "compiled_expr must be a string"
+            #raise ArgumentError, "compiled_expr must be a string"
           end
 
           cls = Class.new(Evaluator)

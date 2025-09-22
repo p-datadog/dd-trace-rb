@@ -81,12 +81,23 @@ module Datadog
                 unless target =~ %r{\A(@?)([a-zA-Z0-9_]+)\z}
                   raise DI::Error::BadVariableName, "Bad variable name: #{target}"
                 end
-                method_name = (($1 == '@') ? 'iref' : 'ref')
-                "#{method_name}('#{target}')"
+                if $1 == '@'
+                  lambda do
+                    iref(target)
+                  end
+                else
+                  lambda do
+                    ref(target)
+                  end
+                end
               end
             when *SINGLE_ARG_METHODS
               method_name = op.gsub(/[A-Z]/) { |m| "_#{m.downcase}" }
-              "#{method_name}(#{compile_partial(target)}, '#{var_name_maybe(target)}')"
+              target_compiled = compile_partial(target)
+              target_name = var_name_maybe(target)
+              lambda do
+                send(method_name, target_compiled.call, target_name)
+              end
             when *TWO_ARG_METHODS
               method_name = op.gsub(/[A-Z]/) { |m| "_#{m.downcase}" }
               unless Array === target && target.length == 2
@@ -109,7 +120,10 @@ module Datadog
               end
               "#{op}(#{target.map { |arg| "(#{compile_partial(arg)})" }.join(", ")})"
             when 'not'
-              "!(#{compile_partial(target)})"
+              inner = compile_partial(target)
+              lambda do
+                !inner.call
+              end
             when *OPERATORS.keys
               unless Array === target && target.length == 2
                 raise DI::Error::InvalidExpression, "Improper #{op} syntax"
