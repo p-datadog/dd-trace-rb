@@ -138,8 +138,9 @@ module Datadog
           ddsource: 'dd_debugger',
           message: probe.template_segments && evaluate_template(
             probe.template_segments,
-            context),
-            #duration: duration ? duration * 1000 : 0),
+            context
+          ),
+          #duration: duration ? duration * 1000 : 0),
           timestamp: timestamp,
         }
       end
