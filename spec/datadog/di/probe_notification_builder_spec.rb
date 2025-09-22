@@ -166,8 +166,7 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
     let(:context) do
       Datadog::DI::EL::Context.new(
         settings: settings, serializer: serializer,
-        probe: probe
-      )
+        probe: probe)
     end
 
     context 'with template' do
@@ -355,8 +354,7 @@ RSpec.describe Datadog::DI::ProbeNotificationBuilder do
         Datadog::DI::EL::Context.new(
           settings: settings, serializer: serializer,
           locals: vars,
-          probe: probe
-        )
+          probe: probe)
       end
 
       let(:expected) { %(test "'\\\\a\#{value}) }
