@@ -7,6 +7,10 @@ module Datadog
       #
       # @api private
       class Evaluator
+        def initialize
+          @stack = []
+        end
+
         def ref(var)
           @context.fetch(var)
         end
@@ -95,13 +99,23 @@ module Datadog
           case collection
           when Array
             collection.all? do |item|
-              block.call(item)
+              @stack << [item]
+              begin
+                instance_exec(&block)
+              ensure
+                @stack.pop
+              end
             end
           when Hash
             # For hashes, the expression language has both @it and
             # @key/@value. Manufacture @it from the key and value.
             collection.all? do |key, value|
-              block.call([key, value], key, value)
+              @stack << [[key, value], key, value]
+              begin
+                instance_exec(&block)
+              ensure
+                @stack.pop
+              end
             end
           else
             raise DI::Error::ExpressionEvaluationError, "Bad collection type for all: #{collection.class}"
@@ -112,13 +126,23 @@ module Datadog
           case collection
           when Array
             collection.any? do |item|
-              block.call(item)
+              @stack << [item]
+              begin
+                instance_exec(&block)
+              ensure
+                @stack.pop
+              end
             end
           when Hash
             collection.any? do |key, value|
               # For hashes, the expression language has both @it and
               # @key/@value. Manufacture @it from the key and value.
-              block.call([key, value], key, value)
+              @stack << [[key, value], key, value]
+              begin
+                instance_exec(&block)
+              ensure
+                @stack.pop
+              end
             end
           else
             raise DI::Error::ExpressionEvaluationError, "Bad collection type for any: #{collection.class}"
@@ -129,11 +153,21 @@ module Datadog
           case collection
           when Array
             collection.select do |item|
-              block.call(item)
+              @stack << [item]
+              begin
+                instance_exec(&block)
+              ensure
+                @stack.pop
+              end
             end
           when Hash
             collection.select do |key, value|
-              block.call([key, value], key, value)
+              @stack << [[key, value], key, value]
+              begin
+                instance_exec(&block)
+              ensure
+                @stack.pop
+              end
             end.to_h
           else
             raise DI::Error::ExpressionEvaluationError, "Bad collection type for filter: #{collection.class}"

@@ -59,11 +59,17 @@ module Datadog
               end
               case target
               when '@it'
-                'current_item'
+                lambda do
+                  @stack.last.first
+                end
               when '@key'
-                'current_key'
+                lambda do
+                  @stack.last[1]
+                end
               when '@value'
-                'current_value'
+                lambda do
+                  @stack.last[2]
+                end
               when '@return'
                 # TODO implement
                 raise NotImplementedError
@@ -93,54 +99,88 @@ module Datadog
               end
             when *SINGLE_ARG_METHODS
               method_name = op.gsub(/[A-Z]/) { |m| "_#{m.downcase}" }
-              target_compiled = compile_partial(target)
+              inner = compile_partial(target)
               target_name = var_name_maybe(target)
               lambda do
-                send(method_name, target_compiled.call, target_name)
+                send(method_name, instance_exec(&inner), target_name)
               end
             when *TWO_ARG_METHODS
-              method_name = op.gsub(/[A-Z]/) { |m| "_#{m.downcase}" }
               unless Array === target && target.length == 2
                 raise DI::Error::InvalidExpression, "Improper #{op} syntax"
               end
-              first, second = target
-              "#{method_name}(#{compile_partial(first)}, (#{compile_partial(second)}))"
+              method_name = op.gsub(/[A-Z]/) { |m| "_#{m.downcase}" }
+              inner_first = compile_partial(target[0])
+              inner_second = compile_partial(target[1])
+              lambda do
+                send(method_name, instance_exec(&inner_first), instance_exec(&inner_second))
+              end
             when *MULTI_ARG_METHODS.keys
               unless Array === target && target.length >= 1
                 raise DI::Error::InvalidExpression, "Improper #{op} syntax"
               end
-              compiled_targets = target.map do |item|
-                "(#{compile_partial(item)})"
+              inners = target.map do |item|
+                compile_partial(item)
               end
               compiled_op = MULTI_ARG_METHODS[op]
-              "(#{compiled_targets.join(" #{compiled_op} ")})"
+              if compiled_op == '||'
+                lambda do
+                  inners.inject(false) do |current, block|
+                    current || instance_exec(&block)
+                  end
+                end
+              else
+                lambda do
+                  inners.inject(true) do |current, block|
+                    current && instance_exec(&block)
+                  end
+                end
+              end
             when 'substring'
               unless Array === target && target.length == 3
                 raise DI::Error::InvalidExpression, "Improper #{op} syntax"
               end
-              "#{op}(#{target.map { |arg| "(#{compile_partial(arg)})" }.join(", ")})"
+              inners = target.map do |item|
+                compile_partial(item)
+              end
+              lambda do
+                substring(
+                  instance_exec(&inners[0]),
+                  instance_exec(&inners[1]),
+                  instance_exec(&inners[2]),
+                )
+              end
             when 'not'
               inner = compile_partial(target)
               lambda do
-                !inner.call
+                !instance_exec(&inner)
               end
             when *OPERATORS.keys
               unless Array === target && target.length == 2
                 raise DI::Error::InvalidExpression, "Improper #{op} syntax"
               end
-              first, second = target
               operator = OPERATORS.fetch(op)
-              "(#{compile_partial(first)}) #{operator} (#{compile_partial(second)})"
+              inner_first = compile_partial(target[0])
+              inner_second = compile_partial(target[1])
+              lambda do
+                instance_exec(&inner_first).send(operator, instance_exec(&inner_second))
+              end
             when 'any', 'all', 'filter'
-              "#{op}(#{compile_partial(target.first)}) { |current_item, current_key, current_value| #{compile_partial(target.last)} }"
+              unless Array === target && target.length == 2
+                raise DI::Error::InvalidExpression, "Improper #{op} syntax"
+              end
+              inner_arg = compile_partial(target[0])
+              inner_block = compile_partial(target[1])
+              lambda do
+                send(op, instance_exec(&inner_arg), &inner_block)
+              end
             else
               raise DI::Error::InvalidExpression, "Unknown operation: #{op}"
             end
-          when Numeric, true, false, nil
+          when Numeric, true, false, nil, String
             # No escaping is needed for the values here.
-            ast.inspect
-          when String
-            "\"#{escape(ast)}\""
+            lambda do
+              ast
+            end
           when Array
             # Arrays are commonly used as arguments of operators/methods,
             # but there are no arrays at the top level in the syntax that
