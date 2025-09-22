@@ -1,3 +1,4 @@
+require'benchmark'
 require 'spec_helper'
 require_relative '../spec_helper'
 require 'datadog/di/el'
@@ -17,6 +18,8 @@ module ELTestMod
   class ELTestIvarClass
   end
 end
+
+$all=0
 
 RSpec.describe Datadog::DI::EL do
   di_test
@@ -79,6 +82,11 @@ RSpec.describe Datadog::DI::EL do
                   let(:expected) { eval_spec['result'] }
 
                   it 'evaluates to expected value' do
+                  $all+=Benchmark.realtime do
+                  100_000.times do
+                    compiled.evaluate(context)
+                  end
+                  end
                     expect(evaluated).to eq(expected)
                   end
 
@@ -105,6 +113,10 @@ RSpec.describe Datadog::DI::EL do
         end
       end
     end
+  end
+
+  after(:all) do
+    p $all
   end
 end
 
