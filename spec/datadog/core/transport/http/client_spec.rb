@@ -11,7 +11,7 @@ RSpec.describe Datadog::Core::Transport::HTTP::Client do
     it { is_expected.to have_attributes(api: api) }
   end
 
-  describe '#send_request_impl' do
+  describe '#send_request' do
     subject(:send_request_impl) { client.send(:send_request_impl, request, &block) }
 
     let(:request) { instance_double(Datadog::Core::Transport::Request) }
