@@ -20,7 +20,8 @@ module Datadog
           api_version: nil,
           headers: nil
         )
-          Core::Transport::HTTP.build(api_instance_class: Diagnostics::API::Instance,
+          Core::Transport::HTTP.build(
+            api_instance_class: Core::Transport::HTTP::API::Instance,
             logger: logger,
             agent_settings: agent_settings, api_version: api_version, headers: headers) do |transport|
             apis = API.defaults
@@ -41,7 +42,7 @@ module Datadog
           headers: nil
         )
           Core::Transport::HTTP.build(
-            api_instance_class: Input::API::Instance,
+            api_instance_class: Core::Transport::HTTP::API::Instance,
             logger: logger,
             agent_settings: agent_settings,
             api_version: api_version,

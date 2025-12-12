@@ -9,20 +9,10 @@ module Datadog
       module HTTP
         module Input
           module API
-            class Instance < Core::Transport::HTTP::API::Instance
-              def send_request(env)
-                raise Core::Transport::HTTP::API::Instance::EndpointNotSupportedError.new('input', self) unless spec.is_a?(Input::API::Spec)
-
-                spec.send_input(env) do |request_env|
-                  call(request_env)
-                end
-              end
-            end
-
             class Spec < Core::Transport::HTTP::API::Spec
               attr_accessor :input
 
-              def send_input(env, &block)
+              def send_request(env, &block)
                 raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('input', self) if input.nil?
 
                 input.call(env, &block)

@@ -24,7 +24,9 @@ module Datadog
 
             # Get responses from API.
             # All of our APIs send only one type of request each.
-            api.send_request(env).tap do |response|
+            api.spec.send_request(env) do |request_env|
+              api.call(request_env)
+            end.tap do |response|
               on_response(response)
             end
           rescue => exception
