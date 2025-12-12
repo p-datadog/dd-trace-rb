@@ -38,7 +38,7 @@ module Datadog
         end
 
         class Instance < Core::Transport::HTTP::API::Instance
-          def send_exposures(env)
+          def send_request(env)
             @spec.call(env) { |request_env| call(request_env) }
           end
         end

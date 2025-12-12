@@ -14,7 +14,7 @@ module Datadog
           module Telemetry
             module API
               class Instance < Core::Transport::HTTP::API::Instance
-                def send_telemetry(env)
+                def send_request(env)
                   raise Core::Transport::HTTP::API::Instance::EndpointNotSupportedError.new('telemetry', self) unless spec.is_a?(Telemetry::API::Spec)
 
                   spec.send_telemetry(env) do |request_env|

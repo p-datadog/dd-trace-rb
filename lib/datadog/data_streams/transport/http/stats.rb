@@ -41,7 +41,7 @@ module Datadog
 
             # HTTP API Instance for DSM
             class Instance < Core::Transport::HTTP::API::Instance
-              def send_stats(env)
+              def send_request(env)
                 unless spec.is_a?(Stats::API::Spec)
                   raise Core::Transport::HTTP::API::Instance::EndpointNotSupportedError.new(
                     'stats', self

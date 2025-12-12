@@ -22,8 +22,9 @@ module Datadog
             # Build request into env
             env = build_env(request)
 
-            # Get responses from API
-            api.public_send("send_#{action}", env).tap do |response|
+            # Get responses from API.
+            # All of our APIs send only one type of request each.
+            api.send_request(env).tap do |response|
               on_response(response)
             end
           rescue => exception
