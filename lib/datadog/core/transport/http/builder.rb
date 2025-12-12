@@ -21,7 +21,7 @@ module Datadog
             :default_headers,
             :logger
 
-          def initialize(api_instance_class:, logger: Datadog.logger)
+          def initialize(api_instance_class: API::Instance, logger: Datadog.logger)
             # Global settings
             @default_adapter = nil
             @default_headers = {}
