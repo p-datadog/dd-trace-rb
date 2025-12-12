@@ -26,6 +26,7 @@ module Datadog
             super
           end
 
+          # TODO rename to send_request?
           def call(env, &block)
             @endpoint.call(env) do |request_env|
               request_env.headers['Content-Type'] = Core::Encoding::JSONEncoder.content_type
@@ -37,8 +38,9 @@ module Datadog
           end
         end
 
+        # TODO remove
         class Instance < Core::Transport::HTTP::API::Instance
-          def send_request(env)
+          def send_exposures(env)
             @spec.call(env) { |request_env| call(request_env) }
           end
         end

@@ -187,25 +187,10 @@ module Datadog
                   @config = endpoint
                 end
 
-                def send_config(env, &block)
+                def send_request(env, &block)
                   raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('config', self) if config.nil?
 
                   config.call(env, &block)
-                end
-              end
-
-              # Extensions for HTTP API Instance
-              module Instance
-                def send_request(env)
-                  unless spec.is_a?(Config::API::Spec)
-                    raise Core::Transport::HTTP::API::Instance::EndpointNotSupportedError.new(
-                      'config', self
-                    )
-                  end
-
-                  spec.send_config(env) do |request_env|
-                    call(request_env)
-                  end
                 end
               end
 
