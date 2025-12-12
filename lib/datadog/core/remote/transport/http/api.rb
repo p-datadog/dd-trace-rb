@@ -22,12 +22,12 @@ module Datadog
 
             def defaults
               Core::Transport::HTTP::API::Map[
-                ROOT => Spec.new do |s|
+                ROOT => NegotiationSpec.new do |s|
                   s.info = Negotiation::API::Endpoint.new(
                     '/info',
                   )
                 end,
-                V7 => Spec.new do |s|
+                V7 => ConfigSpec.new do |s|
                   s.config = Config::API::Endpoint.new(
                     '/v0.7/config',
                     Core::Encoding::JSONEncoder,
@@ -36,13 +36,11 @@ module Datadog
               ]
             end
 
-            class Instance < Core::Transport::HTTP::API::Instance
-              include Config::API::Instance
-              include Negotiation::API::Instance
+            class ConfigSpec < Core::Transport::HTTP::API::Spec
+              include Config::API::Spec
             end
 
-            class Spec < Core::Transport::HTTP::API::Spec
-              include Config::API::Spec
+            class NegotiationSpec < Core::Transport::HTTP::API::Spec
               include Negotiation::API::Spec
             end
           end

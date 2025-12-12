@@ -21,7 +21,7 @@ module Datadog
             api_version: nil,
             headers: nil
           )
-            Core::Transport::HTTP.build(api_instance_class: Telemetry::API::Instance,
+            Core::Transport::HTTP.build(
               logger: logger,
               agent_settings: agent_settings,
               api_version: api_version,
@@ -45,7 +45,7 @@ module Datadog
             api_version: nil,
             headers: nil
           )
-            Core::Transport::HTTP.build(api_instance_class: Telemetry::API::Instance,
+            Core::Transport::HTTP.build(
               logger: logger,
               agent_settings: agent_settings, api_version: api_version, headers: headers) do |transport|
               apis = API.defaults
