@@ -22,19 +22,15 @@ module Datadog
 
           def defaults
             Core::Transport::HTTP::API::Map[
-              V4 => Traces::API::Spec.new do |s|
-                s.traces = Traces::API::Endpoint.new(
-                  '/v0.4/traces',
-                  Core::Encoding::MsgpackEncoder,
-                  service_rates: true
-                )
-              end,
-              V3 => Traces::API::Spec.new do |s|
-                s.traces = Traces::API::Endpoint.new(
-                  '/v0.3/traces',
-                  Core::Encoding::MsgpackEncoder
-                )
-              end,
+              V4 => Traces::API::Endpoint.new(
+                '/v0.4/traces',
+                Core::Encoding::MsgpackEncoder,
+                service_rates: true
+              ),
+              V3 => Traces::API::Endpoint.new(
+                '/v0.3/traces',
+                Core::Encoding::MsgpackEncoder,
+              ),
             ].with_fallbacks(V4 => V3)
           end
         end
