@@ -17,13 +17,11 @@ module Datadog
       end
 
       class HTTP
-        class Spec < Core::Transport::HTTP::API::Spec
+        class Spec
           def initialize
             @endpoint = Core::Transport::HTTP::API::Endpoint.new(
               :post, '/evp_proxy/v2/api/v2/exposures'
             )
-
-            super
           end
 
           # TODO rename to send_request?
