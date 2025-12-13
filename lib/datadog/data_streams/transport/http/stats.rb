@@ -24,14 +24,7 @@ module Datadog
           module API
             # HTTP API Spec for DSM
             class Spec < Core::Transport::HTTP::API::Spec
-              attr_accessor :stats
-
-              def send_request(env, &block)
-                raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('stats', self) if stats.nil?
-
-                stats.call(env, &block)
-              end
-
+              # TODO ??? I think this should be propagated from Endpoint
               def encoder
                 # DSM handles encoding in the transport layer (MessagePack + gzip)
                 # so we don't need an encoder at the API level

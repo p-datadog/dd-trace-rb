@@ -44,21 +44,6 @@ module Datadog
             end
 
             module API
-              # Extensions for HTTP API Spec
-              module Spec
-                attr_reader :info
-
-                def info=(endpoint)
-                  @info = endpoint
-                end
-
-                def send_request(env, &block)
-                  raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('info', self) if info.nil?
-
-                  info.call(env, &block)
-                end
-              end
-
               # Endpoint for negotiation
               class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
                 def initialize(path)

@@ -179,21 +179,6 @@ module Datadog
             end
 
             module API
-              # Extensions for HTTP API Spec
-              module Spec
-                attr_reader :config
-
-                def config=(endpoint)
-                  @config = endpoint
-                end
-
-                def send_request(env, &block)
-                  raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('config', self) if config.nil?
-
-                  config.call(env, &block)
-                end
-              end
-
               # Endpoint for remote configuration
               class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
                 HEADER_CONTENT_TYPE = 'Content-Type'

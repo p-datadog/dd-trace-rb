@@ -27,21 +27,6 @@ module Datadog
           end
 
           module API
-            # HTTP API Spec
-            class Spec < Core::Transport::HTTP::API::Spec
-              attr_accessor :traces
-
-              def send_request(env, &block)
-                raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('traces', self) if traces.nil?
-
-                traces.call(env, &block)
-              end
-
-              def encoder
-                traces.encoder
-              end
-            end
-
             # Endpoint for submitting trace data
             class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
               HEADER_CONTENT_TYPE = 'Content-Type'

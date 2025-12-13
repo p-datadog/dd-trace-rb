@@ -13,16 +13,6 @@ module Datadog
         module HTTP
           module Telemetry
             module API
-              class Spec < Core::Transport::HTTP::API::Spec
-                attr_accessor :telemetry
-
-                def send_request(env, &block)
-                  raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('telemetry', self) if telemetry.nil?
-
-                  telemetry.call(env, &block)
-                end
-              end
-
               class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
                 HEADER_CONTENT_TYPE = 'Content-Type'
 
