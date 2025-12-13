@@ -25,7 +25,7 @@ end
 
 RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
   let(:logger) { logger_allowing_debug }
-  let(:api) { instance_double(Datadog::Tracing::Transport::HTTP::Traces::API::Instance) }
+  let(:api) { instance_double(Datadog::Core::Transport::HTTP::API::Instance) }
 
   subject(:client) { described_class.new(api, logger: logger) }
 
@@ -39,7 +39,7 @@ RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
       expect(client).to receive(:update_stats_from_response!)
         .with(response)
 
-      expect(api).to receive(:send_traces) do |env|
+      expect(api).to receive(:send_request) do |env|
         expect(env).to be_a_kind_of(Datadog::Core::Transport::HTTP::Env)
         expect(env.request).to be(request)
         response
@@ -97,37 +97,6 @@ RSpec.describe Datadog::Tracing::Transport::HTTP::Traces::API::Spec do
     let(:encoder) { double }
 
     it { is_expected.to eq(encoder) }
-  end
-end
-
-RSpec.describe Datadog::Tracing::Transport::HTTP::Traces::API::Instance do
-  subject(:instance) { described_class.new(spec, adapter) }
-
-  let(:adapter) { double('adapter') }
-
-  describe '#send_traces' do
-    subject(:send_traces) { instance.send_traces(env) }
-
-    let(:env) { instance_double(Datadog::Core::Transport::HTTP::Env) }
-
-    context 'when specification does not support traces' do
-      let(:spec) { double('spec') }
-
-      it {
-        expect do
-          send_traces
-        end.to raise_error(Datadog::Core::Transport::HTTP::API::Instance::EndpointNotSupportedError)
-      }
-    end
-
-    context 'when specification supports traces' do
-      let(:spec) { Datadog::Tracing::Transport::HTTP::Traces::API::Spec.new }
-      let(:response) { instance_double(Datadog::Tracing::Transport::HTTP::Traces::Response) }
-
-      before { expect(spec).to receive(:send_traces).with(env).and_return(response) }
-
-      it { is_expected.to be response }
-    end
   end
 end
 
