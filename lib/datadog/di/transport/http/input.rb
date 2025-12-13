@@ -9,16 +9,6 @@ module Datadog
       module HTTP
         module Input
           module API
-            class Spec < Core::Transport::HTTP::API::Spec
-              attr_accessor :input
-
-              def send_request(env, &block)
-                raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('input', self) if input.nil?
-
-                input.call(env, &block)
-              end
-            end
-
             class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
               HEADER_CONTENT_TYPE = 'Content-Type'
 

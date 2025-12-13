@@ -9,16 +9,6 @@ module Datadog
       module HTTP
         module Diagnostics
           module API
-            class Spec < Core::Transport::HTTP::API::Spec
-              attr_accessor :diagnostics
-
-              def send_request(env, &block)
-                raise Core::Transport::HTTP::API::Spec::EndpointNotDefinedError.new('diagnostics', self) if diagnostics.nil?
-
-                diagnostics.call(env, &block)
-              end
-            end
-
             class Endpoint < Datadog::Core::Transport::HTTP::API::Endpoint
               attr_reader :encoder
 
