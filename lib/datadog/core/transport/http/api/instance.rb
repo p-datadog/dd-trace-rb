@@ -10,16 +10,16 @@ module Datadog
             attr_reader \
               :adapter,
               :headers,
-              :spec
+              :endpoint
 
-            def initialize(spec, adapter, options = {})
-              @spec = spec
+            def initialize(endpoint, adapter, options = {})
+              @endpoint = endpoint
               @adapter = adapter
               @headers = options.fetch(:headers, {})
             end
 
             def encoder
-              spec.encoder
+              endpoint.encoder
             end
 
             def call(env)

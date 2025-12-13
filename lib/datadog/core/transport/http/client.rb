@@ -11,10 +11,10 @@ module Datadog
         #
         # @api private
         class Client
-          attr_reader :api, :logger
+          attr_reader :instance, :logger
 
-          def initialize(api, logger:)
-            @api = api
+          def initialize(instance, logger:)
+            @instance = instance
             @logger = logger
           end
 
@@ -24,8 +24,8 @@ module Datadog
 
             # Get responses from API.
             # All of our APIs send only one type of request each.
-            api.spec.call(env) do |request_env|
-              api.call(request_env)
+            instance.endpoint.call(env) do |request_env|
+              instance.call(request_env)
             end.tap do |response|
               on_response(response)
             end
