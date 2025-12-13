@@ -21,16 +21,6 @@ module Datadog
           end
 
           module API
-            # HTTP API Spec for DSM
-            class Spec < Core::Transport::HTTP::API::Spec
-              # TODO ??? I think this should be propagated from Endpoint
-              def encoder
-                # DSM handles encoding in the transport layer (MessagePack + gzip)
-                # so we don't need an encoder at the API level
-                nil
-              end
-            end
-
             # Endpoint for submitting DSM stats data
             class Endpoint < Core::Transport::HTTP::API::Endpoint
               def initialize(path)
