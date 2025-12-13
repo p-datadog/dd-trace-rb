@@ -2,7 +2,6 @@
 
 require_relative '../../../core/transport/http/api/map'
 require_relative '../../../core/transport/http/api/instance'
-require_relative '../../../core/transport/http/api/spec'
 require_relative '../../../core/transport/http/api/endpoint'
 require_relative 'stats'
 

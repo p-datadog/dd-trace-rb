@@ -4,7 +4,6 @@ require_relative '../../../core/encoding'
 
 require_relative '../../../core/transport/http/api/map'
 require_relative '../../../core/transport/http/api/instance'
-require_relative '../../../core/transport/http/api/spec'
 
 require_relative 'traces'
 

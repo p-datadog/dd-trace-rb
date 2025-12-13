@@ -2,7 +2,6 @@
 
 require_relative '../../../transport/http/api/endpoint'
 require_relative '../../../transport/http/api/instance'
-require_relative '../../../transport/http/api/spec'
 require_relative '../../../transport/http/client'
 require_relative '../../../transport/request'
 

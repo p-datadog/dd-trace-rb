@@ -3,7 +3,6 @@
 require_relative '../../../encoding'
 require_relative '../../../transport/http/api/map'
 require_relative '../../../transport/http/api/instance'
-require_relative '../../../transport/http/api/spec'
 require_relative 'negotiation'
 require_relative 'config'
 

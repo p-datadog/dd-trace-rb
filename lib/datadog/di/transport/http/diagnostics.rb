@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../../../core/transport/http/api/instance'
-require_relative '../../../core/transport/http/api/spec'
 
 module Datadog
   module DI
