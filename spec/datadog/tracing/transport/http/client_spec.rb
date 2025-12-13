@@ -4,16 +4,16 @@ require 'datadog/tracing/transport/http/client'
 
 RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
   let(:logger) { logger_allowing_debug }
-  let(:api) { instance_double(Datadog::Tracing::Transport::HTTP::Traces::API::Instance) }
-  subject(:client) { described_class.new(api, logger: logger) }
+  let(:instance) { instance_double(Datadog::Core::Transport::HTTP::API::Instance) }
+  subject(:client) { described_class.new(instance, logger: logger) }
 
   describe '#initialize' do
     it { is_expected.to be_a_kind_of(Datadog::Tracing::Transport::HTTP::Statistics) }
-    it { is_expected.to have_attributes(api: api) }
+    it { is_expected.to have_attributes(instance: instance) }
   end
 
-  describe '#send_request_impl' do
-    subject(:send_request_impl) { client.send(:send_request_impl, request, &block) }
+  describe '#send_request' do
+    subject(:send_request) { client.send(:send_request, :fake_action, request, &block) }
 
     let(:request) { instance_double(Datadog::Core::Transport::Request) }
     let(:response_class) do
@@ -77,7 +77,7 @@ RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
               .with(kind_of(error_class))
 
             is_expected.to be_a_kind_of(Datadog::Core::Transport::InternalErrorResponse)
-            expect(send_request_impl.error).to be_a_kind_of(error_class)
+            expect(send_request.error).to be_a_kind_of(error_class)
             expect(handler).to have_received(:api).with(api).once
 
             # Check log was written to appropriately
@@ -93,9 +93,9 @@ RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
             allow(logger).to receive(:error)
           end
 
-          subject(:send_request_impl) do
-            client.send(:send_request_impl, request, &block)
-            client.send(:send_request_impl, request, &block)
+          subject(:send_request) do
+            client.send(:send_request, :fake_action, request, &block)
+            client.send(:send_request, :fake_action, request, &block)
           end
 
           before do
