@@ -4,7 +4,7 @@ module Datadog
       module HTTP
         module API
           class Instance
-            @spec: untyped
+            @endpoint: untyped
 
             @adapter: untyped
 
@@ -14,9 +14,9 @@ module Datadog
 
             attr_reader headers: untyped
 
-            attr_reader spec: untyped
+            attr_reader endpoint: untyped
 
-            def initialize: (untyped spec, untyped adapter, ?::Hash[untyped, untyped] options) -> void
+            def initialize: (untyped endpoint, untyped adapter, ?::Hash[untyped, untyped] options) -> void
 
             def encoder: () -> untyped
 
