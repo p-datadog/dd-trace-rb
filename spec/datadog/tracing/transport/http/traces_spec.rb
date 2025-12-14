@@ -25,7 +25,8 @@ end
 
 RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
   let(:logger) { logger_allowing_debug }
-  let(:api) { instance_double(Datadog::Core::Transport::HTTP::API::Instance) }
+  let(:api) { double(Datadog::Core::Transport::HTTP::API::Instance, endpoint: endpoint) }
+  let(:endpoint) { double(Datadog::Core::Transport::HTTP::API::Endpoint) }
 
   subject(:client) { described_class.new(api, logger: logger) }
 
@@ -39,7 +40,7 @@ RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
       expect(client).to receive(:update_stats_from_response!)
         .with(response)
 
-      expect(api).to receive(:send_request) do |env|
+      expect(endpoint).to receive(:call) do |env|
         expect(env).to be_a_kind_of(Datadog::Core::Transport::HTTP::Env)
         expect(env.request).to be(request)
         response

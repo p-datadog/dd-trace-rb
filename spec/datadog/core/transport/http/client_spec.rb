@@ -13,68 +13,56 @@ RSpec.describe Datadog::Core::Transport::HTTP::Client do
   end
 
   describe '#send_request' do
-    subject(:send_request) { client.send(:send_request, :fake_action, request, &block) }
+    subject(:send_request) { client.send(:send_request, :fake_action, request) }
 
     let(:request) { double(Datadog::Core::Transport::Request) }
     let(:response_class) { stub_const('TestResponse', Class.new { include Datadog::Core::Transport::HTTP::Response }) }
     let(:response) { double(response_class, code: double('status code')) }
 
-    context 'given a block' do
-      let(:block) do
-        proc do |api, env|
-          handler.api(api)
-          handler.env(env)
-          handler.response
+    context 'which returns an OK response' do
+      before do
+        allow(endpoint).to receive(:call).and_return(response)
+
+        allow(response).to receive(:not_found?).and_return(false)
+        allow(response).to receive(:unsupported?).and_return(false)
+      end
+
+      it 'sends to only the current API once' do
+        is_expected.to eq(response)
+        expect(endpoint).to have_received(:call).with(kind_of(Datadog::Core::Transport::HTTP::Env)).once
+      end
+    end
+
+    context 'which raises an error' do
+      let(:error_class) { stub_const('TestError', Class.new(StandardError)) }
+      let(:logger) { double(Datadog::Core::Logger) }
+
+      context 'once' do
+        it 'makes only one attempt and returns an internal error response' do
+          expect(endpoint).to receive(:call).and_raise(error_class)
+          # The core HTTP client logs errors at debug level, and logs every time.
+          expect(logger).to receive(:debug).once
+
+          is_expected.to be_a_kind_of(Datadog::Core::Transport::InternalErrorResponse)
+
+          expect(send_request.error).to be_a_kind_of(error_class)
         end
       end
 
-      context 'which returns an OK response' do
-        before do
-          allow(endpoint).to receive(:call).and_return(response)
-
-          allow(response).to receive(:not_found?).and_return(false)
-          allow(response).to receive(:unsupported?).and_return(false)
+      context 'twice consecutively' do
+        subject(:send_request) do
+          client.send(:send_request, :fake_action, request)
+          client.send(:send_request, :fake_action, request)
         end
 
-        it 'sends to only the current API once' do
-          is_expected.to eq(response)
-          expect(endpoint).to have_received(:call).with(kind_of(Datadog::Core::Transport::HTTP::Env)).once
-        end
-      end
+        it 'makes one attempt per request (two total) and returns an internal error response' do
+          expect(endpoint).to receive(:call).twice.and_raise(error_class)
+          # The core HTTP client logs errors at debug level, and logs every time.
+          expect(logger).to receive(:debug).twice
 
-      context 'which raises an error' do
-        let(:error_class) { stub_const('TestError', Class.new(StandardError)) }
-        let(:logger) { double(Datadog::Core::Logger) }
+          is_expected.to be_a_kind_of(Datadog::Core::Transport::InternalErrorResponse)
 
-        context 'once' do
-          before do
-            expect(endpoint).to receive(:call).and_raise(error_class)
-            # The core HTTP client logs errors at debug level, and logs every time.
-            expect(logger).to receive(:debug).once
-          end
-
-          it 'makes only one attempt and returns an internal error response' do
-            is_expected.to be_a_kind_of(Datadog::Core::Transport::InternalErrorResponse)
-            expect(send_request.error).to be_a_kind_of(error_class)
-          end
-        end
-
-        context 'twice consecutively' do
-          before do
-            # The core HTTP client logs errors at debug level, and logs every time.
-            expect(logger).to receive(:debug).twice
-          end
-
-          subject(:send_request) do
-            client.send(:send_request, :fake_action, request, &block)
-            client.send(:send_request, :fake_action, request, &block)
-          end
-
-          it 'makes one attempt per request (two total) and returns an internal error response' do
-            expect(endpoint).to receive(:call).twice.and_raise(error_class)
-            is_expected.to be_a_kind_of(Datadog::Core::Transport::InternalErrorResponse)
-            expect(send_request.error).to be_a_kind_of(error_class)
-          end
+          expect(send_request.error).to be_a_kind_of(error_class)
         end
       end
     end
