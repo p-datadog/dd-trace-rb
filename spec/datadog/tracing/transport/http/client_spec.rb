@@ -94,6 +94,9 @@ RSpec.describe Datadog::Tracing::Transport::HTTP::Client do
           end
         end
 
+        # This is a confusingly named test - there is still one attempt
+        # for each request being made (two total), the difference is that
+        # one response is reported at debug level and one at error level.
         it 'makes only one attempt per request and returns an internal error response' do
           expect(endpoint).to receive(:call).twice.and_raise(error_class)
 
