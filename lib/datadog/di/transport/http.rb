@@ -22,7 +22,8 @@ module Datadog
         )
           Core::Transport::HTTP.build(
             logger: logger,
-            agent_settings: agent_settings, api_version: api_version, headers: headers) do |transport|
+            agent_settings: agent_settings, api_version: api_version, headers: headers
+          ) do |transport|
             apis = API.defaults
 
             transport.api API::DIAGNOSTICS, apis[API::DIAGNOSTICS]

@@ -30,12 +30,12 @@ module Datadog
         # but is under HTTP namespace so that client code requires this file
         # to get the adapters configured, and not the builder directly.
         def build(
-          api_instance_class: API::Instance,
-          agent_settings:,
+          agent_settings:, api_instance_class: API::Instance,
           logger: Datadog.logger,
           api_version: nil,
           headers: nil,
-        &block)
+          &block
+        )
           Builder.new(api_instance_class: api_instance_class, logger: logger) do |transport|
             transport.adapter(agent_settings)
             transport.headers(default_headers)
