@@ -378,4 +378,25 @@ RSpec.describe Datadog::Core::Telemetry::Worker do
       try_wait_until { events_received == events_sent }
     end
   end
+
+  describe '#perform' do
+    context 'when worker was previously stopped' do
+      before do
+      #require'byebug';byebug
+      a=worker
+        a.stop
+        expect(worker.run_loop?).to be false
+      end
+
+      it 'does not perform the loop and keeps worker stopped' do
+        # Add a timeout just in case.
+        # If the worker starts performing in practice, it'll trigger an
+        # exception because the emitter is a double.
+        Timeout.timeout(1) do
+          worker.perform
+        end
+        expect(worker.run_loop?).to be false
+      end
+    end
+  end
 end

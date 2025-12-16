@@ -73,6 +73,51 @@ RSpec.describe Datadog::Core::Workers::Polling do
         it { is_expected.to be true }
       end
 
+      context 'when the worker has just been started' do
+        # This is a regression test for a race condition, and as such
+        # it may not always go through the same state sequence as the
+        # original isssue.
+        it 'stops the worker' do
+          # Make sure the worker is not running.
+          expect(worker.running?).to be false
+          expect(worker.run_loop?).to be false
+
+          # Start the worker. This creates a background thread and
+          # schedules it to run, but at this point the background thread
+          # has not yet executed any code.
+          # I don't know of a way to assert that the thread has not
+          # executed any code.
+          worker.perform
+          expect(worker.running?).to be true
+          # run_loop? is false because @run_loop instance variable is
+          # initialized by the background thread.
+          expect(worker.run_loop?).to be false
+          expect(worker.instance_variable_get('@run_loop')).to be nil
+
+          # Request the worker to stop.
+          # This sets @run_loop to false.
+          p 'ask stop'
+          # Call +stop_loop+ instead of +stop+ to assert that the stop
+          # request does not change worker thread state immediately.
+          # This is not (or should not be?) a public API though.
+          # It's hard to test the race condition using sensible public APIs.
+          worker.stop_loop
+          p 'done ask stop'
+          #expect(worker.instance_variable_get('@run_async')).to be false
+          #expect(worker.run_loop?).to be false
+          # running? is still true because it looks at the liveness of
+          # the background thread (which is still scheduled to run but
+          # has not run).
+          expect(worker.running?).to be true
+
+          # Wait for the thread to stop.
+          try_wait_until { !worker.running? }
+          Timeout.timeout(5) { worker.join }
+
+          expect(worker.run_loop?).to be false
+        end
+      end
+
       context 'called multiple times with graceful stop' do
         include_context 'graceful stop'
 
