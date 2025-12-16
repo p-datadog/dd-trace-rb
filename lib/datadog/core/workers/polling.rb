@@ -7,6 +7,8 @@ module Datadog
   module Core
     module Workers
       # Adds polling (async looping) behavior to workers
+      #
+      # @api private
       module Polling
         DEFAULT_SHUTDOWN_TIMEOUT = 1
 
@@ -24,6 +26,8 @@ module Datadog
         end
 
         def stop(force_stop = false, timeout = DEFAULT_SHUTDOWN_TIMEOUT)
+          # We must always request the stop because the worker may be
+          # getting started concurrently.
           if running?
             # Attempt graceful stop and wait
             stop_loop
