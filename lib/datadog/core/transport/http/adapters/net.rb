@@ -162,6 +162,20 @@ module Datadog
                 code.between?(500, 599)
               end
 
+              def content_type
+                return super if http_response.nil?
+
+                http_response.content_type
+              end
+
+              def json?
+                # Accept application/json, application/json+anything.
+                # This also accepts application/json-blah which is not
+                # correct but this implementation is good enough for
+                # identifying whether agent responses are in fact in JSON.
+                content_type =~ %r,\Aapplication/json\b,i
+              end
+
               def inspect
                 "#{super}, http_response:#{http_response}"
               end

@@ -54,8 +54,15 @@ module Datadog
                   # Query for response
                   http_response = super
 
+                  if http_response.ok?
+                  end
+
+                  unless http_response.json?
+                    raise
+                  end
+
                   # Process the response
-                  body = JSON.parse(http_response.payload, symbolize_names: true) if http_response.ok?
+                  body = JSON.parse(http_response.payload, symbolize_names: true)
 
                   # TODO: there should be more processing here to ensure a proper response_options
                   response_options = body.is_a?(Hash) ? body : {}

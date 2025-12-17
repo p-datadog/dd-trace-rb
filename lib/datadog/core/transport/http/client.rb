@@ -41,6 +41,7 @@ module Datadog
             end
           rescue => exception
             on_exception(exception)
+            raise
 
             Datadog::Core::Transport::InternalErrorResponse.new(exception)
           end
