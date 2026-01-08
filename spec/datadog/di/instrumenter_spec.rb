@@ -25,6 +25,7 @@ RSpec.describe Datadog::DI::Instrumenter do
     allow(settings.dynamic_instrumentation).to receive(:redacted_type_names).and_return([])
     allow(settings.dynamic_instrumentation).to receive(:redacted_identifiers).and_return([])
     allow(settings.dynamic_instrumentation.internal).to receive(:propagate_all_exceptions).and_return(propagate_all_exceptions)
+    allow(settings.dynamic_instrumentation.internal).to receive(:max_processing_time).and_return(1)
   end
 
   let(:redactor) do
