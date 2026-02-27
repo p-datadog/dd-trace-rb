@@ -1,0 +1,207 @@
+name: Test Workflow Security
+
+# Tests workflows with complex/malicious input to verify they handle
+# special characters safely without syntax errors or injection vulnerabilities
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    paths:
+      - '.github/workflows/*.yml'
+      - 'bin/validate-github-workflows'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/*.yml'
+      - 'bin/validate-github-workflows'
+  workflow_dispatch:
+
+# Default permissions for all jobs
+permissions: {}
+
+jobs:
+  test-github-script-with-complex-input:
+    name: Test github-script with complex input
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Test SAFE pattern with complex PR body
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          # Realistic PR body that would break unsafe interpolation
+          PR_BODY: |
+            **What does this PR do?**
+            <!-- A brief description of the change being made with this pull request. -->
+            This PR introduces two new environment variables:
+            * `DD_TRACE_PARTIAL_FLUSH_ENABLED`: Enables or disables partial flushing (default: `false`).
+            * `DD_TRACE_PARTIAL_FLUSH_MIN_SPANS`: Sets the minimum number of spans.
+
+            **Code example:**
+            ```ruby
+            require 'datadog'
+            puts "Enabled: #{Datadog.configuration.tracing.partial_flush.enabled}"
+            puts "Threshold: #{Datadog.configuration.tracing.partial_flush.min_spans_threshold}"
+            ```
+
+            **Bash example:**
+            ```bash
+            export DD_TRACE_PARTIAL_FLUSH_ENABLED=true
+            export DD_TRACE_PARTIAL_FLUSH_MIN_SPANS=100
+            ```
+
+            Special chars: "quotes", 'apostrophes', `backticks`, $variables, \escapes, and ${interpolation}
+
+            Multi-line
+            content
+            with
+            newlines
+          PR_TITLE: 'Feat/make partial flush configurable with "env" var'
+          PR_AUTHOR: test-user
+          ISSUE_COMMENT: |
+            /mirror
+            This is a comment with 'quotes' and `backticks`.
+            ${{ secrets.SHOULD_NOT_EXPAND }}
+        with:
+          script: |
+            // ✅ SAFE: Reading from environment variables
+            const body = process.env.PR_BODY;
+            const title = process.env.PR_TITLE;
+            const author = process.env.PR_AUTHOR;
+            const comment = process.env.ISSUE_COMMENT;
+
+            // Verify content was passed correctly
+            core.info('Testing safe env: pattern...');
+
+            if (!body.includes('DD_TRACE_PARTIAL_FLUSH_ENABLED')) {
+              core.setFailed('PR body content not passed correctly');
+            }
+
+            if (!body.includes('```ruby')) {
+              core.setFailed('Code blocks not preserved');
+            }
+
+            if (!body.includes('"quotes"')) {
+              core.setFailed('Quotes not preserved');
+            }
+
+            if (!body.includes('`backticks`')) {
+              core.setFailed('Backticks not preserved');
+            }
+
+            if (!title.includes('"env"')) {
+              core.setFailed('Title quotes not preserved');
+            }
+
+            if (!comment.includes('/mirror')) {
+              core.setFailed('Comment not passed correctly');
+            }
+
+            // Verify special characters don't cause issues
+            const testString = [
+              'Line 1',
+              'Line 2',
+              body,
+              'Line 3'
+            ].join('\n');
+
+            core.info('✅ Successfully handled complex input with env: pattern');
+            core.info(`Body length: ${body.length} characters`);
+            core.info(`Title: ${title}`);
+            core.info(`Author: ${author}`);
+
+      - name: Verify validation script exists and is executable
+        run: |
+          if [ ! -x bin/validate-github-workflows ]; then
+            echo "❌ bin/validate-github-workflows not found or not executable"
+            exit 1
+          fi
+          echo "✅ Validation script exists and is executable"
+
+      - name: Test validation script detects issues
+        run: |
+          # Create a temporary workflow with unsafe interpolation
+          mkdir -p /tmp/test-workflows
+          cat > /tmp/test-workflows/unsafe.yml << 'EOF'
+          name: Unsafe Test
+          on: [push]
+          jobs:
+            test:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/github-script@v8
+                  with:
+                    script: |
+                      const body = '${{ github.event.issue.body }}';
+                      console.log(body);
+          EOF
+
+          # Test that validation catches it
+          if bin/validate-github-workflows 2>&1 | grep -q "Found unsafe interpolation"; then
+            echo "✅ Validation script correctly detected unsafe pattern"
+          else
+            echo "❌ Validation script failed to detect unsafe pattern"
+            exit 1
+          fi
+
+  test-bash-with-special-chars:
+    name: Test bash with special characters
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Test SAFE bash pattern with special characters
+        env:
+          USER_INPUT: |
+            Line with "quotes"
+            Line with 'apostrophes'
+            Line with `backticks`
+            Line with $variables
+            Line with $(command substitution)
+            Line with ${interpolation}
+        run: |
+          # ✅ SAFE: Variable is quoted
+          echo "User input (safe):"
+          echo "$USER_INPUT"
+
+          # Verify content
+          if echo "$USER_INPUT" | grep -q "quotes"; then
+            echo "✅ Quotes preserved"
+          else
+            echo "❌ Quotes not preserved"
+            exit 1
+          fi
+
+          if echo "$USER_INPUT" | grep -q "backticks"; then
+            echo "✅ Backticks preserved"
+          else
+            echo "❌ Backticks not preserved"
+            exit 1
+          fi
+
+          echo "✅ Successfully handled special characters in bash"
+
+  complete:
+    name: Test Workflow Security (complete)
+    needs:
+      - test-github-script-with-complex-input
+      - test-bash-with-special-chars
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "✅ All workflow security tests passed"
+          echo ""
+          echo "These tests verify that workflows can safely handle:"
+          echo "- Multi-line content"
+          echo "- Code blocks with backticks"
+          echo "- Quotes and apostrophes"
+          echo "- Special shell characters"
+          echo "- Variables and interpolation syntax"
+          echo ""
+          echo "Always use env: to pass user input to scripts!"
