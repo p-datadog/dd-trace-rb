@@ -40,4 +40,20 @@ If this change cannot be feasibly tested, please explain why,
 unless the change does not modify code (e.g. only modifies docs, comments).
 -->
 
+**For PRs that modify `.github/workflows/`:**
+<!--
+GitHub Actions workflows have elevated permissions and process user input,
+requiring extra security scrutiny. Complete this checklist:
+-->
+
+- [ ] No user input embedded directly in `script:` blocks (use `env:` instead)
+- [ ] Tested with realistic complex data (code blocks, quotes, newlines, special chars)
+- [ ] All validation passes: `yamllint`, `actionlint`, `bin/validate-github-workflows`
+- [ ] At least one successful test run (in CI or via `workflow_dispatch`)
+- [ ] Proper `permissions:` declarations (minimal required permissions only)
+- [ ] Actions pinned to specific SHA (not tags)
+- [ ] For `issue_comment` or `pull_request_target`: security review completed
+
+<!-- See CLAUDE.md GitHub Actions section and workflow-security-incident-report.md -->
+
 <!-- Unsure? Have a question? Request a review! -->
