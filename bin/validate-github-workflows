@@ -1,0 +1,143 @@
+#!/bin/bash
+# Validates GitHub Actions workflows for common security and syntax issues
+#
+# Checks for:
+# 1. Unsafe interpolation of user input in github-script actions
+# 2. User-controllable data embedded directly in script: blocks
+#
+# Usage: bin/validate-github-workflows
+
+set -euo pipefail
+
+WORKFLOWS_DIR=".github/workflows"
+EXIT_CODE=0
+
+echo "🔍 Validating GitHub Actions workflows..."
+echo
+
+# Check if workflows directory exists
+if [ ! -d "$WORKFLOWS_DIR" ]; then
+  echo "❌ Workflows directory not found: $WORKFLOWS_DIR"
+  exit 1
+fi
+
+# Check for unsafe interpolation in github-script actions
+echo "Checking for unsafe interpolation in github-script blocks..."
+
+# Known user-controllable inputs that should never be interpolated directly
+UNSAFE_PATTERNS=(
+  "github.event.comment.body"
+  "github.event.issue.title"
+  "github.event.issue.body"
+  "github.event.pull_request.title"
+  "github.event.pull_request.body"
+  "github.head_ref"
+  "needs.*.outputs.*"
+)
+
+# Find workflows using github-script
+GITHUB_SCRIPT_WORKFLOWS=$(grep -l "uses: actions/github-script" "$WORKFLOWS_DIR"/*.yml 2>/dev/null || true)
+
+if [ -z "$GITHUB_SCRIPT_WORKFLOWS" ]; then
+  echo "  ℹ️  No workflows using actions/github-script found"
+else
+  for workflow in $GITHUB_SCRIPT_WORKFLOWS; do
+    echo "  Checking $(basename "$workflow")..."
+
+    # Extract github-script steps and check for unsafe patterns
+    # This is a simple grep-based check; more sophisticated parsing would use yq
+
+    # Check if there's any ${{ }} interpolation in script: blocks
+    # We look for lines after "script:" that contain ${{ }}
+    if awk '
+      /uses: actions\/github-script/ { in_github_script=1; next }
+      in_github_script && /script:/ {
+        in_script=1
+        next
+      }
+      in_script && /^      [^ ]/ {
+        in_script=0
+        in_github_script=0
+      }
+      in_script && /\$\{\{.*\}\}/ {
+        print FILENAME ":" NR ":" $0
+        found=1
+      }
+      END { exit found ? 1 : 0 }
+    ' "$workflow"; then
+      # No violations found (awk exited 0)
+      :
+    else
+      # Violations found (awk exited 1)
+      echo
+      echo "    ❌ Found unsafe interpolation in $(basename "$workflow")"
+      echo "    User-controllable values must be passed via env:, not embedded in script:"
+      echo
+
+      # Show the problematic lines
+      awk '
+        /uses: actions\/github-script/ { in_github_script=1; line_start=NR }
+        in_github_script && /script:/ { in_script=1 }
+        in_script && /^      [^ ]/ { in_script=0; in_github_script=0 }
+        in_script && /\$\{\{.*\}\}/ {
+          print "    Line " NR ": " $0
+        }
+      ' "$workflow"
+
+      echo
+      echo "    Fix: Pass user-controllable values via env: instead"
+      echo "    Example:"
+      echo "      env:"
+      echo "        USER_INPUT: \${{ github.event.issue.body }}"
+      echo "      with:"
+      echo "        script: |"
+      echo "          const input = process.env.USER_INPUT;"
+      echo
+
+      EXIT_CODE=1
+    fi
+  done
+fi
+
+echo
+
+# Check for proper permissions declarations
+echo "Checking for proper permissions declarations..."
+
+for workflow in "$WORKFLOWS_DIR"/*.yml; do
+  if ! grep -q "^permissions:" "$workflow"; then
+    echo "  ⚠️  $(basename "$workflow"): No top-level permissions declaration"
+    echo "     Consider adding 'permissions: {}' at workflow level"
+  fi
+done
+
+echo
+
+# Check for proper variable quoting in bash steps
+echo "Checking for unquoted variables in bash steps..."
+
+for workflow in "$WORKFLOWS_DIR"/*.yml; do
+  # Look for common unquoted variable patterns in run: blocks
+  if grep -n "run:" "$workflow" | while IFS=: read -r line_num _; do
+    # Get the next 20 lines after each "run:"
+    sed -n "$((line_num + 1)),$((line_num + 20))p" "$workflow" | \
+      grep -E '\$[A-Z_]+[^"]|echo [^"]\$' | \
+      grep -v '^\s*#' | \
+      head -1
+  done | grep -q .; then
+    echo "  ⚠️  $(basename "$workflow"): Potentially unquoted variables in run: blocks"
+    echo "     Review bash steps to ensure variables are quoted: \"\$VAR\""
+  fi
+done
+
+echo
+
+if [ $EXIT_CODE -eq 0 ]; then
+  echo "✅ All workflow validations passed"
+else
+  echo "❌ Workflow validation failed"
+  echo
+  echo "See workflow-security-incident-report.md for details on why this matters"
+fi
+
+exit $EXIT_CODE
