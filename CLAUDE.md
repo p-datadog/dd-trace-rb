@@ -34,15 +34,51 @@ When creating or modifying workflows in `.github/workflows/`:
 
 ### Security
 
-- NEVER interpolate user input directly in `run:` blocks - use `env:` instead:
-  ```yaml
-  # BAD: run: echo "${{ github.event.comment.body }}"
-  # GOOD:
-  env:
-    COMMENT: ${{ github.event.comment.body }}
-  run: echo "$COMMENT"
-  ```
-- User-controllable inputs: `github.event.comment.body`, `github.event.issue.title`, `github.event.pull_request.title`, `github.head_ref`
+**CRITICAL: Never embed user input directly in scripts**
+
+This applies to BOTH `run:` blocks AND `actions/github-script`:
+
+```yaml
+# ❌ BAD - Will break with newlines/quotes/backticks and enables injection
+uses: actions/github-script@...
+with:
+  script: |
+    const body = '${{ github.event.issue.body }}';  // UNSAFE!
+    const title = '${{ needs.job.outputs.pr-title }}';  // UNSAFE!
+```
+
+```yaml
+# ✅ GOOD - Safe from injection and syntax errors
+uses: actions/github-script@...
+env:
+  ISSUE_BODY: ${{ github.event.issue.body }}
+  PR_TITLE: ${{ needs.job.outputs.pr-title }}
+with:
+  script: |
+    const body = process.env.ISSUE_BODY;
+    const title = process.env.PR_TITLE;
+```
+
+```yaml
+# ❌ BAD - Shell injection risk
+run: echo "${{ github.event.comment.body }}"
+```
+
+```yaml
+# ✅ GOOD - Safe
+env:
+  COMMENT: ${{ github.event.comment.body }}
+run: echo "$COMMENT"
+```
+
+**User-controllable inputs (NEVER interpolate directly):**
+- `github.event.comment.body`
+- `github.event.issue.title` / `github.event.issue.body`
+- `github.event.pull_request.title` / `github.event.pull_request.body`
+- `github.head_ref`
+- `needs.*.outputs.*` (if they contain user data)
+
+**Other security requirements:**
 - Pin actions to SHA: `uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`
 - Set `permissions: {}` at workflow level; explicit minimal permissions per job
 - Prefer `pull_request` over `pull_request_target`
@@ -56,10 +92,27 @@ When creating or modifying workflows in `.github/workflows/`:
 
 ### Validation
 
+Run these checks before committing workflow changes:
+
 ```bash
 yamllint --strict .github/workflows/your-workflow.yml
 actionlint .github/workflows/your-workflow.yml
+bin/validate-github-workflows  # Checks for security anti-patterns
 ```
+
+### Pre-Merge Checklist for Workflow Changes
+
+Before merging PRs that modify `.github/workflows/`:
+
+- [ ] No user input embedded directly in `script:` blocks (use `env:` instead)
+- [ ] Tested with realistic complex data (code blocks, quotes, newlines, special chars)
+- [ ] All validation passes: `yamllint`, `actionlint`, `bin/validate-github-workflows`
+- [ ] At least one successful test run in CI or via workflow_dispatch
+- [ ] Proper `permissions:` declarations (minimal required permissions)
+- [ ] Actions pinned to specific SHA (not tags)
+- [ ] For `issue_comment` or `pull_request_target`: security review completed
+
+See `workflow-security-incident-report.md` for why this matters.
 
 ## Code Changes
 
