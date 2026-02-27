@@ -157,6 +157,16 @@ jobs:
       - name: Run yamllint
         run: yamllint --strict .
 
+  validate-workflows:
+    name: validate-workflows
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Validate GitHub Actions workflows for security issues
+        run: bin/validate-github-workflows
+
   complete:
     name: Static Analysis (complete)
     needs:
@@ -167,6 +177,7 @@ jobs:
       - 'zizmor'
       - 'actionlint'
       - 'yaml-lint'
+      - 'validate-workflows'
     runs-on: ubuntu-24.04
     steps:
       - run: echo "Done"
