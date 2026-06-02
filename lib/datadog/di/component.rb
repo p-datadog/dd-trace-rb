@@ -65,10 +65,19 @@ module Datadog
         @telemetry = telemetry
         @code_tracker = code_tracker
         @redactor = Redactor.new(settings)
+        # Process-wide rate limiter (RFC: global rate limit).
+        @global_rate_limiter = Datadog::Core::TokenBucket.new(
+          settings.dynamic_instrumentation.global_rate_limit
+        )
+        # Atomic flag for the remote-config kill switch (RFC: kill switch).
+        # Initially nil (meaning "no RC opinion yet"); flipped to true/false
+        # when the RC dispatcher applies APM_TRACING lib_config.
+        @rc_enabled = nil
+        @rc_enabled_mutex = Mutex.new
         @serializer = Serializer.new(settings, redactor, telemetry: telemetry)
         @instrumenter = Instrumenter.new(settings, serializer, logger, code_tracker: code_tracker, telemetry: telemetry)
         @probe_repository = ProbeRepository.new
-        @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer)
+        @probe_notification_builder = ProbeNotificationBuilder.new(settings, serializer, telemetry: telemetry)
         @probe_notifier_worker = ProbeNotifierWorker.new(
           settings, logger,
           agent_settings: agent_settings,
@@ -80,7 +89,9 @@ module Datadog
           settings, instrumenter, probe_notification_builder, probe_notifier_worker, logger, probe_repository,
           telemetry: telemetry,
         )
+        @instrumenter.component = self
         probe_notifier_worker.start
+        report_initial_runtime_state
       end
 
       attr_reader :settings
@@ -91,6 +102,43 @@ module Datadog
       attr_reader :instrumenter
       attr_reader :probe_repository
       attr_reader :probe_notifier_worker
+      attr_reader :global_rate_limiter
+
+      # Applies the remote-config kill switch.
+      # +flag+ is the value of lib_config["dynamic_instrumentation_enabled"]:
+      #   - true  -> RC explicitly enables
+      #   - false -> RC explicitly disables
+      #   - nil   -> RC removed the override (revert to local config)
+      def apply_rc_enabled(flag)
+        changed = false
+        @rc_enabled_mutex.synchronize do
+          changed = flag != @rc_enabled
+          @rc_enabled = flag
+        end
+        report_runtime_state if changed
+      end
+
+      # Effective enabled state: local config AND not RC-disabled.
+      def effective_enabled?
+        return false unless settings.dynamic_instrumentation.enabled
+        @rc_enabled_mutex.synchronize do
+          @rc_enabled != false
+        end
+      end
+
+      # Reason for the current effective state. Matches the RFC's
+      # `debugger.di.enabled_reason` enum values.
+      def enabled_reason
+        unless settings.dynamic_instrumentation.enabled
+          return 'localConfigDisabled'
+        end
+        @rc_enabled_mutex.synchronize do
+          case @rc_enabled
+          when false then 'remoteConfigDisabled'
+          else 'enabled'
+          end
+        end
+      end
       attr_reader :probe_notification_builder
       attr_reader :probe_manager
       attr_reader :redactor
@@ -132,6 +180,54 @@ module Datadog
         payload = probe_notification_builder.build_received(probe)
         probe_notifier_worker.add_status(payload, probe: probe)
         probe
+      end
+
+      # Emits the `probes.count` gauge for the current state of the
+      # probe repository. Should be called from the probe-notifier worker
+      # on its flush cadence.
+      def emit_probes_count_gauge
+        return unless telemetry
+
+        # Aggregate by (event_type, probe_status).
+        counts = Hash.new(0)
+        probe_repository.each_installed do |probe|
+          status = probe.enabled? ? Metrics::ProbeStatus::EMITTING : Metrics::ProbeStatus::BLOCKED
+          counts[[Metrics.event_type_for_probe(probe), status]] += 1
+        end
+        probe_repository.each_pending do |probe|
+          counts[[Metrics.event_type_for_probe(probe), Metrics::ProbeStatus::RECEIVED]] += 1
+        end
+        counts.each do |(event_type, status), count|
+          Metrics.emit_probes_count(telemetry, count,
+            event_type: event_type, probe_status: status)
+        end
+      end
+
+      private
+
+      def report_initial_runtime_state
+        report_runtime_state
+      end
+
+      # Emits runtime telemetry mirroring the RFC's
+      # `debugger.di.enabled` / `debugger.di.enabled_reason`.
+      #
+      # The RFC requires that these be reported at startup AND on RC
+      # changes. dd-trace-rb's `client_configuration_change!` is the
+      # closest existing primitive (a one-shot AppClientConfigurationChange
+      # event) so we reuse it.
+      def report_runtime_state
+        return unless telemetry&.respond_to?(:client_configuration_change!)
+
+        begin
+          telemetry.client_configuration_change!([
+            { name: 'debugger.di.enabled', value: effective_enabled? },
+            { name: 'debugger.di.enabled_reason', value: enabled_reason },
+          ])
+        rescue => exc
+          raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
+          logger&.debug { "di: failed to emit runtime state telemetry: #{exc.class}: #{exc.message}" }
+        end
       end
     end
   end

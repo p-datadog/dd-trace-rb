@@ -250,6 +250,8 @@ module Datadog
               original_size = value.bytesize
               if original_size > max
                 serialized.update(truncated: true, size: original_size)
+                Metrics.emit_capture_incomplete(telemetry,
+                  reason: Metrics::IncompleteReason::STRING_LIMIT)
                 value = value.byteslice(0...max)
               end
               value = escape_binary_string(value) # steep:ignore ArgumentTypeMismatch
@@ -258,6 +260,8 @@ module Datadog
               # Truncate non-binary strings
               if value.length > max
                 serialized.update(truncated: true, size: value.length)
+                Metrics.emit_capture_incomplete(telemetry,
+                  reason: Metrics::IncompleteReason::STRING_LIMIT)
                 value = value[0...max]
                 need_dup = false
               end
@@ -269,11 +273,15 @@ module Datadog
           when Array
             if depth <= 0
               serialized.update(notCapturedReason: "depth")
+              Metrics.emit_capture_incomplete(telemetry,
+                reason: Metrics::IncompleteReason::DEPTH_LIMIT)
             else
               collection_size ||= settings.dynamic_instrumentation.max_capture_collection_size
               max = collection_size
               if max != 0 && value.length > max
                 serialized.update(notCapturedReason: "collectionSize", size: value.length)
+                Metrics.emit_capture_incomplete(telemetry,
+                  reason: Metrics::IncompleteReason::COLLECTION_LIMIT)
                 # same steep failure with array slices.
                 # https://github.com/soutaro/steep/issues/1219
                 value = value[0...max] || []
@@ -286,6 +294,8 @@ module Datadog
           when Hash
             if depth <= 0
               serialized.update(notCapturedReason: "depth")
+              Metrics.emit_capture_incomplete(telemetry,
+                reason: Metrics::IncompleteReason::DEPTH_LIMIT)
             else
               collection_size ||= settings.dynamic_instrumentation.max_capture_collection_size
               max = collection_size
@@ -294,6 +304,8 @@ module Datadog
               value.each do |k, v|
                 if max != 0 && cur >= max
                   serialized.update(notCapturedReason: "collectionSize", size: value.length)
+                  Metrics.emit_capture_incomplete(telemetry,
+                    reason: Metrics::IncompleteReason::COLLECTION_LIMIT)
                   break
                 end
                 cur += 1
@@ -305,6 +317,8 @@ module Datadog
           else
             if depth <= 0
               serialized.update(notCapturedReason: "depth")
+              Metrics.emit_capture_incomplete(telemetry,
+                reason: Metrics::IncompleteReason::DEPTH_LIMIT)
             else
               fields = {}
               cur = 0
@@ -334,6 +348,8 @@ module Datadog
               ivars.each do |ivar|
                 if cur >= attribute_count
                   serialized.update(notCapturedReason: "fieldCount", fields: fields)
+                  Metrics.emit_capture_incomplete(telemetry,
+                    reason: Metrics::IncompleteReason::FIELD_LIMIT)
                   break
                 end
                 cur += 1
@@ -354,6 +370,8 @@ module Datadog
           # exhaustion from large objects) and should return a safe structure
           # rather than propagating to the transport layer.
           telemetry&.report(exc, description: "Error serializing")
+          Metrics.emit_capture_incomplete(telemetry,
+            reason: Metrics::IncompleteReason::RUNTIME_ERROR)
           {type: class_name(cls), notSerializedReason: exc.to_s}
         end
       end

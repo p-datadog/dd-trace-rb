@@ -264,6 +264,20 @@ module Datadog
           payload = probe_notification_builder.build_condition_evaluation_failed(context, expr, exc)
           probe_notifier_worker.add_snapshot(payload)
         end
+
+        # RFC: emit BLOCKED status when the evaluation-error throttle
+        # engages. Sent at most once per probe per throttle engagement;
+        # cleared when a subsequent successful evaluation calls
+        # `reset_evaluation_error_count`.
+        threshold = settings.dynamic_instrumentation.evaluation_error_threshold
+        if probe.evaluation_error_throttled?(threshold) && !probe.blocked_notified?
+          payload = probe_notification_builder.build_blocked(
+            probe,
+            "Probe #{probe.id} blocked: evaluation-error throttle engaged after #{probe.evaluation_error_count} consecutive failures"
+          )
+          probe_notifier_worker.add_status(payload, probe: probe)
+          probe.blocked_notified = true
+        end
       end
 
       # Callback invoked when a probe is disabled, for example due to

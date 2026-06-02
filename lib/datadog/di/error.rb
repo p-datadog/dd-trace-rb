@@ -82,6 +82,12 @@ module Datadog
       # expressions.
       class ExpressionEvaluationError < Error
       end
+
+      # Raised when condition or template evaluation exceeded the configured
+      # `evaluation_timeout_ms` budget. Note: Ruby cannot preempt evaluation,
+      # so this is raised AFTER the slow evaluation completes.
+      class EvaluationTimedOut < Error
+      end
     end
   end
 end

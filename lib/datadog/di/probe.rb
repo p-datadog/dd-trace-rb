@@ -268,6 +268,44 @@ module Datadog
       def disable!
         @enabled = false
       end
+
+      # Per-probe evaluation-error throttle state (RFC: evaluation-error
+      # throttling). Counts consecutive evaluation failures; a successful
+      # evaluation resets the counter.
+      #
+      # Threshold lives in settings (debugger.evaluation_error_threshold);
+      # the probe just tracks how many failures have happened in a row.
+      def evaluation_error_count
+        @evaluation_error_count ||= 0
+      end
+
+      def increment_evaluation_error_count
+        @evaluation_error_count = evaluation_error_count + 1
+      end
+
+      def reset_evaluation_error_count
+        @evaluation_error_count = 0
+        # When the throttle clears, re-arm the BLOCKED notification so a
+        # subsequent re-engagement gets its own status event.
+        @blocked_notified = false
+      end
+
+      # True when the probe has been throttled by accumulated evaluation
+      # errors and is currently suppressing events.
+      def evaluation_error_throttled?(threshold)
+        threshold > 0 && evaluation_error_count >= threshold
+      end
+
+      # "Blocked" status (RFC `probe_status: blocked`). Distinct from
+      # `disable!`, which permanently retires a probe. A probe is
+      # "blocked" when it is currently suppressing events but may
+      # resume — e.g. evaluation-error throttle engaged, kill switch on,
+      # or rate-limit pressure (latter not reflected here, see notes).
+      def blocked_notified?
+        !!@blocked_notified
+      end
+
+      attr_writer :blocked_notified
     end
   end
 end

@@ -92,6 +92,7 @@ module Datadog
 
             begin
               more = maybe_send
+              emit_probes_gauge_if_due
             rescue => exc
               raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions
 
@@ -101,7 +102,10 @@ module Datadog
             @lock.synchronize do
               @wake_scheduled = more
             end
-            wake.wait(more ? min_send_interval : nil)
+            # RFC: adaptive flushing under queue pressure. When the queue is
+            # more than half full, shorten the wait proportionally so the
+            # worker flushes faster as pressure rises.
+            wake.wait(more ? adaptive_send_interval : nil)
           end
         end
         @pid = Process.pid
@@ -176,6 +180,41 @@ module Datadog
       # Convenience method to keep line length reasonable in the rest of the file.
       def min_send_interval
         settings.dynamic_instrumentation.internal.min_send_interval
+      end
+
+      # Adaptive send interval. Returns a shorter interval when the queue
+      # is filling up so the worker drains faster under pressure.
+      #
+      #   pressure = max(snapshot, status) queue length / capacity
+      #   interval = min_send_interval * max(1 - pressure, 0.1)
+      #
+      # Below 50% pressure the interval is unchanged; above that it scales
+      # linearly down to 10% of the configured interval at full pressure.
+      def adaptive_send_interval
+        base = min_send_interval
+        capacity = settings.dynamic_instrumentation.internal.snapshot_queue_capacity
+        return base if capacity <= 0
+
+        max_len = @lock.synchronize { [@snapshot_queue.length, @status_queue.length].max }
+        pressure = max_len.to_f / capacity
+        return base if pressure < 0.5
+
+        factor = [1.0 - pressure, 0.1].max
+        base * factor
+      end
+
+      # RFC: probes.count gauge. Emitted on a slower cadence than
+      # event metrics so we don't republish per flush.
+      PROBES_GAUGE_INTERVAL_S = 10
+
+      def emit_probes_gauge_if_due
+        now = Core::Utils::Time.get_time
+        @last_probes_gauge ||= 0
+        return if (now - @last_probes_gauge) < PROBES_GAUGE_INTERVAL_S
+
+        @last_probes_gauge = now
+        component = DI.component
+        component&.emit_probes_count_gauge
       end
 
       # This method should be called while @lock is held.
@@ -257,9 +296,11 @@ module Datadog
         # if it has been more than 1 second since the last send of the same
         # event type.
         define_method("add_#{event_type}") do |event, probe: nil|
+          dropped = false
           @lock.synchronize do
             queue = send("#{event_type}_queue")
             if queue.length > settings.dynamic_instrumentation.internal.snapshot_queue_capacity
+              dropped = true
               if event_type == :status && probe
                 status = event.dig(:debugger, :diagnostics, :status)
                 logger.debug { "di: dropping status for #{probe.type} probe at #{probe.location} (#{probe.id}): #{status} because queue is full" }
@@ -275,6 +316,14 @@ module Datadog
               end
               queue << event
             end
+          end
+
+          if dropped
+            tag_event_type = (event_type == :snapshot) ? DI::Metrics::EventType::SNAPSHOT : DI::Metrics::EventType::DIAGNOSTIC
+            DI::Metrics.emit_dropped(telemetry,
+              reason: DI::Metrics::DropReason::QUEUE_FULL,
+              probe: probe,
+              event_type: tag_event_type)
           end
 
           # Figure out whether to wake up the worker thread.

@@ -172,7 +172,7 @@ RSpec.describe Datadog::DI::Transport::Input::Transport do
           expect(chunked_payload.length).to be < 1_000
           expect(chunked_payload.length).to be > 100
         end
-        expect_lazy_log(logger, :debug, 'di: dropping too big snapshot')
+        expect_lazy_log(logger, :debug, /\Adi: dropping too big snapshot/)
         transport.send_input(snapshots, tags, on_serialization_error: noop_serialization_error_handler)
       end
     end

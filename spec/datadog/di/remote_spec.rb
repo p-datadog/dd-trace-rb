@@ -15,24 +15,23 @@ RSpec.describe Datadog::DI::Remote do
     Datadog::DI.deactivate_tracking!
   end
 
-  it 'declares the LIVE_DEBUGGING product' do
-    expect(remote.products).to contain_exactly('LIVE_DEBUGGING')
+  it 'declares the LIVE_DEBUGGING and APM_TRACING products' do
+    # RFC "Debugger Observability for GA": APM_TRACING product added for
+    # the RC kill switch (`lib_config["dynamic_instrumentation_enabled"]`).
+    expect(remote.products).to contain_exactly('LIVE_DEBUGGING', 'APM_TRACING')
   end
 
-  it 'declares no capabilities' do
-    expect(remote.capabilities).to eq []
+  it 'declares the APM_TRACING DI capability' do
+    expect(remote.capabilities).to eq([1 << 38])
   end
 
-  it 'declares matches that match APM_TRACING' do
+  it 'has a receiver that matches the LIVE_DEBUGGING path' do
     telemetry = instance_double(Datadog::Core::Telemetry::Component)
 
-    expect(remote.receivers(telemetry)).to all(
-      match(
-        lambda do |receiver|
-          receiver.match? Datadog::Core::Remote::Configuration::Path.parse(path)
-        end
-      )
-    )
+    matchers = remote.receivers(telemetry).select do |receiver|
+      receiver.match? Datadog::Core::Remote::Configuration::Path.parse(path)
+    end
+    expect(matchers).not_to be_empty
   end
 
   describe '.receivers' do
@@ -40,8 +39,11 @@ RSpec.describe Datadog::DI::Remote do
 
     it 'returns receivers' do
       receivers = described_class.receivers(telemetry)
-      expect(receivers.size).to eq(1)
-      expect(receivers.first).to be_a(Datadog::Core::Remote::Dispatcher::Receiver)
+      # One for LIVE_DEBUGGING (probes) plus one for APM_TRACING (kill switch).
+      expect(receivers.size).to eq(2)
+      receivers.each do |r|
+        expect(r).to be_a(Datadog::Core::Remote::Dispatcher::Receiver)
+      end
     end
 
     describe 'receiver logic' do

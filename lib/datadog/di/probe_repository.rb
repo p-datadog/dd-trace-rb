@@ -169,6 +169,20 @@ module Datadog
         end
       end
 
+      # Iterates over a snapshot of installed probes without holding the
+      # lock during the block.
+      def each_installed
+        snapshot = @lock.synchronize { @installed_probes.values }
+        snapshot.each { |probe| yield probe }
+      end
+
+      # Iterates over a snapshot of pending probes without holding the
+      # lock during the block.
+      def each_pending
+        snapshot = @lock.synchronize { @pending_probes.values }
+        snapshot.each { |probe| yield probe }
+      end
+
       # Clears all probes from all collections.
       #
       # If a block is given, yields each installed probe after clearing

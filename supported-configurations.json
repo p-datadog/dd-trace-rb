@@ -278,11 +278,39 @@
         "default": "false"
       }
     ],
+    "DD_DYNAMIC_INSTRUMENTATION_EVALUATION_ERROR_THRESHOLD": [
+      {
+        "version": "A",
+        "type": "int",
+        "default": "100"
+      }
+    ],
+    "DD_DYNAMIC_INSTRUMENTATION_EVALUATION_TIMEOUT": [
+      {
+        "version": "A",
+        "type": "int",
+        "default": "200"
+      }
+    ],
+    "DD_DYNAMIC_INSTRUMENTATION_GLOBAL_RATE_LIMIT": [
+      {
+        "version": "A",
+        "type": "int",
+        "default": "5000"
+      }
+    ],
     "DD_DYNAMIC_INSTRUMENTATION_MAX_TIME_TO_SERIALIZE": [
       {
         "version": "A",
         "type": "int",
         "default": "200"
+      }
+    ],
+    "DD_DYNAMIC_INSTRUMENTATION_SNAPSHOT_MAX_BYTES": [
+      {
+        "version": "A",
+        "type": "int",
+        "default": "1048576"
       }
     ],
     "DD_DYNAMIC_INSTRUMENTATION_PROBE_FILE": [

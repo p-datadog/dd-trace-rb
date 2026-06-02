@@ -14,18 +14,61 @@ module Datadog
     module Remote
       class << self
         PRODUCT = 'LIVE_DEBUGGING'
+        APM_TRACING_PRODUCT = 'APM_TRACING'
+
+        # Capability bit advertising support for the remote-config
+        # `dynamic_instrumentation_enabled` kill switch. Matches the
+        # bit assigned in dd-trace-py and other tracers
+        # (APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION = 1 << 38).
+        APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION = 1 << 38
 
         def products
           # TODO: do not send our product on unsupported runtimes
           # (Ruby 2.5 / JRuby)
-          [PRODUCT]
+          [PRODUCT, APM_TRACING_PRODUCT]
         end
 
         def capabilities
-          []
+          [APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION]
         end
 
         def receivers(telemetry)
+          live_debugging_receiver(telemetry) + apm_tracing_receiver(telemetry)
+        end
+
+        # Handles APM_TRACING lib_config (RFC kill switch).
+        def apm_tracing_receiver(_telemetry)
+          matcher = Core::Remote::Dispatcher::Matcher::Product.new([APM_TRACING_PRODUCT])
+          rcv = Core::Remote::Dispatcher::Receiver.new(matcher) do |_repository, changes|
+            component = DI.component
+            next unless component
+
+            # The RFC field is lib_config["dynamic_instrumentation_enabled"].
+            # If multiple APM_TRACING configs arrive, the last one wins.
+            flag = nil
+            saw_any = false
+            changes.each do |change|
+              next if change.type == :delete
+              data = change.content&.data
+              next unless data
+              begin
+                parsed = JSON.parse(data)
+                lib_config = parsed['lib_config'] || {}
+                if lib_config.key?('dynamic_instrumentation_enabled')
+                  flag = lib_config['dynamic_instrumentation_enabled']
+                  saw_any = true
+                end
+              rescue => exc
+                component.logger.debug { "di: failed to parse APM_TRACING payload: #{exc.class}: #{exc.message}" }
+              end
+            end
+            # If we saw no DI-specific override, treat as "no opinion".
+            component.apply_rc_enabled(saw_any ? flag : nil)
+          end
+          [rcv]
+        end
+
+        def live_debugging_receiver(telemetry)
           receiver do |repository, changes|
             # DEV: Filter our by product. Given it will be very common
             # DEV: we can filter this out before we receive the data in this method.

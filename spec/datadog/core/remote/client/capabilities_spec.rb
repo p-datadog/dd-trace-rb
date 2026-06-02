@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'base64'
 require 'spec_helper'
 require 'datadog/core/remote/client/capabilities'
 require 'datadog/appsec/configuration'
@@ -141,8 +142,13 @@ RSpec.describe Datadog::Core::Remote::Client::Capabilities do
       end
 
       describe '#base64_capabilities' do
-        # DI does not contain any additional capabilities at this time
-        include_examples 'matches tracing capabilities only'
+        # RFC "Debugger Observability for GA": DI now advertises
+        # APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION (bit 38) for the RC
+        # kill switch, so the encoded capabilities differ from tracing-only.
+        it 'includes the DI kill-switch capability' do
+          decoded = Base64.decode64(capabilities.base64_capabilities).unpack1('H*').to_i(16)
+          expect(decoded & (1 << 38)).not_to eq(0)
+        end
       end
     end
   end

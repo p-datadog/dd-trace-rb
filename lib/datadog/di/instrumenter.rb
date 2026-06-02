@@ -81,6 +81,50 @@ module Datadog
       attr_reader :logger
       attr_reader :telemetry
       attr_reader :code_tracker
+      # Back-reference to the DI component (set during component init).
+      # Used to consult the global rate limiter and the kill-switch state.
+      attr_accessor :component
+
+      # Evaluates +block+ with a wall-time deadline of
+      # `evaluation_timeout_ms`. Records the duration as
+      # `evaluation.duration` and returns the block result.
+      #
+      # If the block raises Datadog::DI::Error::EvaluationTimedOut, the
+      # caller is responsible for skipping the event (emit
+      # `events.skipped{evaluationTimeout}`).
+      #
+      # Note: Ruby has no portable preemption mechanism; we cannot abort
+      # mid-evaluation. The deadline is checked AFTER the block runs.
+      # See the unresolved-issues report for the implications.
+      def time_evaluation(probe, kind)
+        start_ns = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
+        result = yield
+        elapsed_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond) - start_ns) / 1_000_000.0
+        Metrics.emit_evaluation_duration_ms(telemetry, elapsed_ms,
+          event_type: Metrics.event_type_for_probe(probe),
+          evaluation_kind: kind)
+        budget_ms = settings.dynamic_instrumentation.evaluation_timeout_ms
+        if budget_ms > 0 && elapsed_ms > budget_ms
+          raise DI::Error::EvaluationTimedOut.new(
+            "evaluation exceeded budget: #{elapsed_ms}ms > #{budget_ms}ms"
+          )
+        end
+        result
+      end
+
+      # Consults the kill-switch and global rate limiter.
+      # Returns nil if the event should proceed, or a skip-reason string
+      # (Metrics::SkipReason::*) if the event must be skipped.
+      def check_global_skip(probe)
+        c = component
+        if c && !c.effective_enabled?
+          return Metrics::SkipReason::KILL_SWITCH
+        end
+        if c && !c.global_rate_limiter.allow?
+          return Metrics::SkipReason::RATE_LIMIT_GLOBAL
+        end
+        nil
+      end
 
       # This is a substitute for Thread::Backtrace::Location
       # which does not have a public constructor.
@@ -126,7 +170,24 @@ module Datadog
             di_start_time = Process.clock_gettime(Process::CLOCK_THREAD_CPUTIME_ID)
 
             if continue = probe.enabled?
-              if condition = probe.condition
+              # Kill switch + global rate limit (RFC).
+              skip_reason = instrumenter.check_global_skip(probe)
+              if skip_reason
+                DI::Metrics.emit_skipped(instrumenter.telemetry, reason: skip_reason, probe: probe)
+                continue = false
+              end
+
+              # Evaluation-error throttle: short-circuit if the probe is
+              # currently throttled by accumulated evaluation failures.
+              threshold = settings.dynamic_instrumentation.evaluation_error_threshold
+              if continue && probe.evaluation_error_throttled?(threshold)
+                DI::Metrics.emit_skipped(instrumenter.telemetry,
+                  reason: DI::Metrics::SkipReason::EVALUATION_ERROR_THROTTLED,
+                  probe: probe)
+                continue = false
+              end
+
+              if continue && (condition = probe.condition)
                 begin
                   # This context will be recreated later, unlike for line probes.
                   #
@@ -137,13 +198,27 @@ module Datadog
                     target_self: self,
                     probe: probe, settings: settings, serializer: serializer,
                   )
-                  continue = condition.satisfied?(context)
+                  continue = instrumenter.time_evaluation(probe, DI::Metrics::EvaluationKind::CONDITION) do
+                    condition.satisfied?(context)
+                  end
+                  probe.reset_evaluation_error_count
+                rescue DI::Error::EvaluationTimedOut => exc
+                  DI::Metrics.emit_skipped(instrumenter.telemetry,
+                    reason: DI::Metrics::SkipReason::EVALUATION_TIMEOUT,
+                    probe: probe)
+                  instrumenter.logger.debug { "di: condition evaluation timed out: #{exc.message}" }
+                  continue = false
                 rescue => exc
                   # Evaluation error exception can be raised for "expected"
                   # errors, we probably need another setting to control whether
                   # these exceptions are propagated.
                   raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions &&
                     !exc.is_a?(DI::Error::ExpressionEvaluationError)
+
+                  DI::Metrics.emit_evaluation_error(instrumenter.telemetry,
+                    probe: probe,
+                    evaluation_kind: DI::Metrics::EvaluationKind::CONDITION)
+                  probe.increment_evaluation_error_count
 
                   if context
                     # We want to report evaluation errors for conditions
@@ -173,7 +248,14 @@ module Datadog
               end
             end
 
-            if continue and rate_limiter.nil? || rate_limiter.allow?
+            if continue && rate_limiter && !rate_limiter.allow?
+              DI::Metrics.emit_skipped(instrumenter.telemetry,
+                reason: DI::Metrics::SkipReason::RATE_LIMIT_PROBE,
+                probe: probe)
+              continue = false
+            end
+
+            if continue
               # Arguments may be mutated by the method, therefore
               # they need to be serialized prior to method invocation.
               serialized_entry_args = if probe.capture_snapshot?
@@ -524,16 +606,46 @@ module Datadog
           end
         end
 
+        # Kill switch + global rate limit (RFC).
+        if (skip_reason = check_global_skip(probe))
+          DI::Metrics.emit_skipped(telemetry, reason: skip_reason, probe: probe)
+          return
+        end
+
+        # Evaluation-error throttle (RFC).
+        threshold = settings.dynamic_instrumentation.evaluation_error_threshold
+        if probe.evaluation_error_throttled?(threshold)
+          DI::Metrics.emit_skipped(telemetry,
+            reason: DI::Metrics::SkipReason::EVALUATION_ERROR_THROTTLED,
+            probe: probe)
+          return
+        end
+
         if condition = probe.condition
           begin
             context = build_trace_point_context(probe, tp)
-            return unless condition.satisfied?(context)
+            satisfied = time_evaluation(probe, DI::Metrics::EvaluationKind::CONDITION) do
+              condition.satisfied?(context)
+            end
+            probe.reset_evaluation_error_count
+            return unless satisfied
+          rescue DI::Error::EvaluationTimedOut => exc
+            DI::Metrics.emit_skipped(telemetry,
+              reason: DI::Metrics::SkipReason::EVALUATION_TIMEOUT,
+              probe: probe)
+            logger.debug { "di: condition evaluation timed out: #{exc.message}" }
+            return
           rescue => exc
             # Evaluation error exception can be raised for "expected"
             # errors, we probably need another setting to control whether
             # these exceptions are propagated.
             raise if settings.dynamic_instrumentation.internal.propagate_all_exceptions &&
               !exc.is_a?(DI::Error::ExpressionEvaluationError)
+
+            DI::Metrics.emit_evaluation_error(telemetry,
+              probe: probe,
+              evaluation_kind: DI::Metrics::EvaluationKind::CONDITION)
+            probe.increment_evaluation_error_count
 
             if context
               # We want to report evaluation errors for conditions
@@ -564,7 +676,12 @@ module Datadog
 
         # In practice we should always have a rate limiter, but be safe
         # and check that it is in fact set.
-        return if probe.rate_limiter && !probe.rate_limiter.allow?
+        if probe.rate_limiter && !probe.rate_limiter.allow?
+          DI::Metrics.emit_skipped(telemetry,
+            reason: DI::Metrics::SkipReason::RATE_LIMIT_PROBE,
+            probe: probe)
+          return
+        end
 
         # The context creation is relatively expensive and we don't
         # want to run it if the callback won't be executed due to the

@@ -135,19 +135,70 @@ module Datadog
               end
 
               # Time budget (in milliseconds) for serialization work during
-              # probe fires. Today applied only to capture-expression
-              # evaluation; once the budget is exhausted, remaining capture
-              # expressions emit a stub entry with
+              # probe fires. Applied to both capture-expression
+              # evaluation and snapshot serialization; once the budget is
+              # exhausted, remaining values emit a stub entry with
               # `notCapturedReason: "timeout"` in the snapshot.
               #
+              # Telemetry name: `debugger.capture_timeout_ms`.
               # The env var is shared with .NET's whole-snapshot
               # serialization budget. Default (200 ms) matches Python's
               # hardcoded `CAPTURE_TIME_BUDGET` and .NET's
               # `DefaultMaxSerializationTimeInMilliseconds`.
-              option :max_time_to_serialize_ms do |o|
+              option :capture_timeout_ms do |o|
                 o.type :int
                 o.default 200
                 o.env 'DD_DYNAMIC_INSTRUMENTATION_MAX_TIME_TO_SERIALIZE'
+              end
+
+              # Wall-time budget (in milliseconds) for a single condition or
+              # template evaluation. When the budget is exhausted mid-evaluation
+              # the offending evaluation is aborted, the corresponding event is
+              # skipped (`events.skipped{evaluationTimeout}`), and a runtime
+              # diagnostic is emitted.
+              #
+              # Telemetry name: `debugger.evaluation_timeout_ms`.
+              option :evaluation_timeout_ms do |o|
+                o.type :int
+                o.default 200
+                o.env 'DD_DYNAMIC_INSTRUMENTATION_EVALUATION_TIMEOUT'
+              end
+
+              # Maximum serialized snapshot size, in bytes. Snapshots larger
+              # than this cap are dropped before transport and counted as
+              # `events.dropped{payloadTooLarge}`. The agent's per-payload
+              # limit is 1 MiB; the default matches that ceiling.
+              #
+              # Telemetry name: `debugger.snapshot_max_bytes`.
+              option :snapshot_max_bytes do |o|
+                o.type :int
+                o.default 1024 * 1024
+                o.env 'DD_DYNAMIC_INSTRUMENTATION_SNAPSHOT_MAX_BYTES'
+              end
+
+              # Process-wide rate limit, in events per second, applied across
+              # all probes. Defaults to 5000/sec which matches the per-probe
+              # default for log probes. Set to a negative number to disable
+              # the global limit, 0 to never allow.
+              #
+              # Telemetry name: `debugger.global_rate_limit`.
+              option :global_rate_limit do |o|
+                o.type :int
+                o.default 5000
+                o.env 'DD_DYNAMIC_INSTRUMENTATION_GLOBAL_RATE_LIMIT'
+              end
+
+              # Per-probe evaluation-error throttle threshold. When a probe's
+              # condition/template evaluation has failed this many times in a
+              # row, subsequent fires are skipped
+              # (`events.skipped{evaluationErrorThrottled}`) until a
+              # successful evaluation clears the counter.
+              #
+              # Telemetry name: `debugger.evaluation_error_threshold`.
+              option :evaluation_error_threshold do |o|
+                o.type :int
+                o.default 100
+                o.env 'DD_DYNAMIC_INSTRUMENTATION_EVALUATION_ERROR_THRESHOLD'
               end
 
               # Settings in the 'internal' group are for internal Datadog

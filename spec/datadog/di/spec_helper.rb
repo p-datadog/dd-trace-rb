@@ -149,6 +149,13 @@ module DIHelpers
         double('di settings').tap do |settings|
           allow(settings).to receive(:internal).and_return(di_internal_settings)
           allow(settings).to receive(:redaction_excluded_identifiers).and_return([])
+          # Defaults for RFC "Debugger Observability for GA" settings. Tests
+          # that exercise these specifically should override per-example.
+          allow(settings).to receive(:capture_timeout_ms).and_return(200)
+          allow(settings).to receive(:evaluation_timeout_ms).and_return(200)
+          allow(settings).to receive(:evaluation_error_threshold).and_return(100)
+          allow(settings).to receive(:global_rate_limit).and_return(5000)
+          allow(settings).to receive(:snapshot_max_bytes).and_return(1024 * 1024)
         end
       end
 

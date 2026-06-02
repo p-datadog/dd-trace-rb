@@ -31,8 +31,13 @@ module Datadog
             @telemetry = telemetry
           end
 
-          # The limit on an individual snapshot payload, aka "log line",
-          # is 1 MB.
+          # Hard ceiling on serialized snapshot size. The agent's per-payload
+          # limit is 1 MiB; this value is what the input transport falls back
+          # to when `settings.dynamic_instrumentation.snapshot_max_bytes` is
+          # not lower.
+          #
+          # The configured value (the RFC's `debugger.snapshot_max_bytes`) is
+          # consulted on each send so it tracks RC and runtime config changes.
           #
           # TODO There is an RFC for snapshot pruning that should be
           # implemented to reduce the size of snapshots to be below this
@@ -68,12 +73,40 @@ module Datadog
           def send_input(payload, tags, on_serialization_error:)
             serialized_tags = Core::TagBuilder.serialize_tags(tags)
 
+            # Resolve the configured cap once per send.
+            configured_cap = begin
+              Datadog.configuration.dynamic_instrumentation.snapshot_max_bytes
+            rescue
+              MAX_SERIALIZED_SNAPSHOT_SIZE
+            end
+            cap = [configured_cap, MAX_SERIALIZED_SNAPSHOT_SIZE].min
+
             # Serialize each snapshot individually to isolate failures
             encoded_snapshots = []
             payload.each do |snapshot|
               encoded = encoder.encode(snapshot)
-              if encoded.length > MAX_SERIALIZED_SNAPSHOT_SIZE
-                logger.debug { "di: dropping too big snapshot" }
+              if encoded.length > cap
+                logger.debug { "di: dropping too big snapshot (#{encoded.length} > #{cap} bytes)" }
+                probe_id = snapshot.dig(:debugger, :snapshot, :probe, :id)
+                # RFC: `events.dropped{payloadTooLarge}`. Note that the RFC
+                # places `payloadTooLarge` on `capture.incomplete` and
+                # describes a "trimmed to fit" semantic; dd-trace-rb does
+                # not trim, so we route to events.dropped with the same
+                # reason name. See the unresolved-issues report.
+                if telemetry && probe_id
+                  telemetry.inc(DI::Metrics::NAMESPACE, DI::Metrics::EVENTS_DROPPED, 1,
+                    tags: {
+                      'reason' => DI::Metrics::DropReason::PAYLOAD_TOO_LARGE,
+                      'event_type' => DI::Metrics::EventType::SNAPSHOT,
+                      'probe_id' => probe_id,
+                    })
+                elsif telemetry
+                  telemetry.inc(DI::Metrics::NAMESPACE, DI::Metrics::EVENTS_DROPPED, 1,
+                    tags: {
+                      'reason' => DI::Metrics::DropReason::PAYLOAD_TOO_LARGE,
+                      'event_type' => DI::Metrics::EventType::SNAPSHOT,
+                    })
+                end
                 next
               end
               encoded_snapshots << encoded

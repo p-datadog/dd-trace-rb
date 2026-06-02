@@ -10,16 +10,18 @@ module Datadog
     #
     # @api private
     class ProbeNotificationBuilder
-      def initialize(settings, serializer)
+      def initialize(settings, serializer, telemetry: nil)
         @settings = settings
         @serializer = serializer
+        @telemetry = telemetry
         @capture_expression_evaluator = CaptureExpressionEvaluator.new(
-          settings: settings, serializer: serializer,
+          settings: settings, serializer: serializer, telemetry: telemetry,
         )
       end
 
       attr_reader :settings
       attr_reader :serializer
+      attr_reader :telemetry
       attr_reader :capture_expression_evaluator
 
       def build_received(probe)
@@ -38,6 +40,15 @@ module Datadog
         build_status(probe,
           message: "Probe #{probe.id} is emitting",
           status: 'EMITTING',)
+      end
+
+      # RFC `probe_status: blocked` notification. Sent when a probe is
+      # currently suppressing events (e.g., evaluation-error throttle
+      # engaged) but may resume.
+      def build_blocked(probe, message)
+        build_status(probe,
+          message: message,
+          status: 'BLOCKED',)
       end
 
       def build_errored(probe, exc)
@@ -68,6 +79,10 @@ module Datadog
         if probe.capture_snapshot? && !context.target_self
           raise ArgumentError, "Asked to build snapshot with snapshot capture but target_self is nil"
         end
+
+        # RFC: capture.duration distribution. Wraps the entire capture
+        # (snapshot serialization OR capture-expression evaluation).
+        capture_start_ns = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC, :nanosecond)
 
         # Mutual exclusion (D1): capture_snapshot wins at fire time when both
         # captureSnapshot and captureExpressions are set on the same probe.
@@ -127,12 +142,28 @@ module Datadog
         message = nil
         evaluation_errors = []
         if segments = probe.template_segments
+          template_start_ns = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC, :nanosecond)
           message, evaluation_errors = evaluate_template(segments, context)
+          template_ms = (::Process.clock_gettime(::Process::CLOCK_MONOTONIC, :nanosecond) - template_start_ns) / 1_000_000.0
+          Metrics.emit_evaluation_duration_ms(telemetry, template_ms,
+            event_type: Metrics.event_type_for_probe(probe),
+            evaluation_kind: Metrics::EvaluationKind::TEMPLATE)
+          if evaluation_errors.any?
+            evaluation_errors.size.times do
+              Metrics.emit_evaluation_error(telemetry, probe: probe,
+                evaluation_kind: Metrics::EvaluationKind::TEMPLATE)
+            end
+          end
         end
         # Per-expression evaluation errors are merged into the snapshot's
         # top-level evaluationErrors array alongside template/condition errors.
         # See projects/capture-expressions/design/decisions.md (D5).
         evaluation_errors.concat(capture_expression_evaluation_errors)
+
+        capture_ms = (::Process.clock_gettime(::Process::CLOCK_MONOTONIC, :nanosecond) - capture_start_ns) / 1_000_000.0
+        Metrics.emit_capture_duration_ms(telemetry, capture_ms,
+          event_type: Metrics.event_type_for_probe(probe))
+
         build_snapshot_base(context,
           evaluation_errors: evaluation_errors, message: message,
           captures: captures)
