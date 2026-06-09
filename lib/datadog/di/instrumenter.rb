@@ -160,33 +160,26 @@ module Datadog
               end
             end
 
-            # do_super invokes the original method via super. The lambda
-            # captures super's binding from inside this define_method
-            # block — that's the only place super resolves to the
-            # prepended-on class's method. The four splat shapes are
-            # centralized here; #run_method_probe receives this lambda
-            # and calls it instead of using super directly.
+            # The super-call is passed to #run_method_probe as a block
+            # rather than as a lambda. This eliminates the per-call Proc
+            # allocation the lambda form required — a block written as
+            # { ... } at a call site and consumed via `yield` (no `&block`
+            # parameter on the receiver) is materialized as a frame-only
+            # descriptor in MRI, not a Proc object.
             #
-            # Under Ruby 2.6 we cannot just call super(*args, **kwargs)
-            # for methods defined via method_missing — kwargs forwarding
-            # requires the explicit shape match below.
+            # `super` inside this block lexically resolves to the same
+            # prepended-on class's method as if it were written directly
+            # in this define_method block. The block does not escape
+            # #run_method_probe — only `yield` is used inside #run_method_probe —
+            # so MRI's frame-block optimization keeps the closure capture
+            # of args/kwargs/target_block on the stack.
             #
-            # Allocated only after the guard check above so the guarded
-            # path skips this allocation entirely.
-            do_super = ->(a, k, blk) {
-              if !DI.array_empty?(a)
-                if !DI.hash_empty?(k)
-                  super(*a, **k, &blk)
-                else
-                  super(*a, &blk)
-                end
-              elsif !DI.hash_empty?(k)
-                super(**k, &blk)
-              else
-                super(&blk)
-              end
-            }
-
+            # The four splat shapes (args+kwargs / args / kwargs / neither)
+            # are dispatched explicitly here for the same reason they were
+            # in the prior lambda form: under Ruby 2.6, super(*args, **kwargs)
+            # forwarding does not work for methods defined via method_missing,
+            # so the explicit shape match is required.
+            #
             # FallbackAny: kwargs is `untyped` inside this define_method
             # block (see the kwargs narrowing note above); the call site
             # therefore can't satisfy run_method_probe's `::Hash[::Symbol, untyped]`
@@ -198,10 +191,21 @@ module Datadog
             # Steep can't prove it from the input type.
             instrumenter.run_method_probe(
               args, kwargs, target_block, # steep:ignore FallbackAny
-              self, do_super,
-              probe, responder,
+              self, probe, responder,
               loc, method_name, # steep:ignore ArgumentTypeMismatch
-            )
+            ) do
+              if !DI.array_empty?(args)
+                if !DI.hash_empty?(kwargs) # steep:ignore FallbackAny
+                  super(*args, **kwargs, &target_block) # steep:ignore FallbackAny
+                else
+                  super(*args, &target_block)
+                end
+              elsif !DI.hash_empty?(kwargs) # steep:ignore FallbackAny
+                super(**kwargs, &target_block) # steep:ignore FallbackAny
+              else
+                super(&target_block)
+              end
+            end
           end
         end
 
@@ -411,16 +415,21 @@ module Datadog
 
       # Body of the method probe wrapper. Extracted from the define_method
       # block in #hook_method so the begin/ensure structure can use normal
-      # indentation. The wrapper invokes the original method via the
-      # do_super lambda — that lambda captures super's binding from inside
-      # the define_method block, the only place super resolves to the
-      # prepended-on class's method.
+      # indentation. The wrapper invokes the original method via `yield`,
+      # which dispatches to the block passed by the define_method wrapper.
+      # That block contains the explicit super-call dispatch; super inside
+      # the block lexically resolves to the prepended-on class's method.
       #
-      # Performance: this method takes nine positional parameters, not
+      # The block is invoked via `yield` rather than captured as `&block`
+      # so MRI keeps the block as a frame-only descriptor and does not
+      # materialize a Proc object on entry. That eliminates the per-call
+      # Proc allocation the prior `do_super` lambda required.
+      #
+      # Performance: this method takes eight positional parameters, not
       # keyword parameters, deliberately. Every probed method invocation
       # passes through here on the firing/disabled/rate-limited paths.
       # Keyword-argument calls in Ruby allocate a fresh Hash on every call
-      # to materialize the keyword bindings; with nine keyword arguments
+      # to materialize the keyword bindings; with eight keyword arguments
       # (~300-1000 ns of allocation per invocation), that hash dominated
       # the wrapper's per-call overhead. Positional parameters skip the
       # allocation entirely. The cost is a long unlabeled signature and
@@ -433,19 +442,19 @@ module Datadog
       # @param kwargs [Hash{Symbol => Object}] keyword arguments passed to the probed method
       # @param target_block [Proc, nil] block argument passed to the probed method
       # @param target_self [Object] the receiver of the probed method invocation
-      # @param do_super [Proc] lambda that invokes the original method via super; takes (args, kwargs, block) and dispatches the four splat shapes
       # @param probe [Datadog::DI::Probe] the probe whose callback this invocation runs
       # @param responder [#probe_executed_callback, #probe_condition_evaluation_failed_callback] callback target invoked with the built Context
       # @param loc [Array(String, Integer), nil] source location of the probed method, or nil for virtual/lazily-defined methods
       # @param method_name [String, Symbol] name of the probed method, used as the synthetic top stack frame label
+      # @yield invokes the original method via super; the block is supplied by the define_method wrapper in #hook_method and dispatches the four splat shapes
       # @return [Object] the original method's return value, or re-raises its exception
-      def run_method_probe(args, kwargs, target_block, target_self, do_super,
+      def run_method_probe(args, kwargs, target_block, target_self,
         probe, responder, loc, method_name)
         # Disabled probe: skip DI processing entirely. enter_probe is not
         # called on this path so the guard is never set — there is no DI
         # work to guard, and any nested probed methods invoked by the
         # original method should fire normally without short-circuit.
-        return DI.invoke_proc(do_super, args, kwargs, target_block) unless probe.enabled?
+        return yield unless probe.enabled?
 
         DI.enter_probe
         begin
@@ -519,14 +528,11 @@ module Datadog
 
             rv = nil
             begin
-              # DI.invoke_proc instead of do_super.call: bypasses Proc#call
-              # method dispatch so a user probe on Proc#call cannot
-              # intercept the trampoline. The guard was just released
-              # above so nested probes on the customer method body fire
-              # normally — but Proc#call must remain bypassed regardless,
-              # because the early-return path at the top of the wrapper
-              # also relies on invoking do_super without recursion.
-              rv = DI.invoke_proc(do_super, args, kwargs, target_block)
+              # yield instead of Proc#call: there is no Proc to dispatch,
+              # so a user probe on Proc#call cannot intercept the
+              # trampoline. The guard was just released above so nested
+              # probes on the customer method body fire normally.
+              rv = yield
             rescue NoMemoryError, Interrupt, SystemExit
               raise
             rescue Exception => exc # standard:disable Lint/RescueException
@@ -601,7 +607,7 @@ module Datadog
             # this branch.)
             #
             # The guard must be released here (not relied on the ensure)
-            # because do_super invokes the customer's method, which may
+            # because yielding invokes the customer's method, which may
             # call other probed methods. Those nested probes should fire
             # normally — they would not if the guard were still set,
             # because the wrapper's early-return short-circuits when
@@ -612,9 +618,9 @@ module Datadog
             # a no-op here (guard already cleared) and serves the
             # firing branch above, where post-processing re-enters.
             DI.leave_probe
-            # DI.invoke_proc bypasses Proc#call dispatch — see the firing
-            # branch above for the same rationale.
-            DI.invoke_proc(do_super, args, kwargs, target_block)
+            # yield invokes the block that contains the super-call
+            # dispatch; no Proc#call involved.
+            yield
           end
         ensure
           DI.leave_probe
