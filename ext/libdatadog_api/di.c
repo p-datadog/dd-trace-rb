@@ -27,6 +27,13 @@ static ID id_mesg;
 // method probes on Thread#[] / Thread#[]= cannot intercept guard reads/writes.
 static ID id_datadog_di_in_probe;
 
+// IDs for the C method-probe wrapper: ivar holding per-probe state on the
+// prepended module, and the Ruby helper methods the wrapper invokes for
+// pre-super and post-super work.
+static ID id_di_method_probe_state;
+static ID id_run_method_probe_pre;
+static ID id_run_method_probe_post;
+
 // Returns whether the argument is an IMEMO of type ISEQ.
 static bool ddtrace_imemo_iseq_p(VALUE v) {
   return rb_objspace_internal_object_p(v) && RB_TYPE_P(v, T_IMEMO) && ddtrace_imemo_type(v) == IMEMO_TYPE_ISEQ;
@@ -196,6 +203,180 @@ static VALUE invoke_proc(int argc, VALUE *argv, DDTRACE_UNUSED VALUE _self) {
   return rb_proc_call_with_block(proc, argc - 1, argv + 1, Qnil);
 }
 
+// Inline helpers for the re-entrancy guard. The Ruby-callable
+// DI.in_probe? / DI.enter_probe / DI.leave_probe methods are still
+// defined and used elsewhere; these inline versions are for the C wrapper
+// to avoid Ruby method dispatch on the hot path.
+static inline int in_probe_inline_p(void) {
+  return RTEST(rb_thread_local_aref(rb_thread_current(), id_datadog_di_in_probe));
+}
+
+static inline void leave_probe_inline(void) {
+  rb_thread_local_aset(rb_thread_current(), id_datadog_di_in_probe, Qnil);
+}
+
+// Walks `receiver_class`'s ancestors looking for a module whose
+// @__di_method_probe_state ivar is an Array whose last element (the
+// method-name symbol) matches `method_id`. Returns the state Array,
+// or Qnil if no matching module is found.
+//
+// The walk is O(depth) per call. A class with multiple probed methods
+// has one prepended module per method (#hook_method creates a fresh
+// Module per hook), so the typical depth is small — the prepended
+// module for the called method sits near the front of the ancestors.
+static VALUE find_method_probe_state(VALUE receiver_class, ID method_id) {
+  VALUE ancestors = rb_mod_ancestors(receiver_class);
+  long n = RARRAY_LEN(ancestors);
+  for (long i = 0; i < n; i++) {
+    VALUE m = RARRAY_AREF(ancestors, i);
+    if (RB_TYPE_P(m, T_MODULE)) {
+      VALUE state = rb_ivar_get(m, id_di_method_probe_state);
+      if (RB_TYPE_P(state, T_ARRAY) && RARRAY_LEN(state) == 5) {
+        VALUE name = RARRAY_AREF(state, 4);
+        if (RB_TYPE_P(name, T_SYMBOL) && SYM2ID(name) == method_id) {
+          return state;
+        }
+      }
+    }
+  }
+  return Qnil;
+}
+
+// Wrapper for rb_protect: invokes rb_call_super with the captured argc/argv.
+struct super_call_data {
+  int argc;
+  const VALUE *argv;
+};
+
+static VALUE call_super_protected(VALUE data) {
+  struct super_call_data *s = (struct super_call_data *)data;
+  return rb_call_super(s->argc, s->argv);
+}
+
+// The C-implemented method probe wrapper. Replaces the Ruby
+// define_method block that #hook_method previously installed on the
+// prepended module.
+//
+// Invariants matched from the Ruby form:
+//   - Re-entrancy guard fast path: if DI.in_probe? is set, just super.
+//   - Un-guarded path: invoke Ruby pre-helper (which calls enter_probe
+//     and may set up snapshot state), then rb_call_super, then Ruby
+//     post-helper. leave_probe is called unconditionally on the way out
+//     (idempotent).
+//   - Exceptions from super are captured and re-raised after the post
+//     helper runs, so the responder callback still fires.
+static VALUE method_probe_wrapper_c(int argc, VALUE *argv, VALUE self) {
+  // Fast path: re-entrancy guard set — just super, no DI work.
+  if (in_probe_inline_p()) {
+    return rb_call_super(argc, argv);
+  }
+
+  ID method_id = rb_frame_this_func();
+  VALUE state = find_method_probe_state(rb_class_of(self), method_id);
+  if (NIL_P(state)) {
+    // Wrapper installed without matching state — shouldn't happen.
+    // Pass through rather than crash.
+    return rb_call_super(argc, argv);
+  }
+
+  VALUE instrumenter = RARRAY_AREF(state, 0);
+  VALUE probe = RARRAY_AREF(state, 1);
+  VALUE responder = RARRAY_AREF(state, 2);
+  VALUE loc = RARRAY_AREF(state, 3);
+  VALUE method_name_sym = RARRAY_AREF(state, 4);
+
+  // Split positional args and kwargs. rb_scan_args with "*:" peels off
+  // a symbol-keyed hash from the end of argv when present.
+  VALUE args = Qnil;
+  VALUE kwargs = Qnil;
+  rb_scan_args(argc, argv, "*:", &args, &kwargs);
+  if (NIL_P(kwargs)) {
+    kwargs = rb_hash_new();
+  }
+
+  // Materialize the block argument as a Proc if one was given. The Ruby
+  // helpers need this for snapshot capture and to forward to user code.
+  // The block is also automatically forwarded by rb_call_super for the
+  // original method invocation, so we don't need to pass it there.
+  VALUE target_block = rb_block_given_p() ? rb_block_proc() : Qnil;
+
+  // Pre-super: invoke Ruby helper that handles enabled-check,
+  // enter_probe, condition evaluation, rate-limiter, serialize_args.
+  // Returns nil (disabled, no enter_probe done), :skip (rate-limited /
+  // condition-failed, enter_probe and leave_probe already done), or a
+  // Hash (firing, enter_probe and leave_probe done, post will re-enter).
+  VALUE pre_argv[8] = {
+    args, kwargs, target_block, self,
+    probe, responder, loc, method_name_sym,
+  };
+  VALUE pre_state = rb_funcallv(instrumenter, id_run_method_probe_pre,
+                                8, pre_argv);
+
+  // Invoke original method via super, capturing any exception.
+  struct super_call_data sd = { argc, argv };
+  int prot_state = 0;
+  VALUE rv = rb_protect(call_super_protected, (VALUE)&sd, &prot_state);
+  VALUE exc = Qnil;
+  if (prot_state) {
+    exc = rb_errinfo();
+    rb_set_errinfo(Qnil);
+    rv = Qnil;
+  }
+
+  // Post-super: invoke Ruby helper that builds snapshot Context and
+  // invokes responder callback. No-op when pre_state is nil/:skip.
+  VALUE post_argv[3] = { pre_state, rv, exc };
+  rb_funcallv(instrumenter, id_run_method_probe_post, 3, post_argv);
+
+  // Release re-entrancy guard. enter_probe was set only for the pre_state
+  // = Hash case (and the post helper re-enters before building the
+  // snapshot); on the nil/:skip paths leave_probe is a no-op. Calling
+  // unconditionally keeps the cleanup simple and is idempotent.
+  leave_probe_inline();
+
+  if (!NIL_P(exc)) {
+    rb_exc_raise(exc);
+  }
+  return rv;
+}
+
+/*
+ * call-seq:
+ *   DI.install_method_probe_wrapper(mod, method_name, instrumenter, probe, responder, loc) -> nil
+ *
+ * Installs the C-implemented method probe wrapper on the given module as
+ * an instance method named method_name (a Symbol). The wrapper handles
+ * the re-entrancy guard fast path inline and, on the un-guarded path,
+ * delegates to Ruby helpers for snapshot building while calling
+ * rb_call_super directly for the original method invocation.
+ *
+ * Per-probe state (instrumenter, probe, responder, loc, method_name) is
+ * stored as a frozen Array in @__di_method_probe_state on the module.
+ * When the wrapper is invoked, it looks up its state by walking the
+ * receiver's class's ancestors.
+ *
+ * @api private
+ */
+static VALUE install_method_probe_wrapper(DDTRACE_UNUSED VALUE _self,
+                                          VALUE mod,
+                                          VALUE method_name_sym,
+                                          VALUE instrumenter,
+                                          VALUE probe,
+                                          VALUE responder,
+                                          VALUE loc) {
+  Check_Type(mod, T_MODULE);
+  Check_Type(method_name_sym, T_SYMBOL);
+
+  VALUE state = rb_ary_new_from_args(5, instrumenter, probe, responder,
+                                     loc, method_name_sym);
+  rb_ary_freeze(state);
+  rb_ivar_set(mod, id_di_method_probe_state, state);
+
+  rb_define_method_id(mod, SYM2ID(method_name_sym),
+                      method_probe_wrapper_c, -1);
+  return Qnil;
+}
+
 // rb_iseq_type was added in Ruby 3.1 (commit 89a02d89 by Koichi Sasada,
 // 2021-12-19). It returns the iseq type as a Symbol. On Ruby < 3.1 this
 // function does not exist, so have_func('rb_iseq_type') in extconf.rb
@@ -239,6 +420,9 @@ static VALUE iseq_type(DDTRACE_UNUSED VALUE _self, VALUE iseq_val) {
 void di_init(VALUE datadog_module) {
   id_mesg = rb_intern("mesg");
   id_datadog_di_in_probe = rb_intern("datadog_di_in_probe");
+  id_di_method_probe_state = rb_intern("@__di_method_probe_state");
+  id_run_method_probe_pre = rb_intern("run_method_probe_pre");
+  id_run_method_probe_post = rb_intern("run_method_probe_post");
 
   VALUE di_module = rb_define_module_under(datadog_module, "DI");
   rb_define_singleton_method(di_module, "all_iseqs", all_iseqs, 0);
@@ -249,6 +433,8 @@ void di_init(VALUE datadog_module) {
   rb_define_singleton_method(di_module, "array_empty?", array_empty_p, 1);
   rb_define_singleton_method(di_module, "hash_empty?", hash_empty_p, 1);
   rb_define_singleton_method(di_module, "invoke_proc", invoke_proc, -1);
+  rb_define_singleton_method(di_module, "install_method_probe_wrapper",
+                             install_method_probe_wrapper, 6);
 #ifdef HAVE_RB_ISEQ_TYPE
   rb_define_singleton_method(di_module, "iseq_type", iseq_type, 1);
 #endif
